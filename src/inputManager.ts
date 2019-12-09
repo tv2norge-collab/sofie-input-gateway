@@ -103,21 +103,26 @@ export class InputManager {
 		// set up a test device:
 		this._devices['test'] = new InputGenerator('test')
 
-		// Monitor for changes in settings:
-		this.coreHandler.onChanged(() => {
-			this.coreHandler.core
-				.getPeripheralDevice()
-				.then(device => {
-					if (device) {
-						// const settings = device.settings
-						// if (!_.isEqual(settings, this._monitorManager.settings)) {
-						// 	this._monitorManager.onNewSettings(settings).catch(e => this._logger.error(e))
-						// }
-					}
-				})
-				.catch(() => {
-					this._logger.error(`coreHandler.onChanged: Could not get peripheral device`)
-				})
+		this._devices['test'].on('inputEvent', (e: any) => {
+			this._logger.info('inputEvent', e) // @todo: report to core
+			this.coreHandler.core.callMethod('userInputEvent', e)
 		})
+
+		// Monitor for changes in settings:
+		// this.coreHandler.onChanged(() => {
+		// 	this.coreHandler.core
+		// 		.getPeripheralDevice()
+		// 		.then(device => {
+		// 			if (device) {
+		// 				// const settings = device.settings
+		// 				// if (!_.isEqual(settings, this._monitorManager.settings)) {
+		// 				// 	this._monitorManager.onNewSettings(settings).catch(e => this._logger.error(e))
+		// 				// }
+		// 			}
+		// 		})
+		// 		.catch(() => {
+		// 			this._logger.error(`coreHandler.onChanged: Could not get peripheral device`)
+		// 		})
+		// })
 	}
 }

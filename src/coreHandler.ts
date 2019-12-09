@@ -72,7 +72,7 @@ export class CoreHandler {
 		this._coreConfig = config
 		this._process = process
 
-		this.core = new CoreConnection(this.getCoreConnectionOptions('Media Manager', 'MediaManager'))
+		this.core = new CoreConnection(this.getCoreConnectionOptions('Input Gateway', 'InputGateway'))
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')

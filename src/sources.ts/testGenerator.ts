@@ -4,10 +4,11 @@ export class InputGenerator extends EventEmitter {
 	constructor (deviceId: string) {
 		super()
 
-		this.emit('inputEvent', {
-			deviceId,
-			eventName: 'test',
-			args: [ Math.random() ]
-		})
+		setInterval(() => {
+			this.emit('inputEvent', {
+				deviceId,
+				eventName: 'test',
+				args: [ Math.random() ]
+			})}, 3000)
 	}
 }
