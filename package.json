@@ -9,22 +9,22 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nrkno/tv-automation-input-gateway"
+    "url": "git+https://github.com/nrkno/sofie-input-gateway"
   },
   "bugs": {
-    "url": "https://github.com/nrkno/tv-automation-input-gateway/issues"
+    "url": "https://github.com/nrkno/sofie-input-gateway/issues"
   },
-  "homepage": "https://github.com/nrkno/tv-automation-input-gateway",
+  "homepage": "https://github.com/nrkno/sofie-input-gateway",
   "contributors": [
     {
       "name": "Balte de Wit",
       "email": "balte@superfly.tv",
-      "url": "http://superfly.tv"
+      "url": "https://superfly.tv"
     },
     {
       "name": "Johan Nyman",
       "email": "johan@superfly.tv",
-      "url": "http://superfly.tv"
+      "url": "https://superfly.tv"
     }
   ],
   "scripts": {
