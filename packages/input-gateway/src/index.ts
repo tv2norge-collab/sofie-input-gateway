@@ -1,65 +1,65 @@
-import { InputManager } from './inputManager'
+import { InputManagerHandler } from './inputManagerHandler'
 import { config, logPath, disableWatchdog } from './config'
 import * as Winston from 'winston'
-export interface LoggerInstance extends Winston.LoggerInstance {
+export interface LoggerInstance extends Winston.Logger {
 	warning: never // logger.warning is not a function
 }
 console.log('process started') // This is a message all Sofie processes log upon startup
 
-let c: InputManager
 // Setup logging --------------------------------------
-let logger = new (Winston.Logger)({
-}) as LoggerInstance
+const logger = new Winston.Logger({}) as LoggerInstance
 if (logPath) {
 	// Log json to file, human-readable to console
-	logger.add(Winston.transports.Console, {
-		level: 'verbose',
-		handleExceptions: true,
-		json: false
-	})
-	logger.add(Winston.transports.File, {
-		level: 'debug',
-		handleExceptions: true,
-		json: true,
-		filename: logPath
-	})
+	logger.add(
+		new Winston.transports.Console({
+			level: 'verbose',
+			handleExceptions: true,
+		})
+	)
+	logger.add(
+		new Winston.transports.File({
+			level: 'debug',
+			handleExceptions: true,
+			format: Winston.format.json(),
+			filename: logPath,
+		})
+	)
 	logger.info('Logging to', logPath)
 	// Hijack console.log:
-	// @ts-ignore
-	let orgConsoleLog = console.log
+	const orgConsoleLog = console.log
 	console.log = function (...args: any[]) {
 		// orgConsoleLog('a')
 		if (args.length >= 1) {
-			// @ts-ignore one or more arguments
+			// @ts-expect-error one or more arguments
 			logger.debug(...args)
 			orgConsoleLog(...args)
 		}
 	}
 } else {
 	// Log json to console
-	logger.add(Winston.transports.Console,{
-		handleExceptions: true,
-		json: true,
-		stringify: (obj) => {
-			obj.localTimestamp = getCurrentTime()
-			obj.randomId = Math.round(Math.random() * 10000)
-			return JSON.stringify(obj) // make single line
-		}
-	})
+	logger.add(
+		new Winston.transports.Console({
+			handleExceptions: true,
+			format: Winston.format.printf((obj) => {
+				obj.localTimestamp = getCurrentTime()
+				obj.randomId = Math.round(Math.random() * 10000)
+				return JSON.stringify(obj) // make single line
+			}),
+		})
+	)
 	logger.info('Logging to Console')
 	// Hijack console.log:
-	// @ts-ignore
-	let orgConsoleLog = console.log
+	const _orgConsoleLog = console.log
 	console.log = function (...args: any[]) {
 		// orgConsoleLog('a')
 		if (args.length >= 1) {
-			// @ts-ignore one or more arguments
+			// @ts-expect-error one or more arguments
 			logger.debug(...args)
 		}
 	}
 }
-function getCurrentTime () {
-	let v = Date.now()
+function getCurrentTime() {
+	const v = Date.now()
 	// if (c && c.coreHandler && c.coreHandler.core) {
 	// 	v = c.coreHandler.core.getCurrentTime()
 	// }
@@ -81,13 +81,12 @@ process.on('warning', (e: any) => {
 })
 
 logger.info('------------------------------------------------------------------')
-logger.info('Starting Playout Gateway')
+logger.info('Starting Input Gateway')
 if (disableWatchdog) logger.info('Watchdog is disabled!')
-c = new InputManager(logger)
+const inputHandler = new InputManagerHandler(logger)
 
 logger.info('Core:          ' + config.core.host + ':' + config.core.port)
 logger.info('------------------------------------------------------------------')
-c.init(config)
-.catch(e => {
+inputHandler.init(config).catch((e) => {
 	logger.error(e)
 })

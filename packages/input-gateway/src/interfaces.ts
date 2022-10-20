@@ -1,28 +1,23 @@
-export interface DeviceSettings {
-
-}
+export type DeviceSettings = Record<string, never>
 
 export interface UserInputEvent {
-	deviceId: string,
-	deviceType: DeviceType,
-	values: { [input: string]: number | boolean }, // something like joysticks.left.x: 0.5, joysticks.left.y: 1
-}
-
-export interface DeviceHandler {
-	handleFeedback: (instance: FeedbackInstance) => boolean
+	deviceId: string
+	triggerId: string
+	values: { [arg: string]: any } // something like joysticks.left.x: 0.5, joysticks.left.y: 1
 }
 
 export enum DeviceType {
 	Mouse,
-	Controller
+	Controller,
 }
 
 export enum ValueType {
-	Boolean,
-	Range, // 0 to 1
-	Delta // positive or minus
+	Trigger = 'trigger',
+	Toggle = 'toggle',
+	Range = 'range', // 0 to 1
+	Delta = 'delta', // positive or minus
+	String = 'string',
 }
-
 
 export interface UserInputDeviceManifest {
 	deviceType: DeviceType
@@ -30,21 +25,31 @@ export interface UserInputDeviceManifest {
 }
 
 export interface UserInputInstanceManifest {
-	identifier: string,
+	identifier: string
 	arguments: {
 		[path: string]: ValueType
 	}
 }
 
-export enum FeedbackType {
-	State,
-	Colour,
-	Text
+export enum ActionItemType {
+	VT = 'vt',
+	LIVE_SPEAK = 'liveSpeak',
+	REMOTE = 'remote',
+	LOCAL = 'local',
+	// same as SourceLayerTypes +
+	TAKE = 'take',
+}
+
+export interface ActionItem {
+	label: string
+	shortLabel?: string
+	multiLineLabel?: string[]
+	thumbnail?: string
+	type: ActionItemType
 }
 
 export interface FeedbackInstance {
-	type: FeedbackType,
-	values: any
+	actionItems: ActionItem[]
 }
 
 export const mouseExample: UserInputDeviceManifest = {
@@ -53,35 +58,35 @@ export const mouseExample: UserInputDeviceManifest = {
 		{
 			identifier: 'verticalScroll',
 			arguments: {
-				delta: ValueType.Delta
-			}
+				delta: ValueType.Delta,
+			},
 		},
 		{
 			identifier: 'horizontalScroll',
 			arguments: {
-				delta: ValueType.Delta
-			}
+				delta: ValueType.Delta,
+			},
 		},
 		{
 			identifier: 'mouseMove',
 			arguments: {
 				x: ValueType.Delta,
-				y: ValueType.Delta
-			}
+				y: ValueType.Delta,
+			},
 		},
 		{
 			identifier: 'leftClick',
-			arguments: {}
+			arguments: {},
 		},
 		{
 			identifier: 'middleClick',
-			arguments: {}
+			arguments: {},
 		},
 		{
 			identifier: 'rightClick',
-			arguments: {}
-		}
-	]
+			arguments: {},
+		},
+	],
 }
 
 // export const xboxExample: UserInputEventManifest = {

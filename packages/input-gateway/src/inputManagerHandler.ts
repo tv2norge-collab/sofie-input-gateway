@@ -1,18 +1,13 @@
 import * as Winston from 'winston'
-import * as _ from 'underscore'
-import { PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
-import { CoreHandler, CoreConfig } from './coreHandler'
-import { Process } from './process'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
+import { CoreHandler } from './coreHandler'
 import { DeviceSettings } from './interfaces'
-import { InputGenerator } from './sources.ts/testGenerator'
+import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
+import { Process } from './process'
+import { Config } from './connector'
 
-export type SetProcessState = (processName: string, comments: string[], status: P.StatusCode) => void
+export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
-export interface Config {
-	process: ProcessConfig
-	device: DeviceConfig
-	core: CoreConfig
-}
 export interface ProcessConfig {
 	/** Will cause the Node applocation to blindly accept all certificates. Not recommenced unless in local, controlled networks. */
 	unsafeSSL: boolean
@@ -20,19 +15,18 @@ export interface ProcessConfig {
 	certificates: string[]
 }
 export interface DeviceConfig {
-	deviceId: string
+	deviceId: PeripheralDeviceId
 	deviceToken: string
 }
-export class InputManager {
-	private coreHandler: CoreHandler
-	private _config: Config
-	private _logger: Winston.LoggerInstance
-
+export class InputManagerHandler {
+	private coreHandler!: CoreHandler
+	private _config!: Config
+	private _logger: Winston.Logger
 	private _process: Process
 
 	private _devices: { [deviceId: string]: InputGenerator } = {} // test input
 
-	constructor(logger: Winston.LoggerInstance) {
+	constructor(logger: Winston.Logger) {
 		this._logger = logger
 	}
 
@@ -56,6 +50,7 @@ export class InputManager {
 				this._logger.warn('Not setup yet, exiting process!')
 				this._logger.warn('To setup, go into Core and add this device to a Studio')
 				this._logger.warn('------------------------------------------------------')
+				// eslint-disable-next-line no-process-exit
 				process.exit(1)
 				return
 			}
@@ -69,7 +64,7 @@ export class InputManager {
 		} catch (e) {
 			this._logger.error('Error during initialization:')
 			this._logger.error(e)
-			this._logger.error(e.stack)
+			if (e instanceof Error) this._logger.error(e.stack)
 			try {
 				if (this.coreHandler) {
 					this.coreHandler.destroy().catch(this._logger.error)
@@ -79,18 +74,19 @@ export class InputManager {
 			}
 			this._logger.info('Shutting down in 10 seconds!')
 			setTimeout(() => {
+				// eslint-disable-next-line no-process-exit
 				process.exit(0)
 			}, 10 * 1000)
 			return
 		}
 	}
-	initProcess() {
+	initProcess(): void {
 		this._process = new Process(this._logger)
 		this._process.init(this._config.process)
 	}
-	async initCore() {
+	async initCore(): Promise<void> {
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
-		return this.coreHandler.init(this._config.core, this._process)
+		await this.coreHandler.init(this._config.core, this._process)
 	}
 
 	async initInputManager(settings: DeviceSettings): Promise<void> {
@@ -99,14 +95,6 @@ export class InputManager {
 		this._logger.debug(JSON.stringify(settings))
 
 		// TODO: Initialize input Manager
-
-		// set up a test device:
-		this._devices['test'] = new InputGenerator('test')
-
-		this._devices['test'].on('inputEvent', (e: any) => {
-			this._logger.info('inputEvent', e) // @todo: report to core
-			this.coreHandler.core.callMethod('userInputEvent', e)
-		})
 
 		// Monitor for changes in settings:
 		// this.coreHandler.onChanged(() => {

@@ -1,8 +1,7 @@
 {
-  "extends": "./config/tsconfig.base",
-  "exclude": [
-    "node_modules/**",
-    "src/**/*spec.ts",
-    "src/**/__mocks__/*"
-  ]
+	"files": [],
+	"references": [
+		{ "path": "packages/timeline-state-resolver" },
+		{ "path": "packages/timeline-state-resolver-types" }
+	]
 }

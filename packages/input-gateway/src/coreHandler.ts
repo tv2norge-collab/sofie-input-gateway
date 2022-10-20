@@ -1,20 +1,23 @@
-import {
-	CoreConnection,
-	CoreOptions,
-	PeripheralDeviceAPI as P,
-	DDPConnectorOptions
-} from 'tv-automation-server-core-integration'
+import { CoreConnection, CoreOptions, DDPConnectorOptions } from '@sofie-automation/server-core-integration'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import * as _ from 'underscore'
 import * as Winston from 'winston'
-import { DeviceConfig } from './inputManager'
+import { DeviceConfig } from './inputManagerHandler'
 const depsVersions = undefined // require('./deps-metadata.json')
-import { Process } from './process'
 import { INPUT_DEVICE_CONFIG } from './configManifest'
+import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
+import {
+	PeripheralDeviceSubType,
+	PERIPHERAL_SUBTYPE_PROCESS,
+} from '@sofie-automation/shared-lib/dist/peripheralDevice/peripheralDeviceAPI'
+import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
+import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
+import { Process } from './process'
 
 export interface CoreConfig {
 	host: string
 	port: number
-	ssl: boolean
+	ssl?: boolean
 	watchdog: boolean
 }
 export interface PeripheralDeviceCommand {
@@ -34,13 +37,13 @@ export interface PeripheralDeviceCommand {
  * Represents a connection between the Core and the media-manager
  */
 export class CoreHandler {
-	core: CoreConnection
-	logger: Winston.LoggerInstance
+	core!: CoreConnection
+	logger: Winston.Logger
 
 	public _observers: Array<any> = []
 	public deviceSettings: { [key: string]: any } = {}
 
-	public deviceStatus: P.StatusCode = P.StatusCode.GOOD
+	public deviceStatus: StatusCode = StatusCode.GOOD
 	public deviceMessages: Array<string> = []
 
 	private _deviceOptions: DeviceConfig
@@ -50,17 +53,17 @@ export class CoreHandler {
 	private _coreConfig?: CoreConfig
 	private _process?: Process
 
-	private _statusInitialized: boolean = false
-	private _statusDestroyed: boolean = false
+	private _statusInitialized = false
+	private _statusDestroyed = false
 
 	private _processState: {
 		[key: string]: {
 			comments: string[]
-			status: P.StatusCode
+			status: StatusCode
 		}
 	}
 
-	constructor(logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
+	constructor(logger: Winston.Logger, deviceOptions: DeviceConfig) {
 		this.logger = logger
 		this._deviceOptions = deviceOptions
 		this._processState = {}
@@ -76,7 +79,7 @@ export class CoreHandler {
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
-			this.setupObserversAndSubscriptions().catch(e => {
+			this.setupObserversAndSubscriptions().catch((e) => {
 				this.logger.error('Core Error:', e)
 			})
 			if (this._onConnected) this._onConnected()
@@ -84,18 +87,21 @@ export class CoreHandler {
 		this.core.onDisconnected(() => {
 			this.logger.warn('Core Disconnected!')
 		})
-		this.core.onError(err => {
-			this.logger.error('Core Error: ' + (err.message || err.toString() || err))
+		this.core.onError((err) => {
+			if (err instanceof Error) {
+				this.logger.error('Core Error: ' + (err.message || err.toString() || err))
+			}
+			this.logger.error('Core Error: ' + (err.toString() || err))
 		})
 
-		let ddpConfig: DDPConnectorOptions = {
+		const ddpConfig: DDPConnectorOptions = {
 			host: config.host,
 			port: config.port,
-			ssl: config.ssl
+			ssl: config.ssl,
 		}
 		if (this._process && this._process.certificates.length) {
 			ddpConfig.tlsOpts = {
-				ca: this._process.certificates
+				ca: this._process.certificates,
 			}
 		}
 		await this.core.init(ddpConfig)
@@ -105,32 +111,32 @@ export class CoreHandler {
 		await this.updateCoreStatus()
 		return
 	}
-	async setupObserversAndSubscriptions() {
+	async setupObserversAndSubscriptions(): Promise<void> {
 		this.logger.info('Core: Setting up subscriptions..')
 		this.logger.info('DeviceId: ' + this.core.deviceId)
 		await Promise.all([
 			this.core.autoSubscribe('peripheralDevices', {
-				_id: this.core.deviceId
+				_id: this.core.deviceId,
 			}),
 			this.core.autoSubscribe('studioOfDevice', this.core.deviceId),
-			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId)
+			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
 			// @todo: subscribe to userInput
 		])
 		this.logger.info('Core: Subscriptions are set up!')
 		if (this._observers.length) {
 			this.logger.info('Core: Clearing observers..')
-			this._observers.forEach(obs => {
+			this._observers.forEach((obs) => {
 				obs.stop()
 			})
 			this._observers = []
 		}
 		// setup observers
-		let observer = this.core.observe('peripheralDevices')
+		const observer = this.core.observe('peripheralDevices')
 		observer.added = (id: string) => {
-			this.onDeviceChanged(id)
+			this.onDeviceChanged(protectString(id))
 		}
 		observer.changed = (id1: string) => {
-			this.onDeviceChanged(id1)
+			this.onDeviceChanged(protectString(id1))
 		}
 		this.setupObserverForPeripheralDeviceCommands(this)
 		return
@@ -140,71 +146,70 @@ export class CoreHandler {
 		await this.updateCoreStatus()
 		await this.core.destroy()
 	}
-	getCoreConnectionOptions(name: string, subDeviceId: string, subType?: P.DeviceSubType): CoreOptions {
+	getCoreConnectionOptions(name: string, subDeviceId: string, subType?: PeripheralDeviceSubType): CoreOptions {
 		let credentials: {
-			deviceId: string
+			deviceId: string | PeripheralDeviceId
 			deviceToken: string
 		}
 
 		if (this._deviceOptions.deviceId && this._deviceOptions.deviceToken) {
 			credentials = {
 				deviceId: this._deviceOptions.deviceId + subDeviceId,
-				deviceToken: this._deviceOptions.deviceToken
+				deviceToken: this._deviceOptions.deviceToken,
 			}
 		} else if (this._deviceOptions.deviceId) {
 			this.logger.warn('Token not set, only id! This might be unsecure!')
 			credentials = {
 				deviceId: this._deviceOptions.deviceId + subDeviceId,
-				deviceToken: 'unsecureToken'
+				deviceToken: 'unsecureToken',
 			}
 		} else {
 			credentials = CoreConnection.getCredentials(subDeviceId)
 		}
-		let options: CoreOptions = {
+		const options: CoreOptions = {
 			...credentials,
 
+			//@ts-expect-error Category not yet registered
 			deviceCategory: 'userInput',
+			//@ts-expect-error Type not yet registered
 			deviceType: 'userInput',
-			deviceSubType: subType || P.SUBTYPE_PROCESS,
+			deviceSubType: subType || PERIPHERAL_SUBTYPE_PROCESS,
 
 			deviceName: name,
 			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
 
-			configManifest: INPUT_DEVICE_CONFIG
+			configManifest: INPUT_DEVICE_CONFIG,
 		}
 		options.versions = this._getVersions()
 		return options
 	}
-	onConnected(fcn: () => any) {
+	onConnected(fcn: () => any): void {
 		this._onConnected = fcn
 	}
-	onChanged(fcn: () => any) {
+	onChanged(fcn: () => any): void {
 		this._onChanged = fcn
 	}
-	onDeviceChanged(id: string) {
+	onDeviceChanged(id: PeripheralDeviceId): void {
 		if (id === this.core.deviceId) {
-			let col = this.core.getCollection('peripheralDevices')
+			const col = this.core.getCollection('peripheralDevices')
 			if (!col) throw new Error('collection "peripheralDevices" not found!')
 
-			let device = col.findOne(id)
+			const device = col.findOne(id)
 			if (device) {
 				this.deviceSettings = device.settings || {}
 			} else {
 				this.deviceSettings = {}
 			}
 
-			let logLevel = this.deviceSettings['debugLogging'] ? 'debug' : 'info'
+			const logLevel = this.deviceSettings['debugLogging'] ? 'debug' : 'info'
 			if (logLevel !== this.logger.level) {
 				this.logger.level = logLevel
 
 				this.logger.info('Loglevel: ' + this.logger.level)
 
 				this.logger.debug('Test debug logging')
-				// @ts-ignore
 				this.logger.debug({ msg: 'test msg' })
-				// @ts-ignore
 				this.logger.debug({ message: 'test message' })
-				// @ts-ignore
 				this.logger.debug({ command: 'test command', context: 'test context' })
 
 				this.logger.debug('End test debug logging')
@@ -217,57 +222,62 @@ export class CoreHandler {
 		return !!this.deviceSettings['debugLogging']
 	}
 
-	executeFunction(cmd: PeripheralDeviceCommand, fcnObject: any) {
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+	executeFunction(cmd: PeripheralDeviceCommand, fcnObject: any): void {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
 			this.logger.info(cmd.functionName, cmd.args)
 			this._executedFunctions[cmd._id] = true
 			// console.log('executeFunction', cmd)
-			let cb = (err: any, res?: any) => {
+			const cb = (err: any, res?: any) => {
 				// console.log('cb', err, res)
 				if (err) {
 					this.logger.error('executeFunction error', err, err.stack)
 				}
 				this.core
-					.callMethod(P.methods.functionReply, [cmd._id, err, res])
+					.callMethod(PeripheralDeviceAPIMethods.functionReply, [cmd._id, err, res])
 					.then(() => {
 						// console.log('cb done')
 					})
-					.catch(e => {
+					.catch((e) => {
 						this.logger.error(e)
 					})
 			}
-			// @ts-ignore
-			let fcn: Function = fcnObject[cmd.functionName]
+
+			const fcn = fcnObject[cmd.functionName]
 			try {
 				if (!fcn) throw Error('Function "' + cmd.functionName + '" not found!')
 
 				Promise.resolve(fcn.apply(fcnObject, cmd.args))
-					.then(result => {
+					.then((result) => {
 						cb(null, result)
 					})
-					.catch(e => {
+					.catch((e) => {
 						cb(e.toString(), null)
 					})
 			} catch (e) {
-				cb(e.toString(), null)
+				if (e instanceof Error) {
+					cb(e.toString(), null)
+				} else {
+					cb(`Unknown error: ${e}`, null)
+				}
 			}
 		}
 	}
-	retireExecuteFunction(cmdId: string) {
+	retireExecuteFunction(cmdId: string): void {
 		delete this._executedFunctions[cmdId]
 	}
-	setupObserverForPeripheralDeviceCommands(functionObject: CoreHandler | CoreMonitorHandler) {
-		let observer = functionObject.core.observe('peripheralDeviceCommands')
+	setupObserverForPeripheralDeviceCommands(functionObject: CoreHandler): void {
+		const observer = functionObject.core.observe('peripheralDeviceCommands')
 		functionObject.killProcess(0)
 		functionObject._observers.push(observer)
-		let addedChangedCommand = (id: string) => {
-			let cmds = functionObject.core.getCollection('peripheralDeviceCommands')
+		const addedChangedCommand = (id: string) => {
+			const cmds = functionObject.core.getCollection('peripheralDeviceCommands')
 			if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
-			let cmd = cmds.findOne(id) as PeripheralDeviceCommand
+			const cmd = cmds.findOne(id) as PeripheralDeviceCommand
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			// console.log('addedChangedCommand', id)
-			if (cmd.deviceId === functionObject.core.deviceId) {
+			if (cmd.deviceId === unprotectString(functionObject.core.deviceId)) {
 				this.executeFunction(cmd, functionObject)
 			} else {
 				// console.log('not mine', cmd.deviceId, this.core.deviceId)
@@ -282,23 +292,24 @@ export class CoreHandler {
 		observer.removed = (id: string) => {
 			this.retireExecuteFunction(id)
 		}
-		let cmds = functionObject.core.getCollection('peripheralDeviceCommands')
+		const cmds = functionObject.core.getCollection('peripheralDeviceCommands')
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
-		cmds.find({}).forEach((cmd: PeripheralDeviceCommand) => {
-			if (cmd.deviceId === functionObject.core.deviceId) {
+		;(cmds.find({}) as PeripheralDeviceCommand[]).forEach((cmd: PeripheralDeviceCommand) => {
+			if (cmd.deviceId === unprotectString(functionObject.core.deviceId)) {
 				this.executeFunction(cmd, functionObject)
 			}
 		})
 	}
-	killProcess(actually: number) {
+	killProcess(actually: number): boolean {
 		if (actually === 1) {
 			this.logger.info('KillProcess command received, shutting down in 1000ms!')
 			setTimeout(() => {
+				// eslint-disable-next-line no-process-exit
 				process.exit(0)
 			}, 1000)
 			return true
 		}
-		return 0
+		return false
 	}
 	/* devicesMakeReady (okToDestroyStuff?: boolean): Promise<any> {
 		// TODO: perhaps do something here?
@@ -308,7 +319,7 @@ export class CoreHandler {
 		// TODO: perhaps do something here?
 		return Promise.resolve()
 	} */
-	pingResponse(message: string) {
+	pingResponse(message: string): boolean {
 		this.core.setPingResponse(message)
 		return true
 	}
@@ -321,36 +332,36 @@ export class CoreHandler {
 			// transferStatus: myTransferStatus,
 		}
 	}
-	updateCoreStatus(): Promise<any> {
-		let statusCode = P.StatusCode.GOOD
-		let messages: Array<string> = []
+	async updateCoreStatus(): Promise<any> {
+		let statusCode = StatusCode.GOOD
+		const messages: Array<string> = []
 
-		if (this.deviceStatus !== P.StatusCode.GOOD) {
+		if (this.deviceStatus !== StatusCode.GOOD) {
 			statusCode = this.deviceStatus
 			if (this.deviceMessages) {
-				_.each(this.deviceMessages, msg => {
+				_.each(this.deviceMessages, (msg) => {
 					messages.push(msg)
 				})
 			}
 		}
 		if (!this._statusInitialized) {
-			statusCode = P.StatusCode.BAD
+			statusCode = StatusCode.BAD
 			messages.push('Starting up...')
 		}
 		if (this._statusDestroyed) {
-			statusCode = P.StatusCode.BAD
+			statusCode = StatusCode.BAD
 			messages.push('Shut down')
 		}
 
-		return this.core.setStatus({
+		await this.core.setStatus({
 			statusCode: statusCode,
-			messages: messages
+			messages: messages,
 		})
 	}
-	setProcessState = (processName: string, comments: string[], status: P.StatusCode) => {
+	setProcessState = (processName: string, comments: string[], status: StatusCode): void => {
 		this._processState[processName] = {
 			comments,
-			status
+			status,
 		}
 
 		const deviceState = _.reduce(
@@ -367,12 +378,12 @@ export class CoreHandler {
 
 				return {
 					status,
-					comments
+					comments,
 				}
 			},
 			{
-				status: P.StatusCode.GOOD,
-				comments: [] as string[]
+				status: StatusCode.GOOD,
+				comments: [] as string[],
 			}
 		)
 

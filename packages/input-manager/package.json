@@ -1,0 +1,99 @@
+{
+	"name": "@sofie-automation/input-manager",
+	"version": "0.0.1-release48",
+	"description": "Have devices, send events, receive feedback",
+	"main": "dist/index.js",
+	"typings": "dist/index.d.ts",
+	"module": "dist/module/index.js",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nrkno/sofie-input-gateway.git"
+	},
+	"bugs": {
+		"url": "https://github.com/nrkno/sofie-input-gateway/issues"
+	},
+	"homepage": "https://github.com/nrkno/sofie-input-gateway#readme",
+	"contributors": [
+		{
+			"name": "Johan Nyman",
+			"email": "johan@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Balte de Wit",
+			"email": "balte@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Jesper Stærkær",
+			"email": "jesper@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Jan Starzak",
+			"email": "jan@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Stephan Nordnes Eriksen",
+			"email": "Stephanruler@gmail.com"
+		},
+		{
+			"name": "Julian Waller",
+			"email": "julian@superfly.tv",
+			"url": "http://superfly.tv"
+		}
+	],
+	"scripts": {
+		"unlink:all": "yarn unlink atem-connection & yarn unlink atem-state & yarn unlink casparcg-connection & yarn unlink casparcg-state & yarn unlink superfly-timeline",
+		"build": "rimraf dist && yarn build:main",
+		"build:main": "tsc -p tsconfig.build.json",
+		"lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
+		"lint": "yarn lint:raw .",
+		"lint-fix": "yarn lint --fix",
+		"license-validate": "yarn sofie-licensecheck",
+		"unit": "jest --forceExit",
+		"unitci": "jest --forceExit --coverage",
+		"test": "yarn lint && yarn unit",
+		"test:integration": "yarn lint && jest --config=jest-integration.config.js",
+		"watch": "jest --watch",
+		"cov": "jest --coverage && yarn cov-open",
+		"cov-open": "open-cli coverage/lcov-report/index.html",
+		"validate:dependencies": "yarn audit --groups dependencies && yarn license-validate",
+		"validate:dev-dependencies": "yarn audit --groups devDependencies",
+		"precommit": "lint-staged"
+	},
+	"engines": {
+		"node": "^14.18 || ^16.14"
+	},
+	"lint-staged": {
+		"*.{css,json,md,scss}": [
+			"prettier"
+		],
+		"*.{ts,tsx,js,jsx}": [
+			"yarn lint:raw"
+		]
+	},
+	"files": [
+		"/dist",
+		"/CHANGELOG.md",
+		"/README.md",
+		"/LICENSE"
+	],
+	"keywords": [
+		"broadcast",
+		"socket",
+		"typescript",
+		"javascript",
+		"open",
+		"source",
+		"automation",
+		"rundown",
+		"production"
+	],
+	"dependencies": {},
+	"publishConfig": {
+		"access": "public"
+	}
+}
