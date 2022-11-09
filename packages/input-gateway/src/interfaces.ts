@@ -1,9 +1,11 @@
 export type DeviceSettings = Record<string, never>
 
+type ValueTypes = string | number | boolean
+
 export interface UserInputEvent {
 	deviceId: string
 	triggerId: string
-	values: { [arg: string]: any } // something like joysticks.left.x: 0.5, joysticks.left.y: 1
+	values: Record<string, ValueTypes>
 }
 
 export enum DeviceType {
@@ -12,11 +14,11 @@ export enum DeviceType {
 }
 
 export enum ValueType {
-	Trigger = 'trigger',
 	Toggle = 'toggle',
 	Range = 'range', // 0 to 1
 	Delta = 'delta', // positive or minus
 	String = 'string',
+	Number = 'number',
 }
 
 export interface UserInputDeviceManifest {
@@ -32,12 +34,36 @@ export interface UserInputInstanceManifest {
 }
 
 export enum ActionItemType {
+	UNKNOWN = 'unknown',
+	/** Local camera sources (local to the studio, not requiring additional coordination) */
+	CAMERA = 'camera',
+	/** Video clips */
 	VT = 'vt',
-	LIVE_SPEAK = 'liveSpeak',
+	/** Remote cameras & pre-produced sources */
+
 	REMOTE = 'remote',
+	/** Script and comments for the prompter */
+	SCRIPT = 'script',
+	/** Fullscreen graphics */
+	GRAPHICS = 'graphics',
+	/** Sources composed out of other sources, such as DVEs, "SuperSource", Additional M/Es, etc. */
+	SPLITS = 'splits',
+	/** Audio-only sources */
+	AUDIO = 'audio',
+	// CAMERA_MOVEMENT = 8,
+	// TODOSYNC: What is this intended to be used for? Why isnt UNKNOWN used instead?
+	METADATA = 'metadata',
+	/** Graphical overlays on top of other video */
+	LOWER_THIRD = 'lower_third',
+	/** Video-only clips or clips with only environment audio */
+	LIVE_SPEAK = 'live_speak',
+	/** Transition effects, content object can use VTContent or TransitionContent */
+	TRANSITION = 'transition',
+	// LIGHTS = 14,
+	/** Uncontrolled local sources, such as PowerPoint presentation inputs, Weather systems, EVS replay machines, etc. */
 	LOCAL = 'local',
-	// same as SourceLayerTypes +
-	TAKE = 'take',
+	// same as SourceLayerTypes + other actions
+	ACTION_TAKE = 'action_take',
 }
 
 export interface ActionItem {

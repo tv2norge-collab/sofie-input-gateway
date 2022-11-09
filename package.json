@@ -10,15 +10,17 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "build": "yarn build:types && yarn build:main",
-    "build:types": "cd packages/timeline-state-resolver-types && yarn build",
-    "build:main": "cd packages/timeline-state-resolver && yarn build",
+    "build": "yarn build:manager && yarn build:main",
+    "build:main": "cd packages/input-gateway && yarn build",
+    "build:manager": "cd packages/input-manager && yarn build",
     "lint": "yarn lerna exec yarn lint -- --",
     "test": "yarn lerna exec yarn test",
     "unit": "yarn lerna exec yarn unit",
     "unitci": "yarn lerna exec yarn unitci",
     "watch": "lerna run --parallel build:main -- --watch --preserveWatchOutput",
     "docs": "yarn typedoc .",
+    "start": "cd packages/input-gateway && yarn start",
+    "buildstart": "yarn build && yarn start",
     "postinstall": "lerna bootstrap",
     "release:set-version": "lerna version --exact --no-changelog --no-git-tag-version --no-push --yes",
     "release:bump-release": "lerna version --exact --conventional-commits --conventional-graduate --tag-version-prefix='' --no-push --force-publish=*",
@@ -45,7 +47,7 @@
     "ts-jest": "^26.1.0",
     "type-fest": "^2.16.0",
     "typedoc": "^0.22.14",
-    "typescript": "~4.8"
+    "typescript": "~4.6"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json"
 }

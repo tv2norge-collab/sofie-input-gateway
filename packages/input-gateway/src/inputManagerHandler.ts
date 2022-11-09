@@ -5,6 +5,7 @@ import { DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import { Process } from './process'
 import { Config } from './connector'
+import { InputManager } from '@sofie-automation/input-manager'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -22,9 +23,9 @@ export class InputManagerHandler {
 	private coreHandler!: CoreHandler
 	private _config!: Config
 	private _logger: Winston.Logger
-	private _process: Process
+	private _process!: Process
 
-	private _devices: { [deviceId: string]: InputGenerator } = {} // test input
+	private _inputManager: InputManager | undefined
 
 	constructor(logger: Winston.Logger) {
 		this._logger = logger
@@ -90,11 +91,31 @@ export class InputManagerHandler {
 	}
 
 	async initInputManager(settings: DeviceSettings): Promise<void> {
-		// console.log(this.coreHandler.deviceSettings)
-		this._logger.debug('Initializing Media Manager with the following settings:')
-		this._logger.debug(JSON.stringify(settings))
+		this._logger.info('Initializing Input Manager with the following settings:')
+
+		this._logger.info(JSON.stringify(settings))
 
 		// TODO: Initialize input Manager
+
+		this._inputManager = new InputManager(
+			{
+				devices: {
+					http0: {
+						type: 'http',
+						options: {},
+					},
+				},
+			},
+			this._logger
+		)
+		this._inputManager.on('trigger', (e) => {
+			this.coreHandler.core
+				.callMethod('peripheralDevice.input.trigger', [e.deviceId, e.triggerId, e.arguments ?? null])
+				.catch(() => {
+					this._logger.error(`peripheralDevice.input.trigger failed`)
+				})
+		})
+		await this._inputManager.init()
 
 		// Monitor for changes in settings:
 		// this.coreHandler.onChanged(() => {

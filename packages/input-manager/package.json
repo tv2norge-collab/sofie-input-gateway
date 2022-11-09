@@ -46,7 +46,6 @@
 		}
 	],
 	"scripts": {
-		"unlink:all": "yarn unlink atem-connection & yarn unlink atem-state & yarn unlink casparcg-connection & yarn unlink casparcg-state & yarn unlink superfly-timeline",
 		"build": "rimraf dist && yarn build:main",
 		"build:main": "tsc -p tsconfig.build.json",
 		"lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
@@ -77,8 +76,6 @@
 	},
 	"files": [
 		"/dist",
-		"/CHANGELOG.md",
-		"/README.md",
 		"/LICENSE"
 	],
 	"keywords": [
@@ -92,7 +89,9 @@
 		"rundown",
 		"production"
 	],
-	"dependencies": {},
+	"dependencies": {
+		"easymidi": "^3.0.1"
+	},
 	"publishConfig": {
 		"access": "public"
 	}

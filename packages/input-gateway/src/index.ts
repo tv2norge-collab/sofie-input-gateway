@@ -1,13 +1,15 @@
 import { InputManagerHandler } from './inputManagerHandler'
 import { config, logPath, disableWatchdog } from './config'
-import * as Winston from 'winston'
+import Winston from 'winston'
+
 export interface LoggerInstance extends Winston.Logger {
 	warning: never // logger.warning is not a function
 }
 console.log('process started') // This is a message all Sofie processes log upon startup
 
 // Setup logging --------------------------------------
-const logger = new Winston.Logger({}) as LoggerInstance
+const logger = Winston.createLogger({})
+
 if (logPath) {
 	// Log json to file, human-readable to console
 	logger.add(
@@ -49,7 +51,7 @@ if (logPath) {
 	)
 	logger.info('Logging to Console')
 	// Hijack console.log:
-	const _orgConsoleLog = console.log
+
 	console.log = function (...args: any[]) {
 		// orgConsoleLog('a')
 		if (args.length >= 1) {
