@@ -1,6 +1,7 @@
 import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
+import { Symbols } from '../../lib'
 
 export interface StreamDeckDeviceConfig {
 	device: StreamDeckDeviceIdentifier
@@ -40,13 +41,13 @@ export class StreamDeckDevice extends Device {
 		this.#streamDeck = device
 
 		this.#streamDeck.addListener('down', (key) => {
-			const triggerId = `down ${key}`
+			const triggerId = `${key} ${Symbols.DOWN}`
 			this.emit('trigger', {
 				triggerId,
 			})
 		})
 		this.#streamDeck.addListener('up', (key) => {
-			const triggerId = `up ${key}`
+			const triggerId = `${key} ${Symbols.UP}`
 			this.emit('trigger', {
 				triggerId,
 			})
@@ -54,6 +55,7 @@ export class StreamDeckDevice extends Device {
 		this.#streamDeck.addListener('error', (err) => {
 			this.logger.error(String(err))
 		})
+		await this.#streamDeck.clearPanel()
 	}
 
 	async destroy(): Promise<void> {

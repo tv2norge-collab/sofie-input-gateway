@@ -37,7 +37,7 @@ class InputManager extends EventEmitter {
 	#devices: Record<string, Device> = {}
 	#logger: Logger
 
-	constructor(private config: Config, private logger: Logger) {
+	constructor(private config: Config, logger: Logger) {
 		super()
 		this.#logger = logger
 	}
@@ -64,9 +64,6 @@ class InputManager extends EventEmitter {
 			})
 			this.#devices[deviceId] = device
 		}
-
-		console.log(JSON.stringify(this.#devices))
-		this.logger.debug('aaa')
 
 		// TODO: switch to allSettled when device statuses are forwarded to Core
 		await Promise.allSettled(Object.values(this.#devices).map(async (device) => device.init()))

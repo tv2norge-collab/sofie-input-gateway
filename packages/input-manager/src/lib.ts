@@ -1,3 +1,8 @@
+export enum Symbols {
+	DOWN = '↧',
+	UP = '↥',
+}
+
 export function throwNever(_never: never): never {
 	throw new Error("Didn't expect to get here")
 }

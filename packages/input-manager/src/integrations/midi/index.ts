@@ -1,6 +1,7 @@
 import { Input } from 'easymidi'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
+import { Symbols } from '../../lib'
 
 export interface MIDIDeviceConfig {
 	inputName: string
@@ -18,7 +19,7 @@ export class MIDIDevice extends Device {
 	async init(): Promise<void> {
 		this.#input = new Input(this.#config.inputName)
 		this.#input.on('noteon', (msg) => {
-			const triggerId = `noteOn ${msg.channel}_${msg.note}`
+			const triggerId = `${msg.channel}_${msg.note} ${Symbols.DOWN}`
 			this.emit('trigger', {
 				triggerId,
 				arguments: {
@@ -27,7 +28,7 @@ export class MIDIDevice extends Device {
 			})
 		})
 		this.#input.on('noteoff', (msg) => {
-			const triggerId = `noteOff ${msg.channel}_${msg.note}`
+			const triggerId = `${msg.channel}_${msg.note} ${Symbols.UP}`
 			this.emit('trigger', {
 				triggerId,
 				arguments: {
@@ -36,7 +37,7 @@ export class MIDIDevice extends Device {
 			})
 		})
 		this.#input.on('cc', (msg) => {
-			const triggerId = `cc ${msg.channel}_${msg.controller}`
+			const triggerId = `${msg.channel}_${msg.controller} cc`
 			this.emit('trigger', {
 				triggerId,
 				arguments: {
