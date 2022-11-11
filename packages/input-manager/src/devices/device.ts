@@ -18,8 +18,7 @@ export interface TriggerEventArgs {
 }
 
 export abstract class Device extends EventEmitter {
-	// @ts-expect-error this is an abstract class, we use logger elsewhere
-	#logger: Logger
+	protected logger: Logger
 
 	on(event: 'trigger', listener: (e: TriggerEventArgs) => void): this
 	on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -33,7 +32,7 @@ export abstract class Device extends EventEmitter {
 
 	constructor(logger: Logger) {
 		super()
-		this.#logger = logger
+		this.logger = logger
 	}
 
 	abstract setFeedback(triggerId: string, feedback: Feedback): void

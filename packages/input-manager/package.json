@@ -90,7 +90,9 @@
 		"production"
 	],
 	"dependencies": {
-		"easymidi": "^3.0.1"
+		"easymidi": "^3.0.1",
+		"@elgato-stream-deck/node": "^5.6.0",
+		"@julusian/jpeg-turbo": "^2.0.0"
 	},
 	"publishConfig": {
 		"access": "public"

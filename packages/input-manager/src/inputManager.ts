@@ -2,6 +2,7 @@ import EventEmitter from 'events'
 import { Device, TriggerEventArgs as DeviceTriggerEventArgs } from './devices/device'
 import { HTTPDevice, HTTPDeviceConfig } from './integrations/http'
 import { MIDIDevice, MIDIDeviceConfig } from './integrations/midi'
+import { StreamDeckDevice, StreamDeckDeviceConfig } from './integrations/streamdeck'
 import { throwNever } from './lib'
 import { Logger } from './logger'
 
@@ -17,11 +18,13 @@ interface DeviceConfig<Type extends string, T> {
 enum DeviceType {
 	MIDI = 'midi',
 	HTTP = 'http',
+	STREAM_DECK = 'streamDeck',
 }
 
 type SomeDeviceConfig =
 	| DeviceConfig<DeviceType.MIDI, MIDIDeviceConfig>
 	| DeviceConfig<DeviceType.HTTP, HTTPDeviceConfig>
+	| DeviceConfig<DeviceType.STREAM_DECK, StreamDeckDeviceConfig>
 
 interface TriggerEventArgs extends DeviceTriggerEventArgs {
 	/** The ID of the device that issued this event */
@@ -81,6 +84,8 @@ function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger) {
 			return new HTTPDevice(deviceConfig.options, logger)
 		case DeviceType.MIDI:
 			return new MIDIDevice(deviceConfig.options, logger)
+		case DeviceType.STREAM_DECK:
+			return new StreamDeckDevice(deviceConfig.options, logger)
 		default:
 			throwNever(deviceConfig)
 	}

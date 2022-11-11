@@ -11,5 +11,6 @@
 		},
 		"types": ["node"],
 		"esModuleInterop": true,
+		"target": "ES2021"
 	}
 }

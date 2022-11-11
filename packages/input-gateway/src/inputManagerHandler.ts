@@ -115,6 +115,14 @@ export class InputManagerHandler {
 							port: 9090,
 						},
 					},
+					streamDeck0: {
+						type: DeviceType.STREAM_DECK,
+						options: {
+							device: {
+								index: 0,
+							},
+						},
+					},
 				},
 			},
 			this.#logger

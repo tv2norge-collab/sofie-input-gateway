@@ -6,6 +6,13 @@
     "packages": [
       "packages/input-gateway",
       "packages/input-manager"
+    ],
+    "nohoist": [
+      "**/easymidi",
+      "**/@elgato-stream-deck/node",
+      "**/@julusian/jpeg-turbo",
+      "**/eventemitter3",
+      "**/node-hid"
     ]
   },
   "scripts": {
