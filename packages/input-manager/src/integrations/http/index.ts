@@ -1,27 +1,39 @@
 import { Server } from 'http'
+import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
 
-export class HTTPDevice extends Device {
-	private server: Server | undefined
+export interface HTTPDeviceConfig {
+	port: number
+}
 
-	constructor() {
-		super()
+export class HTTPDevice extends Device {
+	#server: Server | undefined
+	#config: HTTPDeviceConfig
+
+	constructor(config: HTTPDeviceConfig, logger: Logger) {
+		super(logger)
+		this.#config = config
 	}
 
 	async init(): Promise<void> {
 		console.log('Initialized HTTP')
-		this.server = new Server((req, res) => {
+		this.#server = new Server((req, res) => {
 			const triggerId = `${req.method ?? 'GET'} ${req.url}`
 			this.emit('trigger', {
 				triggerId,
 			})
 			res.end()
 		})
-		this.server.listen(9090)
+		this.#server.listen(this.#config.port)
 	}
 
 	async destroy(): Promise<void> {
-		if (!this.server) return
-		this.server.close()
+		await super.destroy()
+		if (!this.#server) return
+		this.#server.close()
+	}
+
+	setFeedback(): void {
+		void ''
 	}
 }

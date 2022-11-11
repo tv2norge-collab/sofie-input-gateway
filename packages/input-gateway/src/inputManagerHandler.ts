@@ -5,7 +5,8 @@ import { DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import { Process } from './process'
 import { Config } from './connector'
-import { InputManager } from '@sofie-automation/input-manager'
+import { InputManager, TriggerEventArgs, DeviceType } from '@sofie-automation/input-manager'
+import { SendQueue } from './sendQueue'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -20,60 +21,62 @@ export interface DeviceConfig {
 	deviceToken: string
 }
 export class InputManagerHandler {
-	private coreHandler!: CoreHandler
-	private _config!: Config
-	private _logger: Winston.Logger
-	private _process!: Process
+	#coreHandler!: CoreHandler
+	#config!: Config
+	#logger: Winston.Logger
+	#process!: Process
 
-	private _inputManager: InputManager | undefined
+	#inputManager: InputManager | undefined
+	#queue: SendQueue
 
 	constructor(logger: Winston.Logger) {
-		this._logger = logger
+		this.#logger = logger
+		this.#queue = new SendQueue()
 	}
 
 	async init(config: Config): Promise<void> {
-		this._config = config
+		this.#config = config
 
 		try {
-			this._logger.info('Initializing Process...')
+			this.#logger.info('Initializing Process...')
 			this.initProcess()
-			this._logger.info('Process initialized')
+			this.#logger.info('Process initialized')
 
-			this._logger.info('Initializing Core...')
+			this.#logger.info('Initializing Core...')
 			await this.initCore()
-			this._logger.info('Core initialized')
+			this.#logger.info('Core initialized')
 
-			const peripheralDevice = await this.coreHandler.core.getPeripheralDevice()
+			const peripheralDevice = await this.#coreHandler.core.getPeripheralDevice()
 
 			// Stop here if studioId not set
 			if (!peripheralDevice.studioId) {
-				this._logger.warn('------------------------------------------------------')
-				this._logger.warn('Not setup yet, exiting process!')
-				this._logger.warn('To setup, go into Core and add this device to a Studio')
-				this._logger.warn('------------------------------------------------------')
+				this.#logger.warn('------------------------------------------------------')
+				this.#logger.warn('Not setup yet, exiting process!')
+				this.#logger.warn('To setup, go into Core and add this device to a Studio')
+				this.#logger.warn('------------------------------------------------------')
 				// eslint-disable-next-line no-process-exit
 				process.exit(1)
 				return
 			}
-			this._logger.info('Initializing InputManager...')
+			this.#logger.info('Initializing InputManager...')
 
 			await this.initInputManager(peripheralDevice.settings || {})
-			this._logger.info('InputManager initialized')
+			this.#logger.info('InputManager initialized')
 
-			this._logger.info('Initialization done')
+			this.#logger.info('Initialization done')
 			return
 		} catch (e) {
-			this._logger.error('Error during initialization:')
-			this._logger.error(e)
-			if (e instanceof Error) this._logger.error(e.stack)
+			this.#logger.error('Error during initialization:')
+			this.#logger.error(e)
+			if (e instanceof Error) this.#logger.error(e.stack)
 			try {
-				if (this.coreHandler) {
-					this.coreHandler.destroy().catch(this._logger.error)
+				if (this.#coreHandler) {
+					this.#coreHandler.destroy().catch(this.#logger.error)
 				}
 			} catch (e1) {
-				this._logger.error(e1)
+				this.#logger.error(e1)
 			}
-			this._logger.info('Shutting down in 10 seconds!')
+			this.#logger.info('Shutting down in 10 seconds!')
 			setTimeout(() => {
 				// eslint-disable-next-line no-process-exit
 				process.exit(0)
@@ -82,40 +85,44 @@ export class InputManagerHandler {
 		}
 	}
 	initProcess(): void {
-		this._process = new Process(this._logger)
-		this._process.init(this._config.process)
+		this.#process = new Process(this.#logger)
+		this.#process.init(this.#config.process)
 	}
 	async initCore(): Promise<void> {
-		this.coreHandler = new CoreHandler(this._logger, this._config.device)
-		await this.coreHandler.init(this._config.core, this._process)
+		this.#coreHandler = new CoreHandler(this.#logger, this.#config.device)
+		await this.#coreHandler.init(this.#config.core, this.#process)
 	}
 
 	async initInputManager(settings: DeviceSettings): Promise<void> {
-		this._logger.info('Initializing Input Manager with the following settings:')
+		this.#logger.info('Initializing Input Manager with the following settings:')
 
-		this._logger.info(JSON.stringify(settings))
+		this.#logger.info(JSON.stringify(settings))
 
 		// TODO: Initialize input Manager
 
-		this._inputManager = new InputManager(
+		this.#inputManager = new InputManager(
 			{
 				devices: {
+					midi0: {
+						type: DeviceType.MIDI,
+						options: {
+							inputName: 'X-TOUCH MINI',
+						},
+					},
 					http0: {
-						type: 'http',
-						options: {},
+						type: DeviceType.HTTP,
+						options: {
+							port: 9090,
+						},
 					},
 				},
 			},
-			this._logger
+			this.#logger
 		)
-		this._inputManager.on('trigger', (e) => {
-			this.coreHandler.core
-				.callMethod('peripheralDevice.input.trigger', [e.deviceId, e.triggerId, e.arguments ?? null])
-				.catch(() => {
-					this._logger.error(`peripheralDevice.input.trigger failed`)
-				})
+		this.#inputManager.on('trigger', (e: TriggerEventArgs) => {
+			this.#throttleSendTrigger(e.deviceId, e.triggerId, e.arguments, e.replacesPrevious ?? false)
 		})
-		await this._inputManager.init()
+		await this.#inputManager.init()
 
 		// Monitor for changes in settings:
 		// this.coreHandler.onChanged(() => {
@@ -133,5 +140,30 @@ export class InputManagerHandler {
 		// 			this._logger.error(`coreHandler.onChanged: Could not get peripheral device`)
 		// 		})
 		// })
+	}
+
+	#throttleSendTrigger(
+		deviceId: string,
+		triggerId: string,
+		args: Record<string, string | number | boolean> | undefined,
+		replacesUnsent: boolean
+	) {
+		const className = `${deviceId}_${triggerId}`
+		if (replacesUnsent) this.#queue.remove(className)
+		this.#queue
+			.add(
+				async () =>
+					this.#coreHandler.core.callMethod('peripheralDevice.input.trigger', [
+						deviceId,
+						triggerId,
+						args ?? null,
+					]),
+				{
+					className,
+				}
+			)
+			.catch(() => {
+				this.#logger.error(`peripheralDevice.input.trigger failed`)
+			})
 	}
 }

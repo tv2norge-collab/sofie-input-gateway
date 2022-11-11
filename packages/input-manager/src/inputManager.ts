@@ -1,28 +1,42 @@
 import EventEmitter from 'events'
-import { Device } from './devices/device'
-import { HTTPDevice } from './integrations/http'
-import { MIDIDevice } from './integrations/midi'
+import { Device, TriggerEventArgs as DeviceTriggerEventArgs } from './devices/device'
+import { HTTPDevice, HTTPDeviceConfig } from './integrations/http'
+import { MIDIDevice, MIDIDeviceConfig } from './integrations/midi'
+import { throwNever } from './lib'
+import { Logger } from './logger'
 
 interface Config {
-	devices: Record<string, DeviceConfig<any>>
+	devices: Record<string, SomeDeviceConfig>
 }
 
-interface DeviceConfig<T> {
-	type: 'midi' | 'http'
+interface DeviceConfig<Type extends string, T> {
+	type: Type
 	options: T
 }
 
-interface TriggerEventArgs {
+enum DeviceType {
+	MIDI = 'midi',
+	HTTP = 'http',
+}
+
+type SomeDeviceConfig =
+	| DeviceConfig<DeviceType.MIDI, MIDIDeviceConfig>
+	| DeviceConfig<DeviceType.HTTP, HTTPDeviceConfig>
+
+interface TriggerEventArgs extends DeviceTriggerEventArgs {
+	/** The ID of the device that issued this event */
 	deviceId: string
-	triggerId: string
-	arguments?: Record<string, string | number | boolean>
+	/** Should this event replace whatever unsent events there are */
+	replacesPrevious?: boolean
 }
 
 class InputManager extends EventEmitter {
-	devices: Record<string, Device> = {}
+	#devices: Record<string, Device> = {}
+	#logger: Logger
 
 	constructor(private config: Config, private logger: Logger) {
 		super()
+		this.#logger = logger
 	}
 
 	on(event: 'trigger', listener: (e: TriggerEventArgs) => void): this
@@ -36,44 +50,40 @@ class InputManager extends EventEmitter {
 	}
 
 	async init(): Promise<void> {
-		this.devices = {}
+		this.#devices = {}
 		for (const [deviceId, deviceConfig] of Object.entries(this.config.devices)) {
-			const device = createNewDevice(deviceConfig)
+			const device = createNewDevice(deviceConfig, this.#logger)
 			device.on('trigger', (eventArgs) => {
 				this.emit('trigger', {
 					...eventArgs,
 					deviceId,
 				})
 			})
-			this.devices[deviceId] = device
+			this.#devices[deviceId] = device
 		}
 
-		console.log(JSON.stringify(this.devices))
+		console.log(JSON.stringify(this.#devices))
 		this.logger.debug('aaa')
 
 		// TODO: switch to allSettled when device statuses are forwarded to Core
-		await Promise.all(Object.values(this.devices).map(async (device) => device.init()))
+		await Promise.allSettled(Object.values(this.#devices).map(async (device) => device.init()))
 	}
 
 	async destroy(): Promise<void> {
-		await Promise.all(Object.values(this.devices).map(async (device) => device.destroy()))
+		await Promise.all(Object.values(this.#devices).map(async (device) => device.destroy()))
+		this.#devices = {}
 	}
 }
 
-function createNewDevice(deviceConfig: DeviceConfig<any>) {
+function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger) {
 	switch (deviceConfig.type) {
-		case 'http':
-			return new HTTPDevice()
-		case 'midi':
-			return new MIDIDevice()
+		case DeviceType.HTTP:
+			return new HTTPDevice(deviceConfig.options, logger)
+		case DeviceType.MIDI:
+			return new MIDIDevice(deviceConfig.options, logger)
 		default:
-			throw new Error(`Unknown device: ${deviceConfig.type}`)
+			throwNever(deviceConfig)
 	}
 }
 
-interface Logger {
-	info(s: string): void
-	debug(s: string): void
-}
-
-export { InputManager }
+export { InputManager, DeviceType, TriggerEventArgs }

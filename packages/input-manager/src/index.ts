@@ -1,3 +1,3 @@
-import { InputManager } from './inputManager'
+import { InputManager, TriggerEventArgs, DeviceType } from './inputManager'
 
-export { InputManager }
+export { InputManager, TriggerEventArgs, DeviceType }

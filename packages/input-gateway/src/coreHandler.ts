@@ -75,7 +75,7 @@ export class CoreHandler {
 		this._coreConfig = config
 		this._process = process
 
-		this.core = new CoreConnection(this.getCoreConnectionOptions('Input Gateway', 'InputGateway'))
+		this.core = new CoreConnection(this.getCoreConnectionOptions('Input gateway', 'InputGateway'))
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
@@ -206,13 +206,6 @@ export class CoreHandler {
 				this.logger.level = logLevel
 
 				this.logger.info('Loglevel: ' + this.logger.level)
-
-				this.logger.debug('Test debug logging')
-				this.logger.debug({ msg: 'test msg' })
-				this.logger.debug({ message: 'test message' })
-				this.logger.debug({ command: 'test command', context: 'test context' })
-
-				this.logger.debug('End test debug logging')
 			}
 
 			if (this._onChanged) this._onChanged()
