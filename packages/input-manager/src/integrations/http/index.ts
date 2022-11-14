@@ -16,7 +16,6 @@ export class HTTPDevice extends Device {
 	}
 
 	async init(): Promise<void> {
-		console.log('Initialized HTTP')
 		this.#server = new Server((req, res) => {
 			const triggerId = `${req.method ?? 'GET'} ${req.url}`
 			this.emit('trigger', {
@@ -33,7 +32,7 @@ export class HTTPDevice extends Device {
 		this.#server.close()
 	}
 
-	setFeedback(): void {
+	async setFeedback(): Promise<void> {
 		void ''
 	}
 }

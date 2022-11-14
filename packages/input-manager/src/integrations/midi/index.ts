@@ -54,7 +54,7 @@ export class MIDIDevice extends Device {
 		this.#input.close()
 	}
 
-	setFeedback(): void {
+	async setFeedback(): Promise<void> {
 		void ''
 	}
 }

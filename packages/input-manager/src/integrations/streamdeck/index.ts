@@ -2,6 +2,9 @@ import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
 import { Symbols } from '../../lib'
+import { Feedback } from '../../feedback/feedback'
+import { getBitmap } from '../../feedback/bitmapFeedback'
+import { performance } from 'perf_hooks'
 
 export interface StreamDeckDeviceConfig {
 	device: StreamDeckDeviceIdentifier
@@ -64,7 +67,29 @@ export class StreamDeckDevice extends Device {
 		await this.#streamDeck.close()
 	}
 
-	setFeedback(): void {
-		void ''
+	private static parseTriggerId(triggerId: string): [number, boolean] {
+		const triggerElements = triggerId.split(/\s+/)
+		const buttonId = Number.parseInt(triggerElements[0] ?? '0')
+		const isUp = triggerElements[1] === Symbols.UP
+		return [buttonId, isUp]
+	}
+
+	async setFeedback(triggerId: string, feedback: Feedback): Promise<void> {
+		this.logger.debug(`Streamdeck: setting feedback "${feedback.action?.long}" on btn ${triggerId}`)
+		if (!this.#streamDeck) return
+
+		const [button] = StreamDeckDevice.parseTriggerId(triggerId)
+
+		const BTN_SIZE = this.#streamDeck.ICON_SIZE
+
+		const begin = performance.now()
+		const imgBuffer = await getBitmap(feedback, BTN_SIZE, BTN_SIZE)
+		const end = performance.now()
+		this.logger.debug(`Rendering bitmap took: ${end - begin}ms`)
+
+		this.logger.debug(`Streamdeck: setting feedback "${feedback.action?.long}" on btn ${button}`)
+		await this.#streamDeck.fillKeyBuffer(button, imgBuffer, {
+			format: 'rgba',
+		})
 	}
 }

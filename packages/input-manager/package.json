@@ -64,7 +64,7 @@
 		"precommit": "lint-staged"
 	},
 	"engines": {
-		"node": "^14.18 || ^16.14"
+		"node": "^16.14"
 	},
 	"lint-staged": {
 		"*.{css,json,md,scss}": [
@@ -90,14 +90,12 @@
 		"production"
 	],
 	"dependencies": {
-		"easymidi": "^3.0.1",
 		"@elgato-stream-deck/node": "^5.6.0",
 		"@julusian/jpeg-turbo": "^2.0.0",
-		"sharp": "^0.31.2"
+		"easymidi": "^3.0.1",
+		"skia-canvas": "^1.0.1"
 	},
-	"devDependencies": {
-		"@types/sharp": "^0.31.0"
-	},
+	"devDependencies": {},
 	"publishConfig": {
 		"access": "public"
 	}

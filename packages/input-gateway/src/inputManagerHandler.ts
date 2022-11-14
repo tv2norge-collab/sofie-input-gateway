@@ -7,6 +7,7 @@ import { Process } from './process'
 import { Config } from './connector'
 import { InputManager, TriggerEventArgs, DeviceType } from '@sofie-automation/input-manager'
 import { SendQueue } from './sendQueue'
+import { DeviceTriggerMountedAction } from './lib/coreInterfaces'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -98,9 +99,126 @@ export class InputManagerHandler {
 
 		this.#logger.info(JSON.stringify(settings))
 
+		let currentSettngs = JSON.stringify(settings)
+
 		// TODO: Initialize input Manager
 
-		this.#inputManager = new InputManager(
+		this.#inputManager = await this.#createInputManager()
+
+		let devicesPreviewId = await this.#coreHandler.core.autoSubscribe(
+			'mountedTriggersForDevice',
+			this.#coreHandler.core.deviceId,
+			['midi0', 'http0', 'streamDeck0']
+		)
+		await this.#coreHandler.core.autoSubscribe('mountedTriggersForDevicePreview', this.#coreHandler.core.deviceId)
+
+		this.#logger.info(`Subscribed to mountedTriggersForDevice: ${devicesPreviewId}`)
+
+		this.#coreHandler.core
+			.getCollection('mountedTriggers')
+			.find({})
+			.forEach((obj) => {
+				const mountedTrigger = obj as DeviceTriggerMountedAction
+				this.#handleChangedMountedTrigger(mountedTrigger._id).catch(this.#logger.error)
+			})
+
+		const observer0 = this.#coreHandler.core.observe('mountedTriggers')
+		observer0.added = (id, _obj) => {
+			this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
+		}
+		observer0.changed = (
+			id,
+			oldFields: Partial<DeviceTriggerMountedAction>,
+			cleared: string[],
+			newFields: Partial<DeviceTriggerMountedAction>
+		) => {
+			const obj = this.#coreHandler.core.getCollection('mountedTriggers').findOne(id) as DeviceTriggerMountedAction
+			if (
+				newFields['deviceId'] ||
+				newFields['deviceTriggerId'] ||
+				cleared.includes('deviceId') ||
+				cleared.includes('deviceTriggerId')
+			) {
+				this.#handleRemovedMountedTrigger(
+					oldFields.deviceId ?? obj.deviceId,
+					oldFields.deviceTriggerId ?? obj.deviceTriggerId
+				)
+					.then(async () => this.#handleChangedMountedTrigger(id))
+					.catch(this.#logger.error)
+			}
+		}
+		observer0.removed = (_id, obj) => {
+			const obj0 = obj as any as DeviceTriggerMountedAction
+			this.#handleRemovedMountedTrigger(obj0.deviceId, obj0.deviceTriggerId).catch(this.#logger.error)
+		}
+		// const observer1 = this.#coreHandler.core.observe('mountedTriggersPreviews')
+		// observer1.added = (id, _obj) => {
+		// 	this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
+		// }
+		// observer1.changed = (id, _old, _cleared, _new) => {
+		// 	this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
+		// }
+		// observer1.removed = (id, _obj) => {
+		// 	this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
+		// }
+
+		// Monitor for changes in settings:
+		this.#coreHandler.onChanged(() => {
+			this.#logger.debug(`Device configuration changed`)
+
+			this.#coreHandler.core
+				.getPeripheralDevice()
+				.then(async (device) => {
+					if (device) {
+						if (JSON.stringify(device.settings || {}) === currentSettngs) return
+
+						if (this.#inputManager) {
+							await this.#inputManager.destroy()
+							this.#inputManager = undefined
+						}
+
+						this.#coreHandler.core.unsubscribe(devicesPreviewId)
+
+						currentSettngs = JSON.stringify(device.settings || {})
+
+						this.#inputManager = await this.#createInputManager()
+
+						devicesPreviewId = await this.#coreHandler.core.autoSubscribe(
+							'mountedTriggersForDevice',
+							this.#coreHandler.core.deviceId,
+							['midi0', 'http0', 'streamDeck0']
+						)
+					}
+				})
+				.catch(() => {
+					this.#logger.error(`coreHandler.onChanged: Could not get peripheral device`)
+				})
+		})
+	}
+
+	#throttleSendTrigger(
+		deviceId: string,
+		triggerId: string,
+		args: Record<string, string | number | boolean> | undefined,
+		replacesUnsent: boolean
+	) {
+		const className = `${deviceId}_${triggerId}`
+		if (replacesUnsent) this.#queue.remove(className)
+		this.#queue
+			.add(
+				async () =>
+					this.#coreHandler.core.callMethod('peripheralDevice.input.trigger', [deviceId, triggerId, args ?? null]),
+				{
+					className,
+				}
+			)
+			.catch(() => {
+				this.#logger.error(`peripheralDevice.input.trigger failed`)
+			})
+	}
+
+	async #createInputManager(): Promise<InputManager> {
+		const manager = new InputManager(
 			{
 				devices: {
 					midi0: {
@@ -127,51 +245,42 @@ export class InputManagerHandler {
 			},
 			this.#logger
 		)
-		this.#inputManager.on('trigger', (e: TriggerEventArgs) => {
+		manager.on('trigger', (e: TriggerEventArgs) => {
 			this.#throttleSendTrigger(e.deviceId, e.triggerId, e.arguments, e.replacesPrevious ?? false)
 		})
-		await this.#inputManager.init()
 
-		// Monitor for changes in settings:
-		// this.coreHandler.onChanged(() => {
-		// 	this.coreHandler.core
-		// 		.getPeripheralDevice()
-		// 		.then(device => {
-		// 			if (device) {
-		// 				// const settings = device.settings
-		// 				// if (!_.isEqual(settings, this._monitorManager.settings)) {
-		// 				// 	this._monitorManager.onNewSettings(settings).catch(e => this._logger.error(e))
-		// 				// }
-		// 			}
-		// 		})
-		// 		.catch(() => {
-		// 			this._logger.error(`coreHandler.onChanged: Could not get peripheral device`)
-		// 		})
-		// })
+		this.#logger.debug(`Created observers for mountedTriggers and mountedTriggersPreviews`)
+
+		await manager.init()
+		return manager
 	}
 
-	#throttleSendTrigger(
-		deviceId: string,
-		triggerId: string,
-		args: Record<string, string | number | boolean> | undefined,
-		replacesUnsent: boolean
-	) {
-		const className = `${deviceId}_${triggerId}`
-		if (replacesUnsent) this.#queue.remove(className)
-		this.#queue
-			.add(
-				async () =>
-					this.#coreHandler.core.callMethod('peripheralDevice.input.trigger', [
-						deviceId,
-						triggerId,
-						args ?? null,
-					]),
-				{
-					className,
-				}
-			)
-			.catch(() => {
-				this.#logger.error(`peripheralDevice.input.trigger failed`)
-			})
+	async #handleChangedMountedTrigger(id: string): Promise<void> {
+		const obj = this.#coreHandler.core.getCollection('mountedTriggers').findOne(id)
+		if (!this.#inputManager) return
+
+		const mountedTrigger = obj as DeviceTriggerMountedAction | undefined
+
+		const feedbackDeviceId = mountedTrigger?.deviceId
+		const feedbackTriggerId = mountedTrigger?.deviceTriggerId
+		this.#logger.debug(`Setting feedback for "${feedbackDeviceId}", "${feedbackTriggerId}"`)
+		if (!feedbackDeviceId || !feedbackTriggerId) return
+
+		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, {
+			action: mountedTrigger ? { long: mountedTrigger.actionType } : undefined,
+		})
+	}
+
+	async #handleRemovedMountedTrigger(deviceId: string, triggerId: string): Promise<void> {
+		if (!this.#inputManager) return
+
+		const feedbackDeviceId = deviceId
+		const feedbackTriggerId = triggerId
+		this.#logger.debug(`Setting feedback for "${feedbackDeviceId}", "${feedbackTriggerId}"`)
+		if (!feedbackDeviceId || !feedbackTriggerId) return
+
+		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, {
+			action: undefined,
+		})
 	}
 }

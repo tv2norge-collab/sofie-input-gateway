@@ -1,7 +1,6 @@
 import EventEmitter from 'events'
+import { Feedback } from '../feedback/feedback'
 import { Logger } from '../logger'
-
-type Feedback = Record<string, never>
 
 /**
  * Description of a the "trigger got triggered" event
@@ -35,7 +34,7 @@ export abstract class Device extends EventEmitter {
 		this.logger = logger
 	}
 
-	abstract setFeedback(triggerId: string, feedback: Feedback): void
+	abstract setFeedback(triggerId: string, feedback: Feedback): Promise<void>
 
 	abstract init(): Promise<void>
 	async destroy(): Promise<void> {

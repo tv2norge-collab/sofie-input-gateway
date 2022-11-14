@@ -12,6 +12,6 @@
 		"types": ["node"],
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-		"target": "ES2021"
+		"target": "ES2021",
 	}
 }

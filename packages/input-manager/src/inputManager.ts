@@ -1,5 +1,6 @@
 import EventEmitter from 'events'
 import { Device, TriggerEventArgs as DeviceTriggerEventArgs } from './devices/device'
+import { Feedback } from './feedback/feedback'
 import { HTTPDevice, HTTPDeviceConfig } from './integrations/http'
 import { MIDIDevice, MIDIDeviceConfig } from './integrations/midi'
 import { StreamDeckDevice, StreamDeckDeviceConfig } from './integrations/streamdeck'
@@ -70,8 +71,17 @@ class InputManager extends EventEmitter {
 	}
 
 	async destroy(): Promise<void> {
+		this.removeAllListeners()
 		await Promise.all(Object.values(this.#devices).map(async (device) => device.destroy()))
 		this.#devices = {}
+	}
+
+	async setFeedback(deviceId: string, triggerId: string, feedback: Feedback): Promise<void> {
+		const device = this.#devices[deviceId]
+		if (!device) throw new Error(`Could not find device "${deviceId}"`)
+
+		this.#logger.debug(`Streamdeck: setting feedback "${feedback.action?.long}" on "${deviceId}" ${triggerId}`)
+		await device.setFeedback(triggerId, feedback)
 	}
 }
 
