@@ -5,9 +5,15 @@ import { DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import { Process } from './process'
 import { Config } from './connector'
-import { InputManager, TriggerEventArgs, DeviceType } from '@sofie-automation/input-manager'
+import { InputManager, TriggerEventArgs, DeviceType, ClassNames } from '@sofie-automation/input-manager'
 import { SendQueue } from './sendQueue'
-import { DeviceTriggerMountedAction, PreviewWrappedAdLib } from './lib/coreInterfaces'
+import {
+	DeviceTriggerMountedAction,
+	interpollateTranslation,
+	ITranslatableMessage,
+	PreviewWrappedAdLib,
+	translateMessage,
+} from './lib/coreInterfaces'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -284,6 +290,20 @@ export class InputManagerHandler {
 		return manager
 	}
 
+	private static buildFeedbackClassNames(mountedTrigger: DeviceTriggerMountedAction): string[] {
+		const classNames: string[] = []
+		if (mountedTrigger.actionType === 'adlib') {
+			classNames.push(ClassNames.AD_LIB)
+		}
+
+		return classNames
+	}
+
+	private static getStringLabel(label: string | ITranslatableMessage): string {
+		if (typeof label === 'string') return label
+		return translateMessage(label, interpollateTranslation)
+	}
+
 	async #handleChangedMountedTrigger(id: string): Promise<void> {
 		const obj = this.#coreHandler.core.getCollection('mountedTriggers').findOne(id)
 		if (!this.#inputManager) return
@@ -302,12 +322,13 @@ export class InputManagerHandler {
 			const previewedAdlibs = this.#coreHandler.core.getCollection('mountedTriggersPreviews').find({
 				actionId: mountedTrigger?.actionId,
 			}) as PreviewWrappedAdLib[]
-			contentLabel = previewedAdlibs.map((adlib) => JSON.stringify(adlib.label)).join(', ')
+			contentLabel = previewedAdlibs.map((adlib) => InputManagerHandler.getStringLabel(adlib.label)).join(', ')
 		}
 
 		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, {
 			action: mountedTrigger ? { long: mountedTrigger.actionType } : undefined,
 			content: contentLabel ? { long: contentLabel } : undefined,
+			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger),
 		})
 	}
 

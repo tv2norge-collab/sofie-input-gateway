@@ -14,7 +14,8 @@ export class TextContext {
 	#margin: [number, number, number, number] = [0, 0, 0, 0]
 	#padding: [number, number, number, number] = [0, 0, 0, 0]
 	#fontFamily = 'Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
-	#fontSize = 14
+	#fontSize = '14px'
+	#lineHeight = '1'
 	#color = '#fff'
 	#width = 0
 	#height = 0
@@ -74,6 +75,7 @@ export class TextContext {
 		color,
 		background,
 		fontSize,
+		lineHeight,
 		lineClamp,
 		spring,
 	}: {
@@ -81,7 +83,8 @@ export class TextContext {
 		align?: CanvasTextAlign
 		color?: string
 		background?: string
-		fontSize?: number
+		fontSize?: string
+		lineHeight?: string
 		lineClamp?: number
 		spring?: boolean
 	}): void {
@@ -95,7 +98,7 @@ export class TextContext {
 		align = align ?? 'left'
 		color = color ?? this.#color ?? '#fff'
 		ctx.textAlign = align
-		ctx.font = `${fontSize ?? this.#fontSize}px ${this.#fontFamily}`
+		ctx.font = `${fontSize ?? this.#fontSize}/${lineHeight ?? this.#lineHeight} ${this.#fontFamily}`
 		ctx.fillStyle = color ?? this.#color
 		ctx.textBaseline = 'top'
 		ctx.textWrap = true

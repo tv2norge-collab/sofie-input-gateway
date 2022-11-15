@@ -1,16 +1,17 @@
 import { Canvas } from 'skia-canvas'
-import { SomeFeedback } from '../feedback'
+import { ClassNames, SomeFeedback } from '../feedback'
 import { TextContext } from './TextContext'
 
 async function makeBitmapFromFeedback(feedback: SomeFeedback, width: number, height: number): Promise<Buffer> {
 	const canvas = new Canvas(width, height)
 	const ctx = canvas.getContext('2d')
-	ctx.imageSmoothingEnabled = false
-	ctx.imageSmoothingQuality = 'low' as const
+
+	ctx.fillStyle = 'black'
+	ctx.fillRect(0, 0, width, height)
 
 	if (feedback !== null) {
 		const text = new TextContext(ctx, width, height)
-		text.setPadding(0, 5)
+		text.setPadding(2, 5, 0)
 		if (feedback.content) {
 			text.p({ children: feedback?.action?.long ?? 'unknown', align: 'center', lineClamp: 1 })
 			text.hr({})
@@ -21,13 +22,15 @@ async function makeBitmapFromFeedback(feedback: SomeFeedback, width: number, hei
 				background: 'red',
 			})
 		} else {
-			text.p({
-				children: feedback?.action?.long ?? 'unknown',
-				align: 'center',
-				fontSize: 20,
-				spring: true,
-				background: 'green',
-			})
+			if (!feedback.classNames?.includes(ClassNames.AD_LIB)) {
+				text.p({
+					children: feedback?.action?.long ?? 'unknown',
+					align: 'center',
+					fontSize: '20px',
+					spring: true,
+					background: 'green',
+				})
+			}
 		}
 	}
 
