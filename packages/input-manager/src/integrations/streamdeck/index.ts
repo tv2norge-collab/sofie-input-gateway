@@ -2,8 +2,8 @@ import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
 import { Symbols } from '../../lib'
-import { Feedback } from '../../feedback/feedback'
-import { getBitmap } from '../../feedback/bitmapFeedback'
+import { SomeFeedback } from '../../feedback/feedback'
+import { getBitmap } from '../../feedback/bitmap'
 import { performance } from 'perf_hooks'
 
 export interface StreamDeckDeviceConfig {
@@ -74,11 +74,15 @@ export class StreamDeckDevice extends Device {
 		return [buttonId, isUp]
 	}
 
-	async setFeedback(triggerId: string, feedback: Feedback): Promise<void> {
-		this.logger.debug(`Streamdeck: setting feedback "${feedback.action?.long}" on btn ${triggerId}`)
+	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
 		if (!this.#streamDeck) return
 
 		const [button] = StreamDeckDevice.parseTriggerId(triggerId)
+
+		if (feedback === null) {
+			await this.#streamDeck.clearKey(button)
+			return
+		}
 
 		const BTN_SIZE = this.#streamDeck.ICON_SIZE
 

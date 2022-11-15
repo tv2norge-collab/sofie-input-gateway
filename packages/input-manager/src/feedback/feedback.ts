@@ -58,3 +58,5 @@ export interface Feedback {
 	classNames?: string[]
 	thumbnail?: string
 }
+
+export type SomeFeedback = Feedback | null

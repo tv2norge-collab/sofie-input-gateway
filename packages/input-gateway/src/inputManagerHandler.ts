@@ -7,7 +7,7 @@ import { Process } from './process'
 import { Config } from './connector'
 import { InputManager, TriggerEventArgs, DeviceType } from '@sofie-automation/input-manager'
 import { SendQueue } from './sendQueue'
-import { DeviceTriggerMountedAction } from './lib/coreInterfaces'
+import { DeviceTriggerMountedAction, PreviewWrappedAdLib } from './lib/coreInterfaces'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -151,16 +151,45 @@ export class InputManagerHandler {
 			const obj0 = obj as any as DeviceTriggerMountedAction
 			this.#handleRemovedMountedTrigger(obj0.deviceId, obj0.deviceTriggerId).catch(this.#logger.error)
 		}
-		// const observer1 = this.#coreHandler.core.observe('mountedTriggersPreviews')
-		// observer1.added = (id, _obj) => {
-		// 	this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
-		// }
-		// observer1.changed = (id, _old, _cleared, _new) => {
-		// 	this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
-		// }
-		// observer1.removed = (id, _obj) => {
-		// 	this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
-		// }
+		const observer1 = this.#coreHandler.core.observe('mountedTriggersPreviews')
+		observer1.added = (id, obj) => {
+			const changedPreview = obj as PreviewWrappedAdLib
+			const mountedAction = this.#coreHandler.core.getCollection('mountedTriggers').findOne({
+				actionId: changedPreview.actionId,
+			}) as DeviceTriggerMountedAction | undefined
+			if (!mountedAction) {
+				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${id}"`)
+				return
+			}
+			this.#handleChangedMountedTrigger(mountedAction._id).catch(this.#logger.error)
+		}
+		observer1.changed = (id, _old, _cleared, _new) => {
+			const obj = this.#coreHandler.core.getCollection('mountedTriggersPreviews').findOne(id)
+			if (!obj) {
+				this.#logger.error(`Could not find PreviewAdlib: "${id}"`)
+				return
+			}
+			const changedPreview = obj as PreviewWrappedAdLib
+			const mountedAction = this.#coreHandler.core.getCollection('mountedTriggers').findOne({
+				actionId: changedPreview.actionId,
+			}) as DeviceTriggerMountedAction | undefined
+			if (!mountedAction) {
+				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
+				return
+			}
+			this.#handleChangedMountedTrigger(mountedAction._id).catch(this.#logger.error)
+		}
+		observer1.removed = (_id, obj) => {
+			const changedPreview = obj as PreviewWrappedAdLib
+			const mountedAction = this.#coreHandler.core.getCollection('mountedTriggers').findOne({
+				actionId: changedPreview.actionId,
+			}) as DeviceTriggerMountedAction | undefined
+			if (!mountedAction) {
+				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
+				return
+			}
+			this.#handleChangedMountedTrigger(mountedAction._id).catch(this.#logger.error)
+		}
 
 		// Monitor for changes in settings:
 		this.#coreHandler.onChanged(() => {
@@ -266,8 +295,19 @@ export class InputManagerHandler {
 		this.#logger.debug(`Setting feedback for "${feedbackDeviceId}", "${feedbackTriggerId}"`)
 		if (!feedbackDeviceId || !feedbackTriggerId) return
 
+		const actionId = mountedTrigger?.actionId
+
+		let contentLabel: string | undefined
+		if (actionId) {
+			const previewedAdlibs = this.#coreHandler.core.getCollection('mountedTriggersPreviews').find({
+				actionId: mountedTrigger?.actionId,
+			}) as PreviewWrappedAdLib[]
+			contentLabel = previewedAdlibs.map((adlib) => JSON.stringify(adlib.label)).join(', ')
+		}
+
 		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, {
 			action: mountedTrigger ? { long: mountedTrigger.actionType } : undefined,
+			content: contentLabel ? { long: contentLabel } : undefined,
 		})
 	}
 
@@ -276,11 +316,9 @@ export class InputManagerHandler {
 
 		const feedbackDeviceId = deviceId
 		const feedbackTriggerId = triggerId
-		this.#logger.debug(`Setting feedback for "${feedbackDeviceId}", "${feedbackTriggerId}"`)
+		this.#logger.debug(`Removing feedback for "${feedbackDeviceId}", "${feedbackTriggerId}"`)
 		if (!feedbackDeviceId || !feedbackTriggerId) return
 
-		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, {
-			action: undefined,
-		})
+		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, null)
 	}
 }

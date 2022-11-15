@@ -1,11 +1,12 @@
 import EventEmitter from 'events'
 import { Device, TriggerEventArgs as DeviceTriggerEventArgs } from './devices/device'
-import { Feedback } from './feedback/feedback'
+import { SomeFeedback } from './feedback/feedback'
 import { HTTPDevice, HTTPDeviceConfig } from './integrations/http'
 import { MIDIDevice, MIDIDeviceConfig } from './integrations/midi'
 import { StreamDeckDevice, StreamDeckDeviceConfig } from './integrations/streamdeck'
 import { throwNever } from './lib'
 import { Logger } from './logger'
+import { init as initBitmapFeedback } from './feedback/bitmap'
 
 interface Config {
 	devices: Record<string, SomeDeviceConfig>
@@ -66,6 +67,8 @@ class InputManager extends EventEmitter {
 			this.#devices[deviceId] = device
 		}
 
+		await initBitmapFeedback()
+
 		// TODO: switch to allSettled when device statuses are forwarded to Core
 		await Promise.allSettled(Object.values(this.#devices).map(async (device) => device.init()))
 	}
@@ -76,11 +79,10 @@ class InputManager extends EventEmitter {
 		this.#devices = {}
 	}
 
-	async setFeedback(deviceId: string, triggerId: string, feedback: Feedback): Promise<void> {
+	async setFeedback(deviceId: string, triggerId: string, feedback: SomeFeedback): Promise<void> {
 		const device = this.#devices[deviceId]
 		if (!device) throw new Error(`Could not find device "${deviceId}"`)
 
-		this.#logger.debug(`Streamdeck: setting feedback "${feedback.action?.long}" on "${deviceId}" ${triggerId}`)
 		await device.setFeedback(triggerId, feedback)
 	}
 }
