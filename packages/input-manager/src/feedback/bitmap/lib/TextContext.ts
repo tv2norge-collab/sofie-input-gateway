@@ -13,7 +13,7 @@ export class TextContext {
 	#inlinePosition = 0
 	#margin: [number, number, number, number] = [0, 0, 0, 0]
 	#padding: [number, number, number, number] = [0, 0, 0, 0]
-	#fontFamily = 'Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
+	#fontFamily = '"RobotoCnd", Roboto, Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
 	#fontSize = '14px'
 	#lineHeight = '1'
 	#color = '#fff'
@@ -78,6 +78,8 @@ export class TextContext {
 		lineHeight,
 		lineClamp,
 		spring,
+		textShadowOffset,
+		textShadowColor,
 	}: {
 		children?: string
 		align?: CanvasTextAlign
@@ -87,6 +89,8 @@ export class TextContext {
 		lineHeight?: string
 		lineClamp?: number
 		spring?: boolean
+		textShadowOffset?: number
+		textShadowColor?: string
 	}): void {
 		const ctx = this.#ctx
 		const maxWidth =
@@ -124,7 +128,9 @@ export class TextContext {
 			}
 		}
 
-		const textHeight = clampedLines.slice(0, linesCount).reduce((memo, line) => memo + line.height, 0)
+		const textHeight = clampedLines
+			.slice(0, linesCount)
+			.reduce((memo, line) => memo + line.height + (line.y < 0 ? line.y : 0), 0)
 
 		let x = this.#inlinePosition + this.#margin[TRBLPositions.LEFT] + this.#padding[TRBLPositions.LEFT]
 
@@ -158,6 +164,11 @@ export class TextContext {
 			ctx.fillRect(inlineBegin, blockBegin, inlineEnd - inlineBegin, blockEnd - blockBegin)
 		}
 
+		if (textShadowOffset) {
+			ctx.fillStyle = textShadowColor ?? '#000'
+			ctx.fillText(nonNullishChildren, x + textShadowOffset, y + textShadowOffset, maxWidth)
+		}
+
 		ctx.fillStyle = color
 		ctx.fillText(nonNullishChildren, x, y, maxWidth)
 
@@ -168,9 +179,9 @@ export class TextContext {
 		}
 	}
 
-	hr({ color }: { color?: string }): void {
+	hr({ color, borderWidth }: { color?: string; borderWidth?: number }): void {
 		const ctx = this.#ctx
-		const height = 1
+		const height = borderWidth ?? 1
 
 		ctx.strokeStyle = color ?? this.#color
 		ctx.lineWidth = height
@@ -187,6 +198,6 @@ export class TextContext {
 		ctx.stroke()
 
 		this.#inlinePosition = x + width
-		this.#blockPosition = this.#blockPosition + height
+		this.#blockPosition = this.#blockPosition + height - 1
 	}
 }

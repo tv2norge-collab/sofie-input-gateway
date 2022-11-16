@@ -12,6 +12,7 @@ import {
 	interpollateTranslation,
 	ITranslatableMessage,
 	PreviewWrappedAdLib,
+	SourceLayerType,
 	translateMessage,
 } from './lib/coreInterfaces'
 
@@ -151,7 +152,9 @@ export class InputManagerHandler {
 				)
 					.then(async () => this.#handleChangedMountedTrigger(id))
 					.catch(this.#logger.error)
+				return
 			}
+			this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
 		}
 		observer0.removed = (_id, obj) => {
 			const obj0 = obj as any as DeviceTriggerMountedAction
@@ -290,16 +293,36 @@ export class InputManagerHandler {
 		return manager
 	}
 
-	private static buildFeedbackClassNames(mountedTrigger: DeviceTriggerMountedAction): string[] {
+	private static buildFeedbackClassNames(
+		mountedTrigger: DeviceTriggerMountedAction,
+		contentTypes: SourceLayerType[] | undefined
+	): string[] {
 		const classNames: string[] = []
 		if (mountedTrigger.actionType === 'adlib') {
 			classNames.push(ClassNames.AD_LIB)
 		}
 
+		if (contentTypes) {
+			if (contentTypes.includes(SourceLayerType.AUDIO)) classNames.push(ClassNames.AUDIO)
+			if (contentTypes.includes(SourceLayerType.CAMERA)) classNames.push(ClassNames.CAMERA)
+			if (contentTypes.includes(SourceLayerType.GRAPHICS)) classNames.push(ClassNames.GRAPHICS)
+			if (contentTypes.includes(SourceLayerType.LIGHTS)) classNames.push(ClassNames.LIGHTS)
+			if (contentTypes.includes(SourceLayerType.LIVE_SPEAK)) classNames.push(ClassNames.LIVE_SPEAK)
+			if (contentTypes.includes(SourceLayerType.LOCAL)) classNames.push(ClassNames.LOCAL)
+			if (contentTypes.includes(SourceLayerType.LOWER_THIRD)) classNames.push(ClassNames.LOWER_THIRD)
+			if (contentTypes.includes(SourceLayerType.REMOTE)) classNames.push(ClassNames.REMOTE)
+			if (contentTypes.includes(SourceLayerType.SCRIPT)) classNames.push(ClassNames.SCRIPT)
+			if (contentTypes.includes(SourceLayerType.SPLITS)) classNames.push(ClassNames.SPLITS)
+			if (contentTypes.includes(SourceLayerType.TRANSITION)) classNames.push(ClassNames.TRANSITION)
+			if (contentTypes.includes(SourceLayerType.UNKNOWN)) classNames.push(ClassNames.UNKNOWN)
+			if (contentTypes.includes(SourceLayerType.VT)) classNames.push(ClassNames.VT)
+		}
+
 		return classNames
 	}
 
-	private static getStringLabel(label: string | ITranslatableMessage): string {
+	private static getStringLabel(label: string | ITranslatableMessage | undefined): string | undefined {
+		if (label === undefined) return undefined
 		if (typeof label === 'string') return label
 		return translateMessage(label, interpollateTranslation)
 	}
@@ -318,17 +341,26 @@ export class InputManagerHandler {
 		const actionId = mountedTrigger?.actionId
 
 		let contentLabel: string | undefined
+		let contentTypes: SourceLayerType[] | undefined
 		if (actionId) {
 			const previewedAdlibs = this.#coreHandler.core.getCollection('mountedTriggersPreviews').find({
 				actionId: mountedTrigger?.actionId,
 			}) as PreviewWrappedAdLib[]
 			contentLabel = previewedAdlibs.map((adlib) => InputManagerHandler.getStringLabel(adlib.label)).join(', ')
+			contentTypes = previewedAdlibs
+				.map((adlib) => adlib.sourceLayerType)
+				.filter((a) => a !== undefined) as SourceLayerType[]
 		}
 
+		this.#logger.debug(`${contentLabel}, ${contentTypes}`)
+
+		const userLabel = InputManagerHandler.getStringLabel(mountedTrigger?.name)
+
 		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, {
+			userLabel: userLabel ? { long: userLabel } : undefined,
 			action: mountedTrigger ? { long: mountedTrigger.actionType } : undefined,
 			content: contentLabel ? { long: contentLabel } : undefined,
-			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger),
+			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger, contentTypes),
 		})
 	}
 

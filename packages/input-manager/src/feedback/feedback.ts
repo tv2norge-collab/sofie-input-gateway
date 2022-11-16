@@ -51,6 +51,7 @@ export enum ClassNames {
 
 export interface Feedback {
 	/** The label for the action assigned to this Feedback area */
+	userLabel?: Label
 	action?: Label
 	content?: Label
 	duration?: string

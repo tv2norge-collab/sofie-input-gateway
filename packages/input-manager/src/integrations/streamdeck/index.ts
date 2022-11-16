@@ -91,7 +91,9 @@ export class StreamDeckDevice extends Device {
 		const end = performance.now()
 		this.logger.debug(`Rendering bitmap took: ${end - begin}ms`)
 
-		this.logger.debug(`Streamdeck: setting feedback "${feedback.action?.long}" on btn ${button}`)
+		this.logger.debug(
+			`Streamdeck: setting feedback "${feedback.action?.long}" on btn ${button}, ${feedback.classNames?.join(', ')}`
+		)
 		await this.#streamDeck.fillKeyBuffer(button, imgBuffer, {
 			format: 'rgba',
 		})
