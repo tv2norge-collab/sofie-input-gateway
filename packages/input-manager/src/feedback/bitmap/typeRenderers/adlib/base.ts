@@ -45,7 +45,7 @@ $segment-item-disabled-color: #c9c9c9;
 const COLORS: Record<string, string> = {
 	[ClassNames.CAMERA]: '#18791c',
 	[ClassNames.GRAPHICS]: '#dc5c00',
-	[ClassNames.LIVE_SPEAK]: '#2f74ff',
+	[ClassNames.LIVE_SPEAK]: 'linear-gradient(to bottom, #2f74ff 50%, #39762b 50%)',
 	[ClassNames.LOCAL]: '#9a2bd8',
 	[ClassNames.LOWER_THIRD]: '#ed7200',
 	[ClassNames.REMOTE]: '#e80064',

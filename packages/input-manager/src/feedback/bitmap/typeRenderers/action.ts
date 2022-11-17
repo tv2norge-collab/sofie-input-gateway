@@ -10,7 +10,7 @@ export class ActionRenderer extends BaseRenderer {
 			align: 'center',
 			fontSize: '20px',
 			spring: true,
-			background: 'black',
+			background: 'linear-gradient(to bottom, #333, #000)',
 			lineClamp: 4,
 		})
 	}

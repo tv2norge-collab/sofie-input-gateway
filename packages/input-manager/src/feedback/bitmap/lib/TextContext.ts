@@ -1,4 +1,5 @@
 import { CanvasRenderingContext2D } from 'skia-canvas'
+import { createFill } from './fill'
 
 enum TRBLPositions {
 	TOP = 0,
@@ -15,18 +16,17 @@ export class TextContext {
 	#inlinePosition = 0
 	#margin: TopRightBottomLeft = [0, 0, 0, 0]
 	#padding: TopRightBottomLeft = [0, 0, 0, 0]
-	#fontFamily = '"RobotoCnd", Roboto, Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
-	#fontSize = '14px'
-	#lineHeight = '1'
-	#color = '#fff'
-	#width = 0
-	#height = 0
+	fontFamily = '"RobotoCnd", Roboto, Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
+	fontSize = '14px'
+	lineHeight = '1'
+	color = '#fff'
+	width = 0
+	height = 0
 
 	constructor(ctx: CanvasRenderingContext2D, width: number, height: number) {
 		this.#ctx = ctx
-		this.#width = width
-		this.#height = height
-		void this.#height
+		this.width = width
+		this.height = height
 	}
 
 	private static populateTRBL(
@@ -71,6 +71,14 @@ export class TextContext {
 		this.#padding = TextContext.populateTRBL(padding0, padding1, padding2, padding3)
 	}
 
+	getMargin(): TopRightBottomLeft {
+		return this.#margin.slice() as TopRightBottomLeft
+	}
+
+	getPadding(): TopRightBottomLeft {
+		return this.#padding.slice() as TopRightBottomLeft
+	}
+
 	p({
 		children,
 		align,
@@ -100,16 +108,16 @@ export class TextContext {
 	}): void {
 		const ctx = this.#ctx
 		const maxWidth =
-			this.#width -
+			this.width -
 			this.#margin[TRBLPositions.LEFT] -
 			this.#margin[TRBLPositions.RIGHT] -
 			this.#padding[TRBLPositions.LEFT] -
 			this.#padding[TRBLPositions.RIGHT]
 		align = align ?? 'left'
-		color = color ?? this.#color ?? '#fff'
+		color = color ?? this.color ?? '#fff'
 		ctx.textAlign = align
-		ctx.font = `${fontSize ?? this.#fontSize}/${lineHeight ?? this.#lineHeight} ${this.#fontFamily}`
-		ctx.fillStyle = color ?? this.#color
+		ctx.font = `${fontSize ?? this.fontSize}/${lineHeight ?? this.lineHeight} ${this.fontFamily}`
+		ctx.fillStyle = color ?? this.color
 		ctx.textBaseline = 'top'
 		ctx.textWrap = true
 
@@ -141,7 +149,7 @@ export class TextContext {
 		if (align === 'center') {
 			x = x + this.#inlinePosition + maxWidth / 2
 		} else if (align === 'right') {
-			x = this.#width - this.#margin[TRBLPositions.RIGHT] - this.#padding[TRBLPositions.RIGHT]
+			x = this.width - this.#margin[TRBLPositions.RIGHT] - this.#padding[TRBLPositions.RIGHT]
 		}
 
 		let y = this.#blockPosition + this.#padding[TRBLPositions.TOP]
@@ -150,7 +158,7 @@ export class TextContext {
 				y +
 				Math.max(
 					0,
-					(this.#height - y - this.#padding[TRBLPositions.BOTTOM] - this.#margin[TRBLPositions.BOTTOM] - textHeight) / 2
+					(this.height - y - this.#padding[TRBLPositions.BOTTOM] - this.#margin[TRBLPositions.BOTTOM] - textHeight) / 2
 				)
 		}
 
@@ -158,13 +166,20 @@ export class TextContext {
 
 		let blockEnd = this.#blockPosition
 		if (spring) {
-			blockEnd = this.#height - this.#margin[TRBLPositions.BOTTOM]
+			blockEnd = this.height - this.#margin[TRBLPositions.BOTTOM]
 		}
 
-		const inlineEnd = this.#width - this.#margin[TRBLPositions.RIGHT]
+		const inlineEnd = this.width - this.#margin[TRBLPositions.RIGHT]
 
 		if (background) {
-			ctx.fillStyle = background
+			ctx.fillStyle = createFill(
+				ctx,
+				background,
+				inlineBegin,
+				blockBegin,
+				inlineEnd - inlineBegin,
+				blockEnd - blockBegin
+			)
 			ctx.fillRect(inlineBegin, blockBegin, inlineEnd - inlineBegin, blockEnd - blockBegin)
 		}
 
@@ -195,14 +210,14 @@ export class TextContext {
 		const ctx = this.#ctx
 		const height = borderWidth ?? 1
 
-		ctx.strokeStyle = color ?? this.#color
+		ctx.strokeStyle = color ?? this.color
 		ctx.lineWidth = height
 
 		this.#inlinePosition = 0
 
 		const x = this.#inlinePosition + this.#margin[TRBLPositions.LEFT]
 		const y = this.#blockPosition
-		const width = this.#width - this.#margin[TRBLPositions.RIGHT]
+		const width = this.width - this.#margin[TRBLPositions.RIGHT]
 
 		ctx.beginPath()
 		ctx.moveTo(x, y)
