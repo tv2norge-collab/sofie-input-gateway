@@ -7,12 +7,14 @@ enum TRBLPositions {
 	LEFT = 3,
 }
 
+type TopRightBottomLeft = [number, number, number, number]
+
 export class TextContext {
 	#ctx: CanvasRenderingContext2D
 	#blockPosition = 0
 	#inlinePosition = 0
-	#margin: [number, number, number, number] = [0, 0, 0, 0]
-	#padding: [number, number, number, number] = [0, 0, 0, 0]
+	#margin: TopRightBottomLeft = [0, 0, 0, 0]
+	#padding: TopRightBottomLeft = [0, 0, 0, 0]
 	#fontFamily = '"RobotoCnd", Roboto, Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
 	#fontSize = '14px'
 	#lineHeight = '1'
@@ -32,7 +34,7 @@ export class TextContext {
 		number1?: number,
 		number2?: number,
 		number3?: number
-	): [number, number, number, number] {
+	): TopRightBottomLeft {
 		let right,
 			bottom,
 			left = 0
@@ -80,6 +82,8 @@ export class TextContext {
 		spring,
 		textShadowOffset,
 		textShadowColor,
+		inlineBackground,
+		inlineBackgroundPadding,
 	}: {
 		children?: string
 		align?: CanvasTextAlign
@@ -91,6 +95,8 @@ export class TextContext {
 		spring?: boolean
 		textShadowOffset?: number
 		textShadowColor?: string
+		inlineBackground?: string
+		inlineBackgroundPadding?: TopRightBottomLeft
 	}): void {
 		const ctx = this.#ctx
 		const maxWidth =
@@ -128,9 +134,7 @@ export class TextContext {
 			}
 		}
 
-		const textHeight = clampedLines
-			.slice(0, linesCount)
-			.reduce((memo, line) => memo + line.height + (line.y < 0 ? line.y : 0), 0)
+		const textHeight = clampedLines.reduce((memo, line) => memo + line.height + (line.y < 0 ? line.y : 0), 0)
 
 		let x = this.#inlinePosition + this.#margin[TRBLPositions.LEFT] + this.#padding[TRBLPositions.LEFT]
 
@@ -162,6 +166,14 @@ export class TextContext {
 		if (background) {
 			ctx.fillStyle = background
 			ctx.fillRect(inlineBegin, blockBegin, inlineEnd - inlineBegin, blockEnd - blockBegin)
+		}
+
+		if (inlineBackground) {
+			clampedLines.forEach((line) => {
+				ctx.fillStyle = inlineBackground
+				const [top, right, bottom, left] = inlineBackgroundPadding ?? [0, 0, 0, 0]
+				ctx.fillRect(x + line.x - left, y + line.y - top, line.width + right + left, line.height + top + bottom)
+			})
 		}
 
 		if (textShadowOffset) {

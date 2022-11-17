@@ -5,7 +5,7 @@ import { TextContext } from '../lib/TextContext'
 export abstract class BaseRenderer {
 	protected text: TextContext
 
-	constructor(protected ctx: CanvasRenderingContext2D, width: number, height: number) {
+	constructor(protected ctx: CanvasRenderingContext2D, protected width: number, protected height: number) {
 		this.text = new TextContext(ctx, width, height)
 	}
 

@@ -2,12 +2,22 @@ import { Canvas, FontLibrary } from 'skia-canvas'
 import { SomeFeedback } from '../feedback'
 import { rendererFactory } from './typeRenderers/factory'
 
-async function makeBitmapFromFeedback(feedback: SomeFeedback, width: number, height: number): Promise<Buffer> {
+async function makeBitmapFromFeedback(
+	feedback: SomeFeedback,
+	width: number,
+	height: number,
+	isPressed: boolean
+): Promise<Buffer> {
 	const canvas = new Canvas(width, height)
 	const ctx = canvas.getContext('2d')
 
 	ctx.fillStyle = 'black'
 	ctx.fillRect(0, 0, width, height)
+
+	if (isPressed) {
+		ctx.translate(width * 0.05, height * 0.05)
+		ctx.scale(0.9, 0.9)
+	}
 
 	if (feedback !== null) {
 		const renderer = rendererFactory(feedback, ctx, width, height)
@@ -21,8 +31,13 @@ async function makeBitmapFromFeedback(feedback: SomeFeedback, width: number, hei
 	)
 }
 
-export async function getBitmap(feedback: SomeFeedback, width: number, height: number): Promise<Buffer> {
-	const bitmap = await makeBitmapFromFeedback(feedback, width, height)
+export async function getBitmap(
+	feedback: SomeFeedback,
+	width: number,
+	height: number,
+	isPressed?: boolean
+): Promise<Buffer> {
+	const bitmap = await makeBitmapFromFeedback(feedback, width, height, isPressed ?? false)
 	return bitmap
 }
 

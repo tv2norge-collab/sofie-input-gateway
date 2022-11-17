@@ -4,7 +4,6 @@ import { Device } from '../../devices/device'
 import { Symbols } from '../../lib'
 import { SomeFeedback } from '../../feedback/feedback'
 import { getBitmap } from '../../feedback/bitmap'
-import { performance } from 'perf_hooks'
 
 export interface StreamDeckDeviceConfig {
 	device: StreamDeckDeviceIdentifier
@@ -19,6 +18,8 @@ export interface StreamDeckDeviceIdentifier {
 export class StreamDeckDevice extends Device {
 	#streamDeck: StreamDeck | undefined
 	#config: StreamDeckDeviceConfig
+	#feedbacks: Record<number, SomeFeedback> = {}
+	private BTN_SIZE: number | undefined = undefined
 
 	constructor(config: StreamDeckDeviceConfig, logger: Logger) {
 		super(logger)
@@ -42,18 +43,23 @@ export class StreamDeckDevice extends Device {
 		})
 		if (!device) throw new Error(`Could not open device: "${deviceInfo.path}"`)
 		this.#streamDeck = device
+		this.BTN_SIZE = this.#streamDeck.ICON_SIZE
 
 		this.#streamDeck.addListener('down', (key) => {
 			const triggerId = `${key} ${Symbols.DOWN}`
 			this.emit('trigger', {
 				triggerId,
 			})
+
+			this.updateFeedback(key, true).catch(console.error)
 		})
 		this.#streamDeck.addListener('up', (key) => {
 			const triggerId = `${key} ${Symbols.UP}`
 			this.emit('trigger', {
 				triggerId,
 			})
+
+			this.updateFeedback(key, false).catch(console.error)
 		})
 		this.#streamDeck.addListener('error', (err) => {
 			this.logger.error(String(err))
@@ -74,28 +80,30 @@ export class StreamDeckDevice extends Device {
 		return [buttonId, isUp]
 	}
 
+	private async updateFeedback(key: number, isDown: boolean): Promise<void> {
+		const streamdeck = this.#streamDeck
+		if (!streamdeck || this.BTN_SIZE === undefined) return
+		const feedback = this.#feedbacks[key]
+		if (!feedback) {
+			if (feedback === null) {
+				await streamdeck.clearKey(key)
+				return
+			}
+		}
+
+		const imgBuffer = await getBitmap(feedback, this.BTN_SIZE, this.BTN_SIZE, isDown)
+		await this.#streamDeck?.fillKeyBuffer(key, imgBuffer, {
+			format: 'rgba',
+		})
+	}
+
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
 		if (!this.#streamDeck) return
 
 		const [button] = StreamDeckDevice.parseTriggerId(triggerId)
 
-		if (feedback === null) {
-			await this.#streamDeck.clearKey(button)
-			return
-		}
+		this.#feedbacks[button] = feedback
 
-		const BTN_SIZE = this.#streamDeck.ICON_SIZE
-
-		const begin = performance.now()
-		const imgBuffer = await getBitmap(feedback, BTN_SIZE, BTN_SIZE)
-		const end = performance.now()
-		this.logger.debug(`Rendering bitmap took: ${end - begin}ms`)
-
-		this.logger.debug(
-			`Streamdeck: setting feedback "${feedback.action?.long}" on btn ${button}, ${feedback.classNames?.join(', ')}`
-		)
-		await this.#streamDeck.fillKeyBuffer(button, imgBuffer, {
-			format: 'rgba',
-		})
+		await this.updateFeedback(button, false)
 	}
 }

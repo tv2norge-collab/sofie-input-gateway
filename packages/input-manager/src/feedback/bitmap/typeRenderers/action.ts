@@ -11,6 +11,7 @@ export class ActionRenderer extends BaseRenderer {
 			fontSize: '20px',
 			spring: true,
 			background: 'black',
+			lineClamp: 4,
 		})
 	}
 }

@@ -85,6 +85,7 @@ export class BaseAdLibRenderer extends BaseRenderer {
 			fontSize: this.getFontSize(label),
 			background: this.getAdLibColor(feedback.classNames),
 			textShadowOffset: 1,
+			lineClamp: 4,
 		})
 	}
 }
