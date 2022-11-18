@@ -7,6 +7,7 @@ import { StreamDeckDevice, StreamDeckDeviceConfig } from './integrations/streamd
 import { throwNever } from './lib'
 import { Logger } from './logger'
 import { init as initBitmapFeedback } from './feedback/bitmap'
+import { XKeysDevice, XKeysDeviceConfig } from './integrations/xkeys'
 
 interface Config {
 	devices: Record<string, SomeDeviceConfig>
@@ -21,12 +22,14 @@ enum DeviceType {
 	MIDI = 'midi',
 	HTTP = 'http',
 	STREAM_DECK = 'streamDeck',
+	X_KEYS = 'XKeys',
 }
 
 type SomeDeviceConfig =
 	| DeviceConfig<DeviceType.MIDI, MIDIDeviceConfig>
 	| DeviceConfig<DeviceType.HTTP, HTTPDeviceConfig>
 	| DeviceConfig<DeviceType.STREAM_DECK, StreamDeckDeviceConfig>
+	| DeviceConfig<DeviceType.X_KEYS, XKeysDeviceConfig>
 
 interface TriggerEventArgs extends DeviceTriggerEventArgs {
 	/** The ID of the device that issued this event */
@@ -95,6 +98,8 @@ function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger) {
 			return new MIDIDevice(deviceConfig.options, logger)
 		case DeviceType.STREAM_DECK:
 			return new StreamDeckDevice(deviceConfig.options, logger)
+		case DeviceType.X_KEYS:
+			return new XKeysDevice(deviceConfig.options, logger)
 		default:
 			throwNever(deviceConfig)
 	}

@@ -85,10 +85,8 @@ export class StreamDeckDevice extends Device {
 		if (!streamdeck || this.BTN_SIZE === undefined) return
 		const feedback = this.#feedbacks[key]
 		if (!feedback) {
-			if (feedback === null) {
-				await streamdeck.clearKey(key)
-				return
-			}
+			await streamdeck.clearKey(key)
+			return
 		}
 
 		const imgBuffer = await getBitmap(feedback, this.BTN_SIZE, this.BTN_SIZE, isDown)

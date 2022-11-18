@@ -5,7 +5,7 @@ import { DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import { Process } from './process'
 import { Config } from './connector'
-import { InputManager, TriggerEventArgs, DeviceType, ClassNames } from '@sofie-automation/input-manager'
+import { InputManager, TriggerEventArgs, DeviceType, ClassNames, Tally } from '@sofie-automation/input-manager'
 import { SendQueue } from './sendQueue'
 import {
 	DeviceTriggerMountedAction,
@@ -263,6 +263,7 @@ export class InputManagerHandler {
 						type: DeviceType.MIDI,
 						options: {
 							inputName: 'X-TOUCH MINI',
+							outputName: 'X-TOUCH MINI',
 						},
 					},
 					http0: {
@@ -342,10 +343,18 @@ export class InputManagerHandler {
 
 		let contentLabel: string | undefined
 		let contentTypes: SourceLayerType[] | undefined
+		let tally: Tally = Tally.NONE
+
 		if (actionId) {
-			const previewedAdlibs = this.#coreHandler.core.getCollection('mountedTriggersPreviews').find({
-				actionId: mountedTrigger?.actionId,
-			}) as PreviewWrappedAdLib[]
+			const previewedAdlibs = this.#coreHandler.core
+				.getCollection('mountedTriggersPreviews')
+				.find({
+					actionId: mountedTrigger?.actionId,
+				})
+				.reverse() as PreviewWrappedAdLib[]
+			if (previewedAdlibs.length > 0) {
+				tally = tally | Tally.PRESENT
+			}
 			contentLabel = previewedAdlibs.map((adlib) => InputManagerHandler.getStringLabel(adlib.label)).join(', ')
 			contentTypes = previewedAdlibs
 				.map((adlib) => adlib.sourceLayerType)
@@ -361,6 +370,7 @@ export class InputManagerHandler {
 			action: mountedTrigger ? { long: mountedTrigger.actionType } : undefined,
 			content: contentLabel ? { long: contentLabel } : undefined,
 			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger, contentTypes),
+			tally,
 		})
 	}
 

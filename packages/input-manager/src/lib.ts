@@ -1,6 +1,10 @@
 export enum Symbols {
 	DOWN = '↧',
 	UP = '↥',
+	JOG = '↺',
+	SHUTTLE = '⤿',
+	MOVE = '⤮',
+	T_BAR = '⬍',
 }
 
 export function throwNever(_never: never): never {
