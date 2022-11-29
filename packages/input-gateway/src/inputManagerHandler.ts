@@ -121,13 +121,16 @@ export class InputManagerHandler {
 
 		this.#logger.info(`Subscribed to mountedTriggersForDevice: ${devicesPreviewId}`)
 
-		this.#coreHandler.core
-			.getCollection('mountedTriggers')
-			.find({})
-			.forEach((obj) => {
-				const mountedTrigger = obj as DeviceTriggerMountedAction
-				this.#handleChangedMountedTrigger(mountedTrigger._id).catch(this.#logger.error)
-			})
+		this.#refreshMountedTriggers()
+
+		this.#coreHandler.onConnected(() => {
+			this.#logger.info(`Core reconnected`)
+			this.#handleClearAllMountedTriggers()
+				.then(() => {
+					this.#refreshMountedTriggers()
+				})
+				.catch(this.#logger.error)
+		})
 
 		const observer0 = this.#coreHandler.core.observe('mountedTriggers')
 		observer0.added = (id, _obj) => {
@@ -232,6 +235,16 @@ export class InputManagerHandler {
 					this.#logger.error(`coreHandler.onChanged: Could not get peripheral device`)
 				})
 		})
+	}
+
+	#refreshMountedTriggers() {
+		this.#coreHandler.core
+			.getCollection('mountedTriggers')
+			.find({})
+			.forEach((obj) => {
+				const mountedTrigger = obj as DeviceTriggerMountedAction
+				this.#handleChangedMountedTrigger(mountedTrigger._id).catch(this.#logger.error)
+			})
 	}
 
 	#throttleSendTrigger(
@@ -383,5 +396,11 @@ export class InputManagerHandler {
 		if (!feedbackDeviceId || !feedbackTriggerId) return
 
 		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, null)
+	}
+
+	async #handleClearAllMountedTriggers(): Promise<void> {
+		if (!this.#inputManager) return
+
+		await this.#inputManager.clearFeedbackAll()
 	}
 }

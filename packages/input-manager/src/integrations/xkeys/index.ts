@@ -161,4 +161,12 @@ export class XKeysDevice extends Device {
 
 		await this.updateFeedback(keyIndex)
 	}
+
+	async clearFeedbackAll(): Promise<void> {
+		for (const keyStr of Object.keys(this.#feedbacks)) {
+			const key = Number(keyStr)
+			this.#feedbacks[key] = null
+			await this.updateFeedback(key)
+		}
+	}
 }

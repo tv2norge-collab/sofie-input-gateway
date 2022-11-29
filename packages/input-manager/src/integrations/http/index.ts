@@ -35,4 +35,8 @@ export class HTTPDevice extends Device {
 	async setFeedback(): Promise<void> {
 		void ''
 	}
+
+	async clearFeedbackAll(): Promise<void> {
+		void ''
+	}
 }

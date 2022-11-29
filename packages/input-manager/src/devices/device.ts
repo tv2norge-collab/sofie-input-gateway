@@ -35,6 +35,7 @@ export abstract class Device extends EventEmitter {
 	}
 
 	abstract setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void>
+	abstract clearFeedbackAll(): Promise<void>
 
 	abstract init(): Promise<void>
 	async destroy(): Promise<void> {

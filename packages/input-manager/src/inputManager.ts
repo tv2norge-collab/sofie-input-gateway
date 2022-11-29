@@ -88,6 +88,12 @@ class InputManager extends EventEmitter {
 
 		await device.setFeedback(triggerId, feedback)
 	}
+
+	async clearFeedbackAll(): Promise<void> {
+		for (const device of Object.values(this.#devices)) {
+			await device.clearFeedbackAll()
+		}
+	}
 }
 
 function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger) {

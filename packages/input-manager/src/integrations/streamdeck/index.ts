@@ -104,4 +104,12 @@ export class StreamDeckDevice extends Device {
 
 		await this.updateFeedback(button, false)
 	}
+
+	async clearFeedbackAll(): Promise<void> {
+		for (const keyStr of Object.keys(this.#feedbacks)) {
+			const key = Number(keyStr)
+			this.#feedbacks[key] = null
+			await this.updateFeedback(key, false)
+		}
+	}
 }
