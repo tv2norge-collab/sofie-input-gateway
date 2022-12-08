@@ -258,13 +258,18 @@ export class InputManagerHandler {
 		this.#queue
 			.add(
 				async () =>
-					this.#coreHandler.core.callMethod('peripheralDevice.input.trigger', [deviceId, triggerId, args ?? null]),
+					this.#coreHandler.core.callMethod('peripheralDevice.input.inputDeviceTrigger', [
+						deviceId,
+						triggerId,
+						args ?? null,
+					]),
 				{
 					className,
 				}
 			)
-			.catch(() => {
-				this.#logger.error(`peripheralDevice.input.trigger failed`)
+			.catch((e) => {
+				this.#logger.error(`peripheralDevice.input.inputDeviceTrigger failed: ${e}`)
+				this.#logger.error(e)
 			})
 	}
 
