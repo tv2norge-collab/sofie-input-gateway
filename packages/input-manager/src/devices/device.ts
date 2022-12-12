@@ -1,4 +1,4 @@
-import EventEmitter from 'events'
+import EventEmitter from 'eventemitter3'
 import { SomeFeedback } from '../feedback/feedback'
 import { Logger } from '../logger'
 
@@ -16,18 +16,12 @@ export interface TriggerEventArgs {
 	replacesPrevious?: boolean
 }
 
-export abstract class Device extends EventEmitter {
+type DeviceEvents = {
+	trigger: [e: TriggerEventArgs]
+}
+
+export abstract class Device extends EventEmitter<DeviceEvents> {
 	protected logger: Logger
-
-	on(event: 'trigger', listener: (e: TriggerEventArgs) => void): this
-	on(event: string | symbol, listener: (...args: any[]) => void): this {
-		return super.on(event, listener)
-	}
-
-	emit(event: 'trigger', e: TriggerEventArgs): boolean
-	emit(event: string | symbol, ...args: any[]): boolean {
-		return super.emit(event, ...args)
-	}
 
 	constructor(logger: Logger) {
 		super()

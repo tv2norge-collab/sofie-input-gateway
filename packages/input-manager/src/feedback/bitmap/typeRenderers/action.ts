@@ -8,7 +8,7 @@ export class ActionRenderer extends BaseRenderer {
 		text.p({
 			children: label ?? 'unknown',
 			align: 'center',
-			fontSize: '20px',
+			fontSize: this.percentToPixels(1.5),
 			spring: true,
 			background: 'linear-gradient(to bottom, #333, #000)',
 			lineClamp: 4,

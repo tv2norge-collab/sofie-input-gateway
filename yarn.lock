@@ -1676,7 +1676,9 @@
     "@elgato-stream-deck/node" "^5.6.0"
     "@julusian/jpeg-turbo" "^2.0.0"
     easymidi "^3.0.1"
+    eventemitter3 "^4.0.7"
     skia-canvas "^1.0.1"
+    xkeys "^2.4.0"
 
 "@sofie-automation/server-core-integration@1.44.0-in-testing.1":
   version "1.44.0-in-testing.1"
@@ -1872,6 +1874,11 @@
   version "14.18.33"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.18.33.tgz#8c29a0036771569662e4635790ffa9e057db379b"
   integrity sha512-qelS/Ra6sacc4loe/3MSjXNL1dNQ/GjxNHVzuChwMfmk7HuycRLVQN2qNY3XahK+fZc5E2szqQSKUyAF0E+2bg==
+
+"@types/node@^18.11.13":
+  version "18.11.13"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.11.13.tgz#dff34f226ec1ac0432ae3b136ec5552bd3b9c0fe"
+  integrity sha512-IASpMGVcWpUsx5xBOrxMj7Bl8lqfuTY7FKAnPmu5cHkfQVWF8GulWS1jbRqA934qZL35xh5xN/+Xe/i26Bod4w==
 
 "@types/normalize-package-data@^2.4.0", "@types/normalize-package-data@^2.4.1":
   version "2.4.1"

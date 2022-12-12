@@ -19,8 +19,10 @@ async function makeBitmapFromFeedback(
 		ctx.scale(0.9, 0.9)
 	}
 
+	const scaleFactor = height / 72
+
 	if (feedback !== null) {
-		const renderer = rendererFactory(feedback, ctx, width, height)
+		const renderer = rendererFactory(feedback, ctx, width, height, scaleFactor)
 		renderer.render(feedback)
 	}
 

@@ -29,7 +29,17 @@ export class HTTPDevice extends Device {
 	async destroy(): Promise<void> {
 		await super.destroy()
 		if (!this.#server) return
-		this.#server.close()
+		const server = this.#server
+		return new Promise((resolve, reject) => {
+			server.close((err) => {
+				if (err) {
+					reject(err)
+					return
+				}
+
+				resolve()
+			})
+		})
 	}
 
 	async setFeedback(): Promise<void> {

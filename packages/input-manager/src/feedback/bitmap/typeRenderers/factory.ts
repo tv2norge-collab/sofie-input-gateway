@@ -8,11 +8,12 @@ export function rendererFactory(
 	feedback: Feedback,
 	ctx: CanvasRenderingContext2D,
 	width: number,
-	height: number
+	height: number,
+	scaleFactor: number
 ): BaseRenderer {
 	if (feedback.classNames?.includes(ClassNames.AD_LIB)) {
-		return new BaseAdLibRenderer(ctx, width, height)
+		return new BaseAdLibRenderer(ctx, width, height, scaleFactor)
 	}
 
-	return new ActionRenderer(ctx, width, height)
+	return new ActionRenderer(ctx, width, height, scaleFactor)
 }

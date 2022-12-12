@@ -205,13 +205,13 @@ export class InputManagerHandler {
 
 		// Monitor for changes in settings:
 		this.#coreHandler.onChanged(() => {
-			this.#logger.debug(`Device configuration changed`)
-
 			this.#coreHandler.core
 				.getPeripheralDevice()
 				.then(async (device) => {
 					if (device) {
-						if (JSON.stringify(device.settings || {}) === currentSettngs) return
+						if (device.settings === currentSettngs) return
+
+						this.#logger.debug(`Device configuration changed`)
 
 						if (this.#inputManager) {
 							await this.#inputManager.destroy()
@@ -220,7 +220,7 @@ export class InputManagerHandler {
 
 						this.#coreHandler.core.unsubscribe(devicesPreviewId)
 
-						currentSettngs = JSON.stringify(device.settings || {})
+						currentSettngs = device.settings
 
 						this.#inputManager = await this.#createInputManager()
 
@@ -229,6 +229,8 @@ export class InputManagerHandler {
 							this.#coreHandler.core.deviceId,
 							['midi0', 'http0', 'streamDeck0']
 						)
+
+						this.#refreshMountedTriggers()
 					}
 				})
 				.catch(() => {

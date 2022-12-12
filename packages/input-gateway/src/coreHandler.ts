@@ -1,6 +1,6 @@
 import { CoreConnection, CoreOptions, DDPConnectorOptions } from '@sofie-automation/server-core-integration'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
-import * as _ from 'underscore'
+import _ from 'underscore'
 import * as Winston from 'winston'
 import { DeviceConfig } from './inputManagerHandler'
 const depsVersions = undefined // require('./deps-metadata.json')
@@ -196,7 +196,9 @@ export class CoreHandler {
 
 			const device = col.findOne(id)
 			if (device) {
-				this.deviceSettings = device.settings || {}
+				if (!_.isEqual(this.deviceSettings, device.settings)) {
+					this.deviceSettings = device.settings || {}
+				}
 			} else {
 				this.deviceSettings = {}
 			}

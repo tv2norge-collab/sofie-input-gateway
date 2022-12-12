@@ -62,14 +62,14 @@ export class BaseAdLibRenderer extends BaseRenderer {
 		return COLORS[ClassNames.UNKNOWN]
 	}
 
-	private getFontSize(label: string): string | undefined {
+	private getFontSize(label: string): number {
 		if (label.length <= 3) {
-			return '35px'
+			return 2.5
 		}
 		if (label.length < 5) {
-			return '20px'
+			return 1.5
 		}
-		return undefined
+		return 1
 	}
 
 	render(feedback: Feedback): void {
@@ -82,7 +82,8 @@ export class BaseAdLibRenderer extends BaseRenderer {
 			children: label,
 			align: 'center',
 			spring: true,
-			fontSize: this.getFontSize(label),
+			fontSize: this.percentToPixels(this.getFontSize(label)),
+			lineHeight: this.percentToPixels(this.getFontSize(label)),
 			background: this.getAdLibColor(feedback.classNames),
 			textShadowOffset: 1,
 			lineClamp: 4,
