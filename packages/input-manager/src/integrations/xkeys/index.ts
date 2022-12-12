@@ -18,10 +18,10 @@ export interface XKeysDeviceConfig {
 }
 
 export interface XKeysDeviceIdentifier {
+	unitId?: number
 	path?: string
-	serialNumber?: string
 	productId?: number
-	index?: number
+	serialNumber?: string
 }
 
 export class XKeysDevice extends Device {
@@ -36,19 +36,46 @@ export class XKeysDevice extends Device {
 
 	async init(): Promise<void> {
 		const allDevices = listAllConnectedPanels()
-		const deviceInfo = allDevices.find((thisDevice, index) => {
-			let match = true
-			if (this.#config.device.path && thisDevice.path !== this.#config.device.path) match = false
-			if (this.#config.device.serialNumber && thisDevice.serialNumber !== this.#config.device.serialNumber)
-				match = false
-			if (this.#config.device.productId && thisDevice.productId !== this.#config.device.productId) match = false
-			if (this.#config.device.index && index !== this.#config.device.index) match = false
+		const useDevices = (
+			await Promise.all(
+				allDevices.map(async (thisDevice): Promise<XKeys | null> => {
+					const config = this.#config.device
+					if (config.productId && thisDevice.productId !== config.productId) return null
 
-			return match
-		})
-		if (!deviceInfo) throw new Error('Matching device not found')
+					const xkeysDevice = await setupXkeysPanel(thisDevice)
 
-		const device = await setupXkeysPanel(deviceInfo)
+					let match = true
+
+					// Try matching the unitId (unitId === 0 means that it hasn't been set)
+					if (
+						config.unitId !== undefined &&
+						config.unitId !== 0 &&
+						xkeysDevice.unitId !== 0 &&
+						config.unitId !== xkeysDevice.unitId
+					)
+						match = false
+					if (config.path !== undefined && thisDevice.path !== config.path) match = false
+					if (config.serialNumber !== undefined && thisDevice.serialNumber !== config.serialNumber) match = false
+
+					if (match === false) {
+						// nothing matched..
+						await xkeysDevice.close()
+						return null
+					}
+
+					return xkeysDevice
+				})
+			)
+		).filter(Boolean) as XKeys[]
+
+		const device = useDevices[0]
+		for (let i = 1; i < useDevices.length; i++) {
+			const otherDevice = useDevices[i]
+			await otherDevice.close()
+		}
+
+		if (!device) throw new Error('Matching device not found')
+
 		this.#device = device
 
 		this.#device.on('down', (keyIndex) => {
