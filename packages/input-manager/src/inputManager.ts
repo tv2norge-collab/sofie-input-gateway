@@ -1,29 +1,26 @@
-import EventEmitter from 'events'
+import EventEmitter from 'eventemitter3'
 import { Device, TriggerEventArgs as DeviceTriggerEventArgs } from './devices/device'
 import { SomeFeedback } from './feedback/feedback'
-import { HTTPDevice, HTTPDeviceConfig } from './integrations/http'
-import { MIDIDevice, MIDIDeviceConfig } from './integrations/midi'
-import { StreamDeckDevice, StreamDeckDeviceConfig } from './integrations/streamdeck'
-import { throwNever } from './lib'
+import { HTTPDevice, HTTPDeviceConfig, DEVICE_CONFIG as HTTP_CONFIG } from './integrations/http'
+import { MIDIDevice, MIDIDeviceConfig, DEVICE_CONFIG as MIDI_CONFIG } from './integrations/midi'
+import {
+	StreamDeckDevice,
+	StreamDeckDeviceConfig,
+	DEVICE_CONFIG as STREAM_DECK_CONFIG,
+} from './integrations/streamdeck'
+import { XKeysDevice, XKeysDeviceConfig, DEVICE_CONFIG as XKEYS_CONFIG } from './integrations/xkeys'
+import { DeviceConfigManifest, throwNever } from './lib'
 import { Logger } from './logger'
 import { init as initBitmapFeedback } from './feedback/bitmap'
-import { XKeysDevice, XKeysDeviceConfig } from './integrations/xkeys'
+import { DeviceType } from './integrations/deviceType'
 
 interface Config {
 	devices: Record<string, SomeDeviceConfig>
 }
 
-interface DeviceConfig<Type extends string, T> {
+type DeviceConfig<Type extends string, T> = {
 	type: Type
-	options: T
-}
-
-enum DeviceType {
-	MIDI = 'midi',
-	HTTP = 'http',
-	STREAM_DECK = 'streamDeck',
-	X_KEYS = 'XKeys',
-}
+} & T
 
 type SomeDeviceConfig =
 	| DeviceConfig<DeviceType.MIDI, MIDIDeviceConfig>
@@ -38,23 +35,17 @@ interface TriggerEventArgs extends DeviceTriggerEventArgs {
 	replacesPrevious?: boolean
 }
 
-class InputManager extends EventEmitter {
+type DeviceEvents = {
+	trigger: [e: TriggerEventArgs]
+}
+
+class InputManager extends EventEmitter<DeviceEvents> {
 	#devices: Record<string, Device> = {}
 	#logger: Logger
 
 	constructor(private config: Config, logger: Logger) {
 		super()
 		this.#logger = logger
-	}
-
-	on(event: 'trigger', listener: (e: TriggerEventArgs) => void): this
-	on(event: string | symbol, listener: (...args: any[]) => void): this {
-		return super.on(event, listener)
-	}
-
-	emit(event: 'trigger', e: TriggerEventArgs): boolean
-	emit(event: string | symbol, ...args: any[]): boolean {
-		return super.emit(event, ...args)
 	}
 
 	async init(): Promise<void> {
@@ -99,16 +90,25 @@ class InputManager extends EventEmitter {
 function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger) {
 	switch (deviceConfig.type) {
 		case DeviceType.HTTP:
-			return new HTTPDevice(deviceConfig.options, logger)
+			return new HTTPDevice(deviceConfig, logger)
 		case DeviceType.MIDI:
-			return new MIDIDevice(deviceConfig.options, logger)
+			return new MIDIDevice(deviceConfig, logger)
 		case DeviceType.STREAM_DECK:
-			return new StreamDeckDevice(deviceConfig.options, logger)
+			return new StreamDeckDevice(deviceConfig, logger)
 		case DeviceType.X_KEYS:
-			return new XKeysDevice(deviceConfig.options, logger)
+			return new XKeysDevice(deviceConfig, logger)
 		default:
 			throwNever(deviceConfig)
 	}
 }
 
-export { InputManager, DeviceType, TriggerEventArgs }
+function getIntegrationsConfigManifest(): Record<string, DeviceConfigManifest<any>> {
+	return {
+		[DeviceType.HTTP]: HTTP_CONFIG,
+		[DeviceType.MIDI]: MIDI_CONFIG,
+		[DeviceType.STREAM_DECK]: STREAM_DECK_CONFIG,
+		[DeviceType.X_KEYS]: XKEYS_CONFIG,
+	}
+}
+
+export { InputManager, SomeDeviceConfig, TriggerEventArgs, getIntegrationsConfigManifest }

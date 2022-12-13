@@ -1,19 +1,34 @@
 import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { Symbols } from '../../lib'
+import { DeviceConfigManifest, Symbols } from '../../lib'
 import { SomeFeedback } from '../../feedback/feedback'
 import { getBitmap } from '../../feedback/bitmap'
+import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 
 export interface StreamDeckDeviceConfig {
-	device: StreamDeckDeviceIdentifier
-}
-
-export interface StreamDeckDeviceIdentifier {
 	path?: string
 	serialNumber?: string
 	index?: number
 }
+
+export const DEVICE_CONFIG: DeviceConfigManifest<StreamDeckDeviceConfig> = [
+	{
+		id: 'path',
+		type: ConfigManifestEntryType.STRING,
+		name: 'Device Path',
+	},
+	{
+		id: 'serialNumber',
+		type: ConfigManifestEntryType.STRING,
+		name: 'Serial Number',
+	},
+	{
+		id: 'index',
+		type: ConfigManifestEntryType.INT,
+		name: 'Device Index',
+	},
+]
 
 export class StreamDeckDevice extends Device {
 	#streamDeck: StreamDeck | undefined
@@ -24,16 +39,16 @@ export class StreamDeckDevice extends Device {
 	constructor(config: StreamDeckDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
+		this.logger.debug(`Created Stream Deck device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {
 		const allDevices = listStreamDecks()
 		const deviceInfo = allDevices.find((thisDevice, index) => {
 			let match = true
-			if (this.#config.device.path && thisDevice.path !== this.#config.device.path) match = false
-			if (this.#config.device.serialNumber && thisDevice.serialNumber !== this.#config.device.serialNumber)
-				match = false
-			if (this.#config.device.index && index !== this.#config.device.index) match = false
+			if (this.#config.path && thisDevice.path !== this.#config.path) match = false
+			if (this.#config.serialNumber && thisDevice.serialNumber !== this.#config.serialNumber) match = false
+			if (this.#config.index && index !== this.#config.index) match = false
 
 			return match
 		})

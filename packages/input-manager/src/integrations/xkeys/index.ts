@@ -1,8 +1,9 @@
 import { listAllConnectedPanels, setupXkeysPanel, XKeys } from 'xkeys'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { Symbols } from '../../lib'
+import { DeviceConfigManifest, Symbols } from '../../lib'
 import { ClassNames, SomeFeedback, Tally } from '../../feedback/feedback'
+import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 
 enum Colors {
 	RED = '#ff0000',
@@ -14,15 +15,35 @@ enum Colors {
 }
 
 export interface XKeysDeviceConfig {
-	device: XKeysDeviceIdentifier
-}
-
-export interface XKeysDeviceIdentifier {
 	unitId?: number
 	path?: string
 	productId?: number
 	serialNumber?: string
 }
+
+export const DEVICE_CONFIG: DeviceConfigManifest<XKeysDeviceConfig> = [
+	{
+		id: 'unitId',
+		type: ConfigManifestEntryType.INT,
+		name: 'Unit ID',
+		hint: 'This is a user-configurable ID that is supposed to identify the set of physical labels on the buttons',
+	},
+	{
+		id: 'path',
+		type: ConfigManifestEntryType.STRING,
+		name: 'Device Path',
+	},
+	{
+		id: 'productId',
+		type: ConfigManifestEntryType.INT,
+		name: 'Product ID',
+	},
+	{
+		id: 'serialNumber',
+		type: ConfigManifestEntryType.INT,
+		name: 'Serial Number',
+	},
+]
 
 export class XKeysDevice extends Device {
 	#config: XKeysDeviceConfig
@@ -32,6 +53,7 @@ export class XKeysDevice extends Device {
 	constructor(config: XKeysDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
+		this.logger.debug(`Created X-Keys device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {
@@ -39,7 +61,7 @@ export class XKeysDevice extends Device {
 		const useDevices = (
 			await Promise.all(
 				allDevices.map(async (thisDevice): Promise<XKeys | null> => {
-					const config = this.#config.device
+					const config = this.#config
 					if (config.productId && thisDevice.productId !== config.productId) return null
 
 					const xkeysDevice = await setupXkeysPanel(thisDevice)
@@ -54,8 +76,8 @@ export class XKeysDevice extends Device {
 						config.unitId !== xkeysDevice.unitId
 					)
 						match = false
-					if (config.path !== undefined && thisDevice.path !== config.path) match = false
-					if (config.serialNumber !== undefined && thisDevice.serialNumber !== config.serialNumber) match = false
+					if (config.path && thisDevice.path !== config.path) match = false
+					if (config.serialNumber && thisDevice.serialNumber !== config.serialNumber) match = false
 
 					if (match === false) {
 						// nothing matched..

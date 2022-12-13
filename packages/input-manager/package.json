@@ -1,6 +1,6 @@
 {
 	"name": "@sofie-automation/input-manager",
-	"version": "0.0.1-release48",
+	"version": "0.0.1",
 	"description": "Have devices, send events, receive feedback",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
@@ -98,8 +98,8 @@
 		"skia-canvas": "^1.0.1",
 		"xkeys": "^2.4.0"
 	},
-	"devDependencies": {
-		"@types/node": "^18.11.13"
+	"peerDependencies": {
+		"@sofie-automation/server-core-integration": "*"
 	},
 	"publishConfig": {
 		"access": "public"

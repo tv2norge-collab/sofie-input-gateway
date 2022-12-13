@@ -1,3 +1,4 @@
+import _ from 'underscore'
 import * as Winston from 'winston'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { CoreHandler } from './coreHandler'
@@ -5,7 +6,7 @@ import { DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import { Process } from './process'
 import { Config } from './connector'
-import { InputManager, TriggerEventArgs, DeviceType, ClassNames, Tally } from '@sofie-automation/input-manager'
+import { InputManager, TriggerEventArgs, ClassNames, Tally } from '@sofie-automation/input-manager'
 import { SendQueue } from './SendQueue'
 import {
 	DeviceTriggerMountedAction,
@@ -15,6 +16,7 @@ import {
 	SourceLayerType,
 	translateMessage,
 } from './lib/coreInterfaces'
+import { SomeDeviceConfig } from '@sofie-automation/input-manager'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -106,16 +108,16 @@ export class InputManagerHandler {
 
 		this.#logger.info(JSON.stringify(settings))
 
-		let currentSettngs = JSON.stringify(settings)
+		let currentSettngs = settings
 
-		// TODO: Initialize input Manager
+		const devices = settings.devices ?? {}
 
-		this.#inputManager = await this.#createInputManager()
+		this.#inputManager = await this.#createInputManager(devices)
 
 		let devicesPreviewId = await this.#coreHandler.core.autoSubscribe(
 			'mountedTriggersForDevice',
 			this.#coreHandler.core.deviceId,
-			['midi0', 'http0', 'streamDeck0']
+			InputManagerHandler.getDeviceIds(devices)
 		)
 		await this.#coreHandler.core.autoSubscribe('mountedTriggersForDevicePreview', this.#coreHandler.core.deviceId)
 
@@ -209,7 +211,9 @@ export class InputManagerHandler {
 				.getPeripheralDevice()
 				.then(async (device) => {
 					if (device) {
-						if (device.settings === currentSettngs) return
+						if (_.isEqual(device.settings, currentSettngs)) return
+
+						const settings: DeviceSettings = device.settings
 
 						this.#logger.debug(`Device configuration changed`)
 
@@ -220,14 +224,16 @@ export class InputManagerHandler {
 
 						this.#coreHandler.core.unsubscribe(devicesPreviewId)
 
-						currentSettngs = device.settings
+						currentSettngs = settings
 
-						this.#inputManager = await this.#createInputManager()
+						const devices = settings.devices ?? {}
+
+						this.#inputManager = await this.#createInputManager(devices)
 
 						devicesPreviewId = await this.#coreHandler.core.autoSubscribe(
 							'mountedTriggersForDevice',
 							this.#coreHandler.core.deviceId,
-							['midi0', 'http0', 'streamDeck0']
+							InputManagerHandler.getDeviceIds(devices)
 						)
 
 						this.#refreshMountedTriggers()
@@ -275,32 +281,10 @@ export class InputManagerHandler {
 			})
 	}
 
-	async #createInputManager(): Promise<InputManager> {
+	async #createInputManager(settings: Record<string, SomeDeviceConfig>): Promise<InputManager> {
 		const manager = new InputManager(
 			{
-				devices: {
-					midi0: {
-						type: DeviceType.MIDI,
-						options: {
-							inputName: 'X-TOUCH MINI',
-							outputName: 'X-TOUCH MINI',
-						},
-					},
-					http0: {
-						type: DeviceType.HTTP,
-						options: {
-							port: 9090,
-						},
-					},
-					streamDeck0: {
-						type: DeviceType.STREAM_DECK,
-						options: {
-							device: {
-								index: 0,
-							},
-						},
-					},
-				},
+				devices: settings,
 			},
 			this.#logger
 		)
@@ -308,10 +292,12 @@ export class InputManagerHandler {
 			this.#throttleSendTrigger(e.deviceId, e.triggerId, e.arguments, e.replacesPrevious ?? false)
 		})
 
-		this.#logger.debug(`Created observers for mountedTriggers and mountedTriggersPreviews`)
-
 		await manager.init()
 		return manager
+	}
+
+	private static getDeviceIds(settings: Record<string, SomeDeviceConfig>) {
+		return Object.keys(settings)
 	}
 
 	private static buildFeedbackClassNames(

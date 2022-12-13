@@ -1,13 +1,27 @@
 import { Input, Output } from 'easymidi'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { Symbols } from '../../lib'
+import { DeviceConfigManifest, Symbols } from '../../lib'
 import { SomeFeedback } from '../../feedback/feedback'
+import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 
 export interface MIDIDeviceConfig {
 	inputName: string
 	outputName?: string
 }
+
+export const DEVICE_CONFIG: DeviceConfigManifest<MIDIDeviceConfig> = [
+	{
+		id: 'inputName',
+		type: ConfigManifestEntryType.STRING,
+		name: 'Input Name',
+	},
+	{
+		id: 'outputName',
+		type: ConfigManifestEntryType.STRING,
+		name: 'Output Name',
+	},
+]
 
 export class MIDIDevice extends Device {
 	#input: Input | undefined
@@ -18,6 +32,7 @@ export class MIDIDevice extends Device {
 	constructor(config: MIDIDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
+		this.logger.debug(`Created MIDI device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {

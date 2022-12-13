@@ -1,6 +1,6 @@
 {
 	"name": "input-gateway",
-	"version": "0.0.1-release48",
+	"version": "0.0.1",
 	"description": "Have devices, trigger stuff",
 	"main": "dist/index.js",
 	"license": "MIT",
@@ -83,9 +83,9 @@
 		"production"
 	],
 	"dependencies": {
-		"@sofie-automation/shared-lib": "1.44.0-in-testing.1",
+		"@sofie-automation/input-manager": "0.0.1",
 		"@sofie-automation/server-core-integration": "1.44.0-in-testing.1",
-		"@sofie-automation/input-manager": "file:../input-manager",
+		"@sofie-automation/shared-lib": "1.44.0-in-testing.1",
 		"debug": "^4.3.1",
 		"eventemitter3": "^4.0.7",
 		"p-all": "^3.0.0",

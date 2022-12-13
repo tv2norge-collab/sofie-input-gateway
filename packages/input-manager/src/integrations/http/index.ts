@@ -1,10 +1,20 @@
 import { Server } from 'http'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
+import { DeviceConfigManifest } from '../../lib'
+import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 
 export interface HTTPDeviceConfig {
 	port: number
 }
+
+export const DEVICE_CONFIG: DeviceConfigManifest<HTTPDeviceConfig> = [
+	{
+		id: 'port',
+		type: ConfigManifestEntryType.INT,
+		name: 'Port number',
+	},
+]
 
 export class HTTPDevice extends Device {
 	#server: Server | undefined
@@ -13,6 +23,7 @@ export class HTTPDevice extends Device {
 	constructor(config: HTTPDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
+		this.logger.debug(`Created HTTP device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {

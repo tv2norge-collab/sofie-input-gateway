@@ -1,3 +1,5 @@
+import { TableEntryConfigManifestEntry } from '@sofie-automation/server-core-integration'
+
 export enum Symbols {
 	DOWN = '↧',
 	UP = '↥',
@@ -14,3 +16,7 @@ export function throwNever(_never: never): never {
 export function assertNever(_never: never): void {
 	// Do nothing. This is a type guard
 }
+
+export type DeviceConfigManifest<ConfigObj extends object> = Array<
+	{ id: keyof ConfigObj } & Omit<TableEntryConfigManifestEntry, 'id'>
+>
