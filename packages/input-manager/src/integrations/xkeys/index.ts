@@ -98,6 +98,10 @@ export class XKeysDevice extends Device {
 
 		if (!device) throw new Error('Matching device not found')
 
+		this.logger.debug(
+			`X-Keys: productId: ${device.info.productId}, unitId: ${device.unitId}, path: ${device.devicePath}`
+		)
+
 		this.#device = device
 
 		this.#device.on('down', (keyIndex) => {

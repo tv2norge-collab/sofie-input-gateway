@@ -53,6 +53,13 @@ export class StreamDeckDevice extends Device {
 			return match
 		})
 		if (!deviceInfo) throw new Error('Matching device not found')
+
+		this.logger.debug(
+			`Stream Deck: path: ${deviceInfo.path}, serialNumber: ${deviceInfo.serialNumber}, index: ${allDevices.indexOf(
+				deviceInfo
+			)}`
+		)
+
 		const device = openStreamDeck(deviceInfo.path, {
 			resetToLogoOnClose: true,
 		})
