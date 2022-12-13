@@ -3,7 +3,7 @@ import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import _ from 'underscore'
 import * as Winston from 'winston'
 import { DeviceConfig } from './inputManagerHandler'
-const depsVersions = undefined // require('./deps-metadata.json')
+import fs from 'fs'
 import { INPUT_DEVICE_CONFIG } from './configManifest'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import {
@@ -13,6 +13,7 @@ import {
 import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
 import { Process } from './process'
+import { stringifyError } from './lib/lib'
 
 export interface CoreConfig {
 	host: string
@@ -170,17 +171,18 @@ export class CoreHandler {
 			...credentials,
 
 			//@ts-expect-error Category not yet registered
-			deviceCategory: 'userInput',
+			deviceCategory: 'triggerInput',
 			//@ts-expect-error Type not yet registered
-			deviceType: 'userInput',
+			deviceType: 'triggerInput',
 			deviceSubType: subType || PERIPHERAL_SUBTYPE_PROCESS,
 
 			deviceName: name,
 			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
 
 			configManifest: INPUT_DEVICE_CONFIG,
+
+			versions: this._getVersions(),
 		}
-		options.versions = this._getVersions()
 		return options
 	}
 	onConnected(fcn: () => any): void {
@@ -389,6 +391,30 @@ export class CoreHandler {
 		})
 	}
 	private _getVersions() {
-		return depsVersions || {}
+		const versions: { [packageName: string]: string } = {}
+
+		if (process.env.npm_package_version) {
+			versions['_process'] = process.env.npm_package_version
+		}
+
+		const dirNames = ['@sofie-automation/server-core-integration']
+		try {
+			const nodeModulesDirectories = fs.readdirSync('node_modules')
+			for (const dir of nodeModulesDirectories) {
+				try {
+					if (dirNames.indexOf(dir) !== -1) {
+						let file = 'node_modules/' + dir + '/package.json'
+						file = fs.readFileSync(file, 'utf8')
+						const json = JSON.parse(file)
+						versions[dir] = json.version || 'N/A'
+					}
+				} catch (e) {
+					this.logger.error(`Error in _getVersions, dir "${dir}": ${stringifyError(e)}`)
+				}
+			}
+		} catch (e) {
+			this.logger.error(`Error in _getVersions: ${stringifyError(e)}`)
+		}
+		return versions
 	}
 }
