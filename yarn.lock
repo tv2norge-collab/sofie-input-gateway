@@ -1670,16 +1670,6 @@
     read-pkg-up "^9.1.0"
     shelljs "^0.8.5"
 
-"@sofie-automation/input-manager@file:packages/input-manager":
-  version "0.0.1-release48"
-  dependencies:
-    "@elgato-stream-deck/node" "^5.6.0"
-    "@julusian/jpeg-turbo" "^2.0.0"
-    easymidi "^3.0.1"
-    eventemitter3 "^4.0.7"
-    skia-canvas "^1.0.1"
-    xkeys "^2.4.0"
-
 "@sofie-automation/server-core-integration@1.44.0-in-testing.1":
   version "1.44.0-in-testing.1"
   resolved "https://registry.yarnpkg.com/@sofie-automation/server-core-integration/-/server-core-integration-1.44.0-in-testing.1.tgz#43576fc56dbc9ebc2d06087d1a1a78d3fe313d7d"
@@ -1869,11 +1859,6 @@
   version "18.11.9"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.11.9.tgz#02d013de7058cea16d36168ef2fc653464cfbad4"
   integrity sha512-CRpX21/kGdzjOpFsZSkcrXMGIBWMGNIHXXBVFSH+ggkftxg+XYP20TESbh+zFvFj3EQOl5byk0HTRn1IL6hbqg==
-
-"@types/node@^14.18.12":
-  version "14.18.33"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.18.33.tgz#8c29a0036771569662e4635790ffa9e057db379b"
-  integrity sha512-qelS/Ra6sacc4loe/3MSjXNL1dNQ/GjxNHVzuChwMfmk7HuycRLVQN2qNY3XahK+fZc5E2szqQSKUyAF0E+2bg==
 
 "@types/node@^18.11.13":
   version "18.11.13"
