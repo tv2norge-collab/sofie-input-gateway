@@ -6,7 +6,7 @@ import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model
 import { Process } from './process'
 import { Config } from './connector'
 import { InputManager, TriggerEventArgs, DeviceType, ClassNames, Tally } from '@sofie-automation/input-manager'
-import { SendQueue } from './sendQueue'
+import { SendQueue } from './SendQueue'
 import {
 	DeviceTriggerMountedAction,
 	interpollateTranslation,

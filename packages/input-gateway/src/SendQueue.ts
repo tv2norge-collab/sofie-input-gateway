@@ -45,6 +45,7 @@ export class SendQueue {
 	}
 
 	start(): void {
+		if (this.#paused === false) return
 		;(async () => {
 			this.#paused = false
 			// eslint-disable-next-line no-constant-condition
