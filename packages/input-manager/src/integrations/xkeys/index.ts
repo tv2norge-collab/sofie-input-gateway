@@ -59,7 +59,7 @@ export class XKeysDevice extends Device {
 	async init(): Promise<void> {
 		const allDevices = listAllConnectedPanels()
 		const useDevices = (
-			await Promise.all(
+			await Promise.allSettled(
 				allDevices.map(async (thisDevice): Promise<XKeys | null> => {
 					const config = this.#config
 					if (config.productId && thisDevice.productId !== config.productId) return null
@@ -88,7 +88,15 @@ export class XKeysDevice extends Device {
 					return xkeysDevice
 				})
 			)
-		).filter(Boolean) as XKeys[]
+		)
+			.map((promiseResult) => {
+				if (promiseResult.status === 'rejected') {
+					this.logger.error(promiseResult.reason) // TODO: Stringify error
+					return null
+				}
+				return promiseResult.value
+			})
+			.filter(Boolean) as XKeys[]
 
 		const device = useDevices[0]
 		for (let i = 1; i < useDevices.length; i++) {
