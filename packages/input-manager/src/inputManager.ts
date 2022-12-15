@@ -13,6 +13,7 @@ import { DeviceConfigManifest, throwNever } from './lib'
 import { Logger } from './logger'
 import { init as initBitmapFeedback } from './feedback/bitmap'
 import { DeviceType } from './integrations/deviceType'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 
 interface Config {
 	devices: Record<string, SomeDeviceConfig>
@@ -35,8 +36,14 @@ interface TriggerEventArgs extends DeviceTriggerEventArgs {
 	replacesPrevious?: boolean
 }
 
+interface StatusChangeEventArgs {
+	deviceId: string
+	status: StatusCode
+}
+
 type DeviceEvents = {
 	trigger: [e: TriggerEventArgs]
+	statusChange: [e: StatusChangeEventArgs]
 }
 
 const REFRESH_INTERVAL = 5000
@@ -104,6 +111,10 @@ class InputManager extends EventEmitter<DeviceEvents> {
 			const erroredDevice = device
 			device.on('error', (errorArgs) => {
 				this.#logger.error(`Error in "${deviceId}": ${errorArgs.error}`)
+				this.emit('statusChange', {
+					deviceId,
+					status: StatusCode.BAD,
+				})
 				erroredDevice
 					.destroy()
 					.catch((e) => {
@@ -114,12 +125,26 @@ class InputManager extends EventEmitter<DeviceEvents> {
 						delete this.#devices[deviceId]
 					})
 			})
+			device.on('statusChange', (statusChangeArgs) => {
+				this.emit('statusChange', {
+					deviceId,
+					status: statusChangeArgs.status,
+				})
+			})
 			this.#devices[deviceId] = device
 
 			await device.init()
+			this.emit('statusChange', {
+				deviceId,
+				status: StatusCode.GOOD,
+			})
 		} catch (e) {
 			if (device) await device.destroy()
 			delete this.#devices[deviceId]
+			this.emit('statusChange', {
+				deviceId,
+				status: StatusCode.BAD,
+			})
 		}
 	}
 
