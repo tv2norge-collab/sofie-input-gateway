@@ -84,6 +84,7 @@ export class StreamDeckDevice extends Device {
 		})
 		this.#streamDeck.addListener('error', (err) => {
 			this.logger.error(String(err))
+			this.emit('error', { error: err instanceof Error ? err : new Error(String(err)) })
 		})
 		await this.#streamDeck.clearPanel()
 	}

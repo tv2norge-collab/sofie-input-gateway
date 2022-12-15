@@ -44,7 +44,9 @@ const REFRESH_INTERVAL = 5000
 class InputManager extends EventEmitter<DeviceEvents> {
 	#devices: Record<string, Device> = {}
 	#logger: Logger
+	#refreshRunning = false
 	#refreshInterval: NodeJS.Timeout | undefined
+	#feedback: Record<string, Record<string, SomeFeedback>> = {}
 
 	constructor(private config: Config, logger: Logger) {
 		super()
@@ -62,19 +64,29 @@ class InputManager extends EventEmitter<DeviceEvents> {
 			)
 		)
 
-		this.#refreshInterval = setInterval(() => {
-			this.refreshDevices().catch((e) => {
-				this.#logger.error(`Could not refresh devices: ${e}`)
-			})
-		}, REFRESH_INTERVAL)
+		this.#refreshInterval = setInterval(this.refreshDevicesInterval, REFRESH_INTERVAL)
 	}
 
-	async refreshDevices(): Promise<void> {
+	private refreshDevicesInterval = (): void => {
+		if (this.#refreshRunning === true) return
+
+		this.#refreshRunning = true
+		this.refreshDevices()
+			.catch((e) => {
+				this.#logger.error(`Could not refresh devices: ${e}`)
+			})
+			.finally(() => {
+				this.#refreshRunning = false
+			})
+	}
+
+	private async refreshDevices(): Promise<void> {
 		await Promise.allSettled(
 			Object.entries(this.config.devices).map(async ([deviceId, deviceConfig]) => {
 				if (this.#devices[deviceId] !== undefined) return
 
-				return this.createDevice(deviceId, deviceConfig)
+				await this.createDevice(deviceId, deviceConfig)
+				return this.refreshFeedback(deviceId)
 			})
 		)
 	}
@@ -120,16 +132,37 @@ class InputManager extends EventEmitter<DeviceEvents> {
 		this.#devices = {}
 	}
 
+	private cacheFeedback(deviceId: string, triggerId: string, feedback: SomeFeedback) {
+		if (this.#feedback[deviceId] === undefined) {
+			this.#feedback[deviceId] = {}
+		}
+
+		const deviceFeedback = this.#feedback[deviceId]
+		deviceFeedback[triggerId] = feedback
+	}
+
 	async setFeedback(deviceId: string, triggerId: string, feedback: SomeFeedback): Promise<void> {
 		const device = this.#devices[deviceId]
 		if (!device) throw new Error(`Could not find device "${deviceId}"`)
 
+		this.cacheFeedback(deviceId, triggerId, feedback)
 		await device.setFeedback(triggerId, feedback)
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const device of Object.values(this.#devices)) {
+		for (const [deviceId, device] of Object.entries(this.#devices)) {
+			this.#feedback[deviceId] = {}
 			await device.clearFeedbackAll()
+		}
+	}
+
+	private async refreshFeedback(deviceId: string): Promise<void> {
+		const device = this.#devices[deviceId]
+		if (!device) throw new Error(`Could not find device "${deviceId}"`)
+
+		const cachedFeedback = this.#feedback[deviceId] ?? {}
+		for (const [triggerId, feedback] of Object.entries(cachedFeedback)) {
+			await device.setFeedback(triggerId, feedback)
 		}
 	}
 }
