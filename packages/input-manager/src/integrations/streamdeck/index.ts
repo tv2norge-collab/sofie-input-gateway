@@ -39,7 +39,6 @@ export class StreamDeckDevice extends Device {
 	constructor(config: StreamDeckDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
-		this.logger.debug(`Created Stream Deck device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {

@@ -16,8 +16,13 @@ export interface TriggerEventArgs {
 	replacesPrevious?: boolean
 }
 
+export interface ErrorArgs {
+	error: Error
+}
+
 type DeviceEvents = {
 	trigger: [e: TriggerEventArgs]
+	error: [e: ErrorArgs]
 }
 
 export abstract class Device extends EventEmitter<DeviceEvents> {

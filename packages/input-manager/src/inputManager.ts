@@ -39,9 +39,12 @@ type DeviceEvents = {
 	trigger: [e: TriggerEventArgs]
 }
 
+const REFRESH_INTERVAL = 5000
+
 class InputManager extends EventEmitter<DeviceEvents> {
 	#devices: Record<string, Device> = {}
 	#logger: Logger
+	#refreshInterval: NodeJS.Timeout | undefined
 
 	constructor(private config: Config, logger: Logger) {
 		super()
@@ -50,25 +53,69 @@ class InputManager extends EventEmitter<DeviceEvents> {
 
 	async init(): Promise<void> {
 		this.#devices = {}
-		for (const [deviceId, deviceConfig] of Object.entries(this.config.devices)) {
-			const device = createNewDevice(deviceConfig, this.#logger)
+
+		await initBitmapFeedback()
+
+		await Promise.all(
+			Object.entries(this.config.devices).map(async ([deviceId, deviceConfig]) =>
+				this.createDevice(deviceId, deviceConfig)
+			)
+		)
+
+		this.#refreshInterval = setInterval(() => {
+			this.refreshDevices().catch((e) => {
+				this.#logger.error(`Could not refresh devices: ${e}`)
+			})
+		}, REFRESH_INTERVAL)
+	}
+
+	async refreshDevices(): Promise<void> {
+		await Promise.allSettled(
+			Object.entries(this.config.devices).map(async ([deviceId, deviceConfig]) => {
+				if (this.#devices[deviceId] !== undefined) return
+
+				return this.createDevice(deviceId, deviceConfig)
+			})
+		)
+	}
+
+	private async createDevice(deviceId: string, deviceConfig: SomeDeviceConfig): Promise<void> {
+		let device
+		try {
+			device = createNewDevice(deviceConfig, this.#logger)
 			device.on('trigger', (eventArgs) => {
 				this.emit('trigger', {
 					...eventArgs,
 					deviceId,
 				})
 			})
+			const erroredDevice = device
+			device.on('error', (errorArgs) => {
+				this.#logger.error(`Error in "${deviceId}": ${errorArgs.error}`)
+				erroredDevice
+					.destroy()
+					.catch((e) => {
+						this.#logger.error(`Error when trying to destroy "${deviceId}": ${e}`)
+					})
+					.finally(() => {
+						// this allows the device to be re-initialized in refreshDevices()
+						delete this.#devices[deviceId]
+					})
+			})
 			this.#devices[deviceId] = device
+
+			await device.init()
+		} catch (e) {
+			if (device) await device.destroy()
+			delete this.#devices[deviceId]
 		}
-
-		await initBitmapFeedback()
-
-		// TODO: switch to allSettled when device statuses are forwarded to Core
-		await Promise.allSettled(Object.values(this.#devices).map(async (device) => device.init()))
 	}
 
 	async destroy(): Promise<void> {
 		this.removeAllListeners()
+
+		if (this.#refreshInterval) clearInterval(this.#refreshInterval)
+
 		await Promise.all(Object.values(this.#devices).map(async (device) => device.destroy()))
 		this.#devices = {}
 	}

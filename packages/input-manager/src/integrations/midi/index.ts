@@ -158,7 +158,6 @@ export class MIDIDevice extends Device {
 	constructor(config: MIDIDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
-		this.logger.debug(`Created MIDI device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {

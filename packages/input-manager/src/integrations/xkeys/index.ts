@@ -53,7 +53,6 @@ export class XKeysDevice extends Device {
 	constructor(config: XKeysDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
-		this.logger.debug(`Created X-Keys device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {

@@ -23,7 +23,6 @@ export class HTTPDevice extends Device {
 	constructor(config: HTTPDeviceConfig, logger: Logger) {
 		super(logger)
 		this.#config = config
-		this.logger.debug(`Created HTTP device: ${JSON.stringify(config)}`)
 	}
 
 	async init(): Promise<void> {
