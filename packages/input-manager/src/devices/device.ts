@@ -1,4 +1,5 @@
 import EventEmitter from 'eventemitter3'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { SomeFeedback } from '../feedback/feedback'
 import { Logger } from '../logger'
 
@@ -20,8 +21,13 @@ export interface ErrorArgs {
 	error: Error
 }
 
+export interface StatusChangeEventArgs {
+	status: StatusCode
+}
+
 type DeviceEvents = {
 	trigger: [e: TriggerEventArgs]
+	statusChange: [e: StatusChangeEventArgs]
 	error: [e: ErrorArgs]
 }
 

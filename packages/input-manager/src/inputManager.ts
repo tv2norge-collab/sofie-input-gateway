@@ -9,6 +9,7 @@ import {
 	DEVICE_CONFIG as STREAM_DECK_CONFIG,
 } from './integrations/streamdeck'
 import { XKeysDevice, XKeysDeviceConfig, DEVICE_CONFIG as XKEYS_CONFIG } from './integrations/xkeys'
+import { SkaarhojDevice, SkaarhojDeviceConfig, DEVICE_CONFIG as SKAARHOJ_CONFIG } from './integrations/skaarhoj'
 import { DeviceConfigManifest, throwNever } from './lib'
 import { Logger } from './logger'
 import { init as initBitmapFeedback } from './feedback/bitmap'
@@ -28,6 +29,7 @@ type SomeDeviceConfig =
 	| DeviceConfig<DeviceType.HTTP, HTTPDeviceConfig>
 	| DeviceConfig<DeviceType.STREAM_DECK, StreamDeckDeviceConfig>
 	| DeviceConfig<DeviceType.X_KEYS, XKeysDeviceConfig>
+	| DeviceConfig<DeviceType.SKAARHOJ, SkaarhojDeviceConfig>
 
 interface TriggerEventArgs extends DeviceTriggerEventArgs {
 	/** The ID of the device that issued this event */
@@ -202,6 +204,8 @@ function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger) {
 			return new StreamDeckDevice(deviceConfig, logger)
 		case DeviceType.X_KEYS:
 			return new XKeysDevice(deviceConfig, logger)
+		case DeviceType.SKAARHOJ:
+			return new SkaarhojDevice(deviceConfig, logger)
 		default:
 			throwNever(deviceConfig)
 	}
@@ -213,6 +217,7 @@ function getIntegrationsConfigManifest(): Record<string, DeviceConfigManifest<an
 		[DeviceType.MIDI]: MIDI_CONFIG,
 		[DeviceType.STREAM_DECK]: STREAM_DECK_CONFIG,
 		[DeviceType.X_KEYS]: XKEYS_CONFIG,
+		[DeviceType.SKAARHOJ]: SKAARHOJ_CONFIG,
 	}
 }
 
