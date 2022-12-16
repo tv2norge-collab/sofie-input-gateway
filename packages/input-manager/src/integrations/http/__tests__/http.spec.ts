@@ -2,17 +2,17 @@ import { HTTPDevice } from '../index'
 import { IncomingMessage, ServerResponse } from 'http'
 import { MockLogger } from '../../../__mocks__/logger'
 
-let requestClb: (req: Partial<IncomingMessage>, res: Partial<ServerResponse>) => void
-let serverPort: number
+let mockRequestClb: (req: Partial<IncomingMessage>, res: Partial<ServerResponse>) => void
+let mockServerPort: number
 
 jest.mock('http', () => ({
 	Server: class Server {
 		constructor(clb: (req: IncomingMessage, res: ServerResponse) => void) {
-			requestClb = clb as any
+			mockRequestClb = clb as any
 		}
 
 		listen(port = 80): void {
-			serverPort = port
+			mockServerPort = port
 		}
 	},
 }))
@@ -27,7 +27,7 @@ describe('HTTP Server', () => {
 		)
 		await device.init()
 
-		expect(serverPort).toBe(9090)
+		expect(mockServerPort).toBe(9090)
 	})
 	it('Emits a trigger event when it receives a request', async () => {
 		const device = new HTTPDevice(
@@ -42,10 +42,13 @@ describe('HTTP Server', () => {
 
 		const responseEnd = jest.fn()
 
-		requestClb(
+		const method = 'POST'
+		const url = '/mock/0'
+
+		mockRequestClb(
 			{
-				method: 'POST',
-				url: '/mock/0',
+				method,
+				url,
 			},
 			{
 				end: responseEnd,
@@ -54,7 +57,7 @@ describe('HTTP Server', () => {
 
 		expect(triggerHandler).toBeCalledTimes(1)
 		expect(triggerHandler.mock.calls[0][0]).toMatchObject({
-			triggerId: 'POST /mock/0',
+			triggerId: `${method} ${url}`,
 		})
 		expect(responseEnd).toBeCalledTimes(1)
 	})
