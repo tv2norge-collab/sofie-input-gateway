@@ -1782,6 +1782,11 @@
   resolved "https://registry.yarnpkg.com/@types/caseless/-/caseless-0.12.2.tgz#f65d3d6389e01eeb458bd54dc8f52b95a9463bc8"
   integrity sha512-6ckxMjBBD8URvjB6J3NcnuAn5Pkl7t3TizAg+xdlzzQGSPSmBcXf8KoIH0ua/i+tio+ZRUHEXp0HEmvaR4kt0w==
 
+"@types/fold-to-ascii@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/fold-to-ascii/-/fold-to-ascii-5.0.0.tgz#df5c9d420552f001a9bb4803c6afb0252e8514e1"
+  integrity sha512-zaaLJcf8jPuVVYl6v+mSMaOMJNgkrDsYweu7Oa5RODIKgX9+Yu6Ng6/IY9zylwIurt0iQiDM0SN8agCOhLrKUA==
+
 "@types/graceful-fs@^4.1.2":
   version "4.1.5"
   resolved "https://registry.yarnpkg.com/@types/graceful-fs/-/graceful-fs-4.1.5.tgz#21ffba0d98da4350db64891f92a9e5db3cdb4e15"
@@ -4052,6 +4057,11 @@ fn.name@1.x.x:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/fn.name/-/fn.name-1.1.0.tgz#26cad8017967aea8731bc42961d04a3d5988accc"
   integrity sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==
+
+fold-to-ascii@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/fold-to-ascii/-/fold-to-ascii-5.0.1.tgz#d0b4f06e7b511e959bd502fa49e8e3678b9fc6cc"
+  integrity sha512-VdMFm+u7pSzUWj0IDOniuHekp4lbMOtwKi6EsVx03DGVQaNI+77kxotj8hYaMmNkpym7wwv6c1woY4OZXYdqfg==
 
 follow-redirects@^1.14.9, follow-redirects@^1.15.0:
   version "1.15.2"

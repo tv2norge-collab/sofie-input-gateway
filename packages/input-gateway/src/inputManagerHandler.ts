@@ -371,12 +371,11 @@ export class InputManagerHandler {
 				tally = tally | Tally.PRESENT
 				contentLayerLongName = previewedAdlibs[0].sourceLayerName?.name
 				contentLayerShortName = previewedAdlibs[0].sourceLayerName?.abbreviation
+				contentLabel = previewedAdlibs.map((adlib) => InputManagerHandler.getStringLabel(adlib.label)).join(', ')
+				contentTypes = previewedAdlibs
+					.map((adlib) => adlib.sourceLayerType)
+					.filter((a) => a !== undefined) as SourceLayerType[]
 			}
-
-			contentLabel = previewedAdlibs.map((adlib) => InputManagerHandler.getStringLabel(adlib.label)).join(', ')
-			contentTypes = previewedAdlibs
-				.map((adlib) => adlib.sourceLayerType)
-				.filter((a) => a !== undefined) as SourceLayerType[]
 		}
 
 		this.#logger.debug(`${contentLabel}, ${contentTypes}`)

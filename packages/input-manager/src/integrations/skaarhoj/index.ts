@@ -2,9 +2,10 @@ import net from 'net'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
 import { DeviceConfigManifest, Symbols } from '../../lib'
-import { ClassNames, SomeFeedback, Tally } from '../../feedback/feedback'
+import { ClassNames, Label, SomeFeedback, Tally } from '../../feedback/feedback'
 import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
+import ASCIIFolder from 'fold-to-ascii'
 
 export interface SkaarhojDeviceConfig {
 	host: string
@@ -121,7 +122,17 @@ export class SkaarhojDevice extends Device {
 	private static normalizeString(input: string): string {
 		// Skaarhoj only accepts ASCII characters, this deconstructs accent characters into ASCII
 		// and accent character modifiers and then strips the accents
-		return input.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+		return ASCIIFolder.foldReplacing(input, '?')
+	}
+
+	private static getShortishLabel(label: Label | undefined, makeUppercase?: boolean): string | undefined {
+		if (label === undefined) return undefined
+		let result = label.long
+		if (result.length > 10 && label.short) {
+			result = label.short
+		}
+		if (makeUppercase) return result.toUpperCase()
+		return result
 	}
 
 	private async updateFeedback(key: string): Promise<void> {
@@ -151,8 +162,8 @@ export class SkaarhojDevice extends Device {
 			isPresent = true
 		}
 
-		let title = feedback.contentClass?.long.toUpperCase()
-		let line1 = feedback.userLabel?.long ?? feedback.content?.long ?? feedback.action?.long
+		let title = SkaarhojDevice.getShortishLabel(feedback.contentClass, true)
+		let line1 = feedback.userLabel?.long ?? feedback.content?.long ?? SkaarhojDevice.getShortishLabel(feedback.action)
 		let line2 = ''
 
 		if (line1 !== undefined && line1.length > 10) {
@@ -160,17 +171,24 @@ export class SkaarhojDevice extends Device {
 			line1 = line1.substring(0, 10)
 		}
 
+		let hasFilledTitle = true
 		if (isAdlib && !isPresent) {
-			await this.sendClearFeedback(key)
-			return
+			hasFilledTitle = false
+
+			if (!feedback.content) {
+				await this.sendClearFeedback(key)
+				return
+			}
 		}
 
-		if (title) title = SkaarhojDevice.normalizeString(title)
-		if (line1) line1 = SkaarhojDevice.normalizeString(line1)
-		if (line2) line2 = SkaarhojDevice.normalizeString(line2)
+		if (title) title = SkaarhojDevice.normalizeString(title).trim()
+		if (line1) line1 = SkaarhojDevice.normalizeString(line1).trim()
+		if (line2) line2 = SkaarhojDevice.normalizeString(line2).trim()
 
 		await this.sendToDevice(`HWC#${key}=${tallyColor}`)
-		await this.sendToDevice(`HWCt#${key}=|||${title ?? ''}|${title ? '' : ''}|${line1 ?? 'UNKNOWN'}|${line2}|`)
+		await this.sendToDevice(
+			`HWCt#${key}=|||${title ?? ''}|${hasFilledTitle ? '' : '1'}|${line1 ?? 'UNKNOWN'}|${line2}|`
+		)
 	}
 
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {

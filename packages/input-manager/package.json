@@ -96,6 +96,7 @@
 		"@sofie-automation/shared-lib": "1.44.0-in-testing.1",
 		"easymidi": "^3.0.1",
 		"eventemitter3": "^4.0.7",
+		"fold-to-ascii": "^5.0.1",
 		"skia-canvas": "^1.0.1",
 		"xkeys": "^2.4.0"
 	},
@@ -104,5 +105,8 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"devDependencies": {
+		"@types/fold-to-ascii": "^5.0.0"
 	}
 }

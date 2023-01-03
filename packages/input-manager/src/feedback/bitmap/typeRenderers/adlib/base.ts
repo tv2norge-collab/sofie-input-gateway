@@ -1,4 +1,4 @@
-import { ClassNames, Feedback, Tally } from '../../../feedback'
+import { ClassNames, Feedback } from '../../../feedback'
 import { BaseRenderer } from '../base'
 
 /**
@@ -76,7 +76,7 @@ export class BaseAdLibRenderer extends BaseRenderer {
 		const text = this.text
 		// text.p({ children: feedback?.action?.long ?? 'unknown', align: 'center', lineClamp: 1 })
 		// text.hr({})
-		if (feedback.tally === undefined || (feedback.tally & Tally.PRESENT) === 0) return
+		if (!feedback?.content) return
 		const label = feedback?.userLabel?.long ?? feedback?.content?.long ?? ''
 		text.p({
 			children: label,
