@@ -26,6 +26,10 @@ export type PreviewWrappedAdLib = {
 	triggeredActionId: string
 	actionId: string
 	sourceLayerType?: SourceLayerType
+	sourceLayerName?: {
+		name?: string
+		abbreviation?: string
+	}
 	isCurrent?: boolean
 	isNext?: boolean
 }

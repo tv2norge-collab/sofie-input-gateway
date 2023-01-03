@@ -113,18 +113,32 @@ export class SkaarhojDevice extends Device {
 		return [buttonId, isUp]
 	}
 
+	private async sendClearFeedback(key: string): Promise<void> {
+		await this.sendToDevice(`HWC#${key}=0`)
+		await this.sendToDevice(`HWCt#${key}=|7`)
+	}
+
+	private static normalizeString(input: string): string {
+		// Skaarhoj only accepts ASCII characters, this deconstructs accent characters into ASCII
+		// and accent character modifiers and then strips the accents
+		return input.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+	}
+
 	private async updateFeedback(key: string): Promise<void> {
 		const feedback = this.#feedbacks[key]
 		if (!feedback) {
-			await this.sendToDevice(`HWC#${key}=0`)
-			await this.sendToDevice(`HWCt#${key}=|7`)
+			await this.sendClearFeedback(key)
 			return
 		}
 
 		let tallyColor = 0
+		let isAdlib = false
+		let isPresent = false
 		if (feedback?.classNames?.includes(ClassNames.AD_LIB)) {
+			isAdlib = true
 			if (((feedback.tally ?? 0) & Tally.PRESENT) !== 0) {
 				tallyColor = 5
+				isPresent = true
 			}
 			if (((feedback.tally ?? 0) & Tally.NEXT) !== 0) {
 				tallyColor = 3
@@ -134,12 +148,29 @@ export class SkaarhojDevice extends Device {
 			}
 		} else {
 			tallyColor = 4
+			isPresent = true
 		}
 
+		let title = feedback.contentClass?.long.toUpperCase()
+		let line1 = feedback.userLabel?.long ?? feedback.content?.long ?? feedback.action?.long
+		let line2 = ''
+
+		if (line1 !== undefined && line1.length > 10) {
+			line2 = line1.substring(10, 20)
+			line1 = line1.substring(0, 10)
+		}
+
+		if (isAdlib && !isPresent) {
+			await this.sendClearFeedback(key)
+			return
+		}
+
+		if (title) title = SkaarhojDevice.normalizeString(title)
+		if (line1) line1 = SkaarhojDevice.normalizeString(line1)
+		if (line2) line2 = SkaarhojDevice.normalizeString(line2)
+
 		await this.sendToDevice(`HWC#${key}=${tallyColor}`)
-		await this.sendToDevice(
-			`HWCt#${key}=|||||${feedback.userLabel?.long ?? feedback.content?.long ?? feedback.action?.long ?? 'UNKNOWN'}`
-		)
+		await this.sendToDevice(`HWCt#${key}=|||${title ?? ''}|${title ? '' : ''}|${line1 ?? 'UNKNOWN'}|${line2}|`)
 	}
 
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {

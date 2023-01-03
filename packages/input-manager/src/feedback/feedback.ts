@@ -54,6 +54,7 @@ export interface Feedback {
 	userLabel?: Label
 	action?: Label
 	content?: Label
+	contentClass?: Label
 	duration?: string
 	tally?: Tally
 	classNames?: string[]

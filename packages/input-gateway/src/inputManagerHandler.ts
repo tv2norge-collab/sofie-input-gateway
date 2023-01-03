@@ -168,14 +168,16 @@ export class InputManagerHandler {
 		const observer1 = this.#coreHandler.core.observe('mountedTriggersPreviews')
 		observer1.added = (id, obj) => {
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedAction = this.#coreHandler.core.getCollection('mountedTriggers').findOne({
+			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
 				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction | undefined
-			if (!mountedAction) {
+			}) as DeviceTriggerMountedAction[]
+			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${id}"`)
 				return
 			}
-			this.#handleChangedMountedTrigger(mountedAction._id).catch(this.#logger.error)
+			for (const action of mountedActions) {
+				this.#handleChangedMountedTrigger(action._id).catch(this.#logger.error)
+			}
 		}
 		observer1.changed = (id, _old, _cleared, _new) => {
 			const obj = this.#coreHandler.core.getCollection('mountedTriggersPreviews').findOne(id)
@@ -184,25 +186,29 @@ export class InputManagerHandler {
 				return
 			}
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedAction = this.#coreHandler.core.getCollection('mountedTriggers').findOne({
+			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
 				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction | undefined
-			if (!mountedAction) {
+			}) as DeviceTriggerMountedAction[]
+			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
 				return
 			}
-			this.#handleChangedMountedTrigger(mountedAction._id).catch(this.#logger.error)
+			for (const action of mountedActions) {
+				this.#handleChangedMountedTrigger(action._id).catch(this.#logger.error)
+			}
 		}
 		observer1.removed = (_id, obj) => {
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedAction = this.#coreHandler.core.getCollection('mountedTriggers').findOne({
+			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
 				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction | undefined
-			if (!mountedAction) {
+			}) as DeviceTriggerMountedAction[]
+			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
 				return
 			}
-			this.#handleChangedMountedTrigger(mountedAction._id).catch(this.#logger.error)
+			for (const action of mountedActions) {
+				this.#handleChangedMountedTrigger(action._id).catch(this.#logger.error)
+			}
 		}
 
 		// Monitor for changes in settings:
@@ -349,6 +355,8 @@ export class InputManagerHandler {
 
 		let contentLabel: string | undefined
 		let contentTypes: SourceLayerType[] | undefined
+		let contentLayerLongName: string | undefined
+		let contentLayerShortName: string | undefined
 		let tally: Tally = Tally.NONE
 
 		if (actionId) {
@@ -358,9 +366,13 @@ export class InputManagerHandler {
 					actionId: mountedTrigger?.actionId,
 				})
 				.reverse() as PreviewWrappedAdLib[]
+
 			if (previewedAdlibs.length > 0) {
 				tally = tally | Tally.PRESENT
+				contentLayerLongName = previewedAdlibs[0].sourceLayerName?.name
+				contentLayerShortName = previewedAdlibs[0].sourceLayerName?.abbreviation
 			}
+
 			contentLabel = previewedAdlibs.map((adlib) => InputManagerHandler.getStringLabel(adlib.label)).join(', ')
 			contentTypes = previewedAdlibs
 				.map((adlib) => adlib.sourceLayerType)
@@ -371,9 +383,12 @@ export class InputManagerHandler {
 
 		const userLabel = InputManagerHandler.getStringLabel(mountedTrigger?.name)
 
+		const actionName = mountedTrigger.actionType
+
 		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, {
 			userLabel: userLabel ? { long: userLabel } : undefined,
-			action: mountedTrigger ? { long: mountedTrigger.actionType } : undefined,
+			action: mountedTrigger ? { long: actionName } : undefined,
+			contentClass: contentLayerLongName ? { long: contentLayerLongName, short: contentLayerShortName } : undefined,
 			content: contentLabel ? { long: contentLabel } : undefined,
 			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger, contentTypes),
 			tally,
