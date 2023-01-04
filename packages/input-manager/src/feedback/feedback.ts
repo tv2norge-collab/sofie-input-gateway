@@ -50,15 +50,22 @@ export enum ClassNames {
 }
 
 export interface Feedback {
-	/** The label for the action assigned to this Feedback area */
+	/** The user-defined label for the Action assigned to this Feedback area */
 	userLabel?: Label
+	/** The label for this Action */
 	action?: Label
+	/** The label for the content attached to this Action */
 	content?: Label
+	/** The label for the type of content attached to this Action */
 	contentClass?: Label
+	/** The duration of the content attached to this Action */
 	duration?: string
+	/** The tally state bitmap */
 	tally?: Tally
+	/** Various classes attached to this Action - including the ones defined in `ClassNames` */
 	classNames?: string[]
-	thumbnail?: string
+	/** A PNG image of the content attached to this Action */
+	thumbnail?: Blob
 }
 
 export type SomeFeedback = Feedback | null

@@ -97,6 +97,7 @@
 		"easymidi": "^3.0.1",
 		"eventemitter3": "^4.0.7",
 		"fold-to-ascii": "^5.0.1",
+		"osc": "^2.4.3",
 		"skia-canvas": "^1.0.1",
 		"xkeys": "^2.4.0"
 	},

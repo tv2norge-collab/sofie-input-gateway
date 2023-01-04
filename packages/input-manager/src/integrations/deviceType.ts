@@ -4,4 +4,5 @@ export enum DeviceType {
 	STREAM_DECK = 'STREAM_DECK',
 	X_KEYS = 'X-KEYS',
 	SKAARHOJ = 'SKAARHOJ',
+	OSC = 'OSC',
 }
