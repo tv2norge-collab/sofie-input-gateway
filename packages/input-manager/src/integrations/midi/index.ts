@@ -1,4 +1,4 @@
-import { Channel, Input, Output } from 'easymidi'
+import { Channel, Input, Output, getInputs, getOutputs } from 'easymidi'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
 import { assertNever, DeviceConfigManifest, Symbols } from '../../lib'
@@ -40,6 +40,8 @@ interface SysExFeedback extends MIDIFeedback {
 }
 
 type FeedbackSetting = NoteFeedback | ControllerFeedback | SysExFeedback
+
+const MIDI_RECHECK_INTERVAL = 5000
 
 export interface MIDIDeviceConfig {
 	inputName: string
@@ -88,21 +90,25 @@ export const DEVICE_CONFIG: DeviceConfigManifest<MIDIDeviceConfig> = [
 					id: 'velocity',
 					type: ConfigManifestEntryType.INT,
 					name: 'Velocity - Default',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 				{
 					id: 'velocityPresent',
 					type: ConfigManifestEntryType.INT,
 					name: 'Velocity - Present',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 				{
 					id: 'velocityNext',
 					type: ConfigManifestEntryType.INT,
 					name: 'Velocity - Next',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 				{
 					id: 'velocityOnAir',
 					type: ConfigManifestEntryType.INT,
 					name: 'Velocity - OnAir',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 			],
 			cc: [
@@ -128,21 +134,25 @@ export const DEVICE_CONFIG: DeviceConfigManifest<MIDIDeviceConfig> = [
 					id: 'value',
 					type: ConfigManifestEntryType.INT,
 					name: 'Value - Default',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 				{
 					id: 'valuePresent',
 					type: ConfigManifestEntryType.INT,
 					name: 'Value - Present',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 				{
 					id: 'valueNext',
 					type: ConfigManifestEntryType.INT,
 					name: 'Value - Next',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 				{
 					id: 'valueOnAir',
 					type: ConfigManifestEntryType.INT,
 					name: 'Value - OnAir',
+					hint: 'Use `-1` to not emit anything when condition met',
 				},
 			],
 		},
@@ -154,6 +164,7 @@ export class MIDIDevice extends Device {
 	#output: Output | undefined
 	#config: MIDIDeviceConfig
 	#feedbacks: Record<string, SomeFeedback> = {}
+	#checkInterval: NodeJS.Timer | undefined = undefined
 
 	constructor(config: MIDIDeviceConfig, logger: Logger) {
 		super(logger)
@@ -196,6 +207,8 @@ export class MIDIDevice extends Device {
 					replacesPrevious: true,
 				})
 			})
+
+			this.#checkInterval = setInterval(() => this.midiPortDetection(), MIDI_RECHECK_INTERVAL)
 		} catch (e) {
 			this.emit('error', {
 				error: new Error('MIDI init error'),
@@ -203,8 +216,28 @@ export class MIDIDevice extends Device {
 		}
 	}
 
+	private midiPortDetection(): void {
+		const inputs = getInputs()
+		if (!inputs.includes(this.#config.inputName)) {
+			this.emit('error', {
+				error: new Error(`MIDI Input Device "${this.#config.inputName}" disconnected!`),
+			})
+			return
+		}
+
+		if (!this.#config.outputName) return
+		const outputs = getOutputs()
+		if (!outputs.includes(this.#config.outputName)) {
+			this.emit('error', {
+				error: new Error(`MIDI Output Device "${this.#config.outputName}" disconnected!`),
+			})
+			return
+		}
+	}
+
 	async destroy(): Promise<void> {
 		await super.destroy()
+		if (this.#checkInterval) clearInterval(this.#checkInterval)
 		if (this.#input) this.#input.close()
 		if (this.#output) this.#output.close()
 	}
@@ -309,8 +342,6 @@ export class MIDIDevice extends Device {
 		if (!output) return
 
 		const feedback = this.#feedbacks[triggerId]
-
-		this.logger.debug(`isOpen: ${output.isPortOpen()}`)
 
 		for (const configEntry of this.#config.feedbackSettings) {
 			if (configEntry.trigger !== triggerId) break
