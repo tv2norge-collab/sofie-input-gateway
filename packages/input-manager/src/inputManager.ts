@@ -51,7 +51,7 @@ type DeviceEvents = {
 const REFRESH_INTERVAL = 5000
 
 class InputManager extends EventEmitter<DeviceEvents> {
-	#devices: Record<string, Device> = {}
+	#devices: Record<string, Device | undefined> = {}
 	#logger: Logger
 	#refreshRunning = false
 	#refreshInterval: NodeJS.Timeout | undefined
@@ -67,7 +67,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 
 		await initBitmapFeedback()
 
-		await Promise.all(
+		await Promise.allSettled(
 			Object.entries(this.config.devices).map(async ([deviceId, deviceConfig]) =>
 				this.createDevice(deviceId, deviceConfig)
 			)
@@ -77,6 +77,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 
 	private refreshDevicesInterval = (): void => {
+		this.#logger.debug(`Refreshing devices... ${this.#refreshRunning}`)
 		if (this.#refreshRunning === true) return
 
 		this.#refreshRunning = true
@@ -85,6 +86,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 				this.#logger.error(`Could not refresh devices: ${e}`)
 			})
 			.finally(() => {
+				this.#logger.debug(`Refreshing devices done.`)
 				this.#refreshRunning = false
 			})
 	}
@@ -94,8 +96,12 @@ class InputManager extends EventEmitter<DeviceEvents> {
 			Object.entries(this.config.devices).map(async ([deviceId, deviceConfig]) => {
 				if (this.#devices[deviceId] !== undefined) return
 
-				await this.createDevice(deviceId, deviceConfig)
-				return this.refreshFeedback(deviceId)
+				try {
+					await this.createDevice(deviceId, deviceConfig)
+					await this.refreshFeedback(deviceId)
+				} catch (e) {
+					this.#logger.error(`Error while restarting device "${deviceId}: ${e}"`)
+				}
 			})
 		)
 	}
@@ -103,6 +109,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	private async createDevice(deviceId: string, deviceConfig: SomeDeviceConfig): Promise<void> {
 		let device
 		try {
+			this.#logger.debug(`Creating new device "${deviceId}"...`)
 			device = createNewDevice(deviceConfig, this.#logger)
 			device.on('trigger', (eventArgs) => {
 				this.emit('trigger', {
@@ -124,7 +131,8 @@ class InputManager extends EventEmitter<DeviceEvents> {
 					})
 					.finally(() => {
 						// this allows the device to be re-initialized in refreshDevices()
-						delete this.#devices[deviceId]
+						this.#logger.debug(`Removing device from device list "${deviceId}"`)
+						this.#devices[deviceId] = undefined
 					})
 			})
 			device.on('statusChange', (statusChangeArgs) => {
@@ -147,6 +155,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 				deviceId,
 				status: StatusCode.BAD,
 			})
+			throw e
 		}
 	}
 
@@ -155,7 +164,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 
 		if (this.#refreshInterval) clearInterval(this.#refreshInterval)
 
-		await Promise.all(Object.values(this.#devices).map(async (device) => device.destroy()))
+		await Promise.all(Object.values(this.#devices).map(async (device) => device?.destroy()))
 		this.#devices = {}
 	}
 
@@ -179,11 +188,12 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	async clearFeedbackAll(): Promise<void> {
 		for (const [deviceId, device] of Object.entries(this.#devices)) {
 			this.#feedback[deviceId] = {}
-			await device.clearFeedbackAll()
+			await device?.clearFeedbackAll()
 		}
 	}
 
 	private async refreshFeedback(deviceId: string): Promise<void> {
+		this.#logger.debug(`Refreshing feedback on "${deviceId}"`)
 		const device = this.#devices[deviceId]
 		if (!device) throw new Error(`Could not find device "${deviceId}"`)
 

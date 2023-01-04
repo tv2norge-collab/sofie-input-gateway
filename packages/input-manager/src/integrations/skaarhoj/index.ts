@@ -7,6 +7,9 @@ import { ConfigManifestEntryType } from '@sofie-automation/server-core-integrati
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
 import ASCIIFolder from 'fold-to-ascii'
 
+const SEND_TIMEOUT = 1000
+const CONNECTION_TIMEOUT = 5000
+
 export interface SkaarhojDeviceConfig {
 	host: string
 	port: number
@@ -37,39 +40,47 @@ export class SkaarhojDevice extends Device {
 	}
 
 	async init(): Promise<void> {
-		const socket = net.createConnection(
-			{
-				host: this.#config.host,
-				port: this.#config.port,
-			},
-			() => {
-				;(async () => {
-					await this.sendToDevice(`ActivePanel=1`)
-					await sleep(50)
-					await this.sendToDevice('Clear')
-					for (const keyStr of Object.keys(this.#feedbacks)) {
-						await this.updateFeedback(keyStr)
-					}
-				})().catch(this.logger.error)
-			}
-		)
-		socket.setEncoding('utf-8')
-		socket.on('data', this.onData)
-		socket.on('error', () => {
-			this.emit('error', {
-				error: new Error('Socket error'),
+		return new Promise((resolve, reject) => {
+			let isOpen = false
+			const socket = net.createConnection(
+				{
+					host: this.#config.host,
+					port: this.#config.port,
+					timeout: CONNECTION_TIMEOUT,
+				},
+				() => {
+					;(async () => {
+						isOpen = true
+						await this.sendToDevice(`ActivePanel=1`)
+						await sleep(50)
+						await this.sendToDevice('Clear')
+						await sleep(50) // Skaarhoj needs a bit of time after the clear command to start doing something
+						for (const keyStr of Object.keys(this.#feedbacks)) {
+							await this.updateFeedback(keyStr)
+						}
+						resolve()
+					})().catch(reject)
+				}
+			)
+			socket.setEncoding('utf-8')
+			socket.on('data', this.onData)
+			socket.on('error', (err) => {
+				if (!isOpen) reject(err)
+				this.emit('error', {
+					error: err,
+				})
+				socket.end()
+				this.#socket = undefined
 			})
-			socket.end()
-			this.#socket = undefined
-		})
-		socket.on('close', () => {
-			if (this.#closing) return
-			this.emit('error', {
-				error: new Error('Unexpected connection close'),
+			socket.on('close', () => {
+				if (this.#closing) return
+				this.emit('error', {
+					error: new Error('Unexpected connection close'),
+				})
+				this.#socket = undefined
 			})
-			this.#socket = undefined
+			this.#socket = socket
 		})
-		this.#socket = socket
 	}
 
 	private onData = (data: string) => {
@@ -79,7 +90,9 @@ export class SkaarhojDevice extends Device {
 			this.logger.debug(`Uknown message from device: ${data}`)
 			return
 		}
+		let args: Record<string, number> | undefined = undefined
 		let trigger = match[1]
+		let replacesPrevious = false
 		const mask = match[2]
 		const state = match[3]
 		if (mask) {
@@ -89,10 +102,20 @@ export class SkaarhojDevice extends Device {
 			trigger += ` ${Symbols.DOWN}`
 		} else if (state === 'Up') {
 			trigger += ` ${Symbols.UP}`
+		} else {
+			const stateMatch = state.match(AnalogStateChange.StateChange)
+			if (stateMatch) {
+				args = {
+					[stateMatch[1]]: parseFloat(stateMatch[2]),
+				}
+				replacesPrevious = true
+			}
 		}
 
 		this.emit('trigger', {
 			triggerId: trigger,
+			arguments: args,
+			replacesPrevious,
 		})
 	}
 
@@ -105,7 +128,7 @@ export class SkaarhojDevice extends Device {
 	}
 
 	private static parseTriggerId(triggerId: string): [string, boolean] {
-		const triggerElements = triggerId.match(/(\d+)(.\d+)?\s(\S+)/)
+		const triggerElements = triggerId.match(/^(\d+)(.\d+)?\s(\S+)$/)
 		if (!triggerElements) {
 			return ['0', false]
 		}
@@ -214,7 +237,9 @@ export class SkaarhojDevice extends Device {
 				reject(new Error('Socket not connected'))
 				return
 			}
+			const timeout = setTimeout(() => reject('Send timeout'), SEND_TIMEOUT)
 			socket.write(`${buf}\n`, (err) => {
+				clearTimeout(timeout)
 				if (err) {
 					reject(err)
 					return
@@ -227,4 +252,8 @@ export class SkaarhojDevice extends Device {
 
 const InboundMessages = {
 	Trigger: /^HWC#(\d+)(\.\d+)?=(\S+)/,
+}
+
+const AnalogStateChange = {
+	StateChange: /^(\w+):([\d-.]+)$/,
 }
