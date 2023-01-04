@@ -1,3 +1,5 @@
+import { Blob } from 'buffer'
+
 export interface Label {
 	/** Optional, short representation of the label, up to 10 chars */
 	short?: string

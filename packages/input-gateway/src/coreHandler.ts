@@ -6,8 +6,11 @@ import { DeviceConfig } from './inputManagerHandler'
 import fs from 'fs'
 import { INPUT_DEVICE_CONFIG } from './configManifest'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
+import { PeripheralDevicePublic } from '@sofie-automation/shared-lib/dist/core/model/peripheralDevice'
 import {
+	PeripheralDeviceCategory,
 	PeripheralDeviceSubType,
+	PeripheralDeviceType,
 	PERIPHERAL_SUBTYPE_PROCESS,
 } from '@sofie-automation/shared-lib/dist/peripheralDevice/peripheralDeviceAPI'
 import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
@@ -76,7 +79,9 @@ export class CoreHandler {
 		this._coreConfig = config
 		this._process = process
 
-		this.core = new CoreConnection(this.getCoreConnectionOptions('Input gateway', 'InputGateway'))
+		this.core = new CoreConnection(
+			this.getCoreConnectionOptions('Input Gateway', 'InputGateway', PERIPHERAL_SUBTYPE_PROCESS)
+		)
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
@@ -147,43 +152,70 @@ export class CoreHandler {
 		await this.updateCoreStatus()
 		await this.core.destroy()
 	}
-	getCoreConnectionOptions(name: string, subDeviceId: string, subType?: PeripheralDeviceSubType): CoreOptions {
-		let credentials: {
-			deviceId: string | PeripheralDeviceId
-			deviceToken: string
+	getCoreConnectionOptions(name: string, subDeviceId: string, subDeviceType?: PeripheralDeviceSubType): CoreOptions {
+		if (!this._deviceOptions.deviceId) {
+			// this.logger.warn('DeviceId not set, using a temporary random id!')
+			throw new Error('DeviceId is not set!')
 		}
 
-		if (this._deviceOptions.deviceId && this._deviceOptions.deviceToken) {
-			credentials = {
-				deviceId: this._deviceOptions.deviceId + subDeviceId,
-				deviceToken: this._deviceOptions.deviceToken,
-			}
-		} else if (this._deviceOptions.deviceId) {
-			this.logger.warn('Token not set, only id! This might be unsecure!')
-			credentials = {
-				deviceId: this._deviceOptions.deviceId + subDeviceId,
-				deviceToken: 'unsecureToken',
-			}
-		} else {
-			credentials = CoreConnection.getCredentials(subDeviceId)
-		}
 		const options: CoreOptions = {
-			...credentials,
+			deviceId: protectString(this._deviceOptions.deviceId + subDeviceId),
+			deviceToken: this._deviceOptions.deviceToken,
 
-			//@ts-expect-error Category not yet registered
-			deviceCategory: 'triggerInput',
-			//@ts-expect-error Type not yet registered
-			deviceType: 'triggerInput',
-			deviceSubType: subType || PERIPHERAL_SUBTYPE_PROCESS,
+			deviceCategory: PeripheralDeviceCategory.TRIGGER_INPUT,
+			deviceType: PeripheralDeviceType.INPUT,
+			deviceSubType: subDeviceType,
 
 			deviceName: name,
 			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
 
-			configManifest: INPUT_DEVICE_CONFIG,
-
-			versions: this._getVersions(),
+			configManifest: {
+				...INPUT_DEVICE_CONFIG,
+			},
 		}
+
+		if (!options.deviceToken) {
+			this.logger.warn('Token not set, only id! This might be unsecure!')
+			options.deviceToken = 'unsecureToken'
+		}
+
+		if (subDeviceType === PERIPHERAL_SUBTYPE_PROCESS) options.versions = this._getVersions()
 		return options
+
+		// let credentials: {
+		// 	deviceId: PeripheralDeviceId
+		// 	deviceToken: string
+		// }
+
+		// if (this._deviceOptions.deviceId && this._deviceOptions.deviceToken) {
+		// 	credentials = {
+		// 		deviceId: protectString(this._deviceOptions.deviceId + subDeviceId),
+		// 		deviceToken: this._deviceOptions.deviceToken,
+		// 	}
+		// } else if (this._deviceOptions.deviceId) {
+		// 	this.logger.warn('Token not set, only id! This might be unsecure!')
+		// 	credentials = {
+		// 		deviceId: protectString(this._deviceOptions.deviceId + subDeviceId),
+		// 		deviceToken: 'unsecureToken',
+		// 	}
+		// } else {
+		// 	credentials = CoreConnection.getCredentials(subDeviceId)
+		// }
+		// const options: CoreOptions = {
+		// 	...credentials,
+
+		// 	deviceCategory: PeripheralDeviceCategory.TRIGGER_INPUT,
+		// 	deviceType: PeripheralDeviceType.INPUT,
+		// 	deviceSubType: subType || PERIPHERAL_SUBTYPE_PROCESS,
+
+		// 	deviceName: name,
+		// 	watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
+
+		// 	configManifest: INPUT_DEVICE_CONFIG,
+
+		// 	versions: this._getVersions(),
+		// }
+		// return options
 	}
 	onConnected(fcn: () => any): void {
 		this._onConnected = fcn
@@ -193,7 +225,7 @@ export class CoreHandler {
 	}
 	onDeviceChanged(id: PeripheralDeviceId): void {
 		if (id === this.core.deviceId) {
-			const col = this.core.getCollection('peripheralDevices')
+			const col = this.core.getCollection<PeripheralDevicePublic>('peripheralDevices')
 			if (!col) throw new Error('collection "peripheralDevices" not found!')
 
 			const device = col.findOne(id)
@@ -232,7 +264,7 @@ export class CoreHandler {
 					this.logger.error('executeFunction error', err, err.stack)
 				}
 				this.core
-					.callMethod(PeripheralDeviceAPIMethods.functionReply, [cmd._id, err, res])
+					.callMethodRaw(PeripheralDeviceAPIMethods.functionReply, [cmd._id, err, res])
 					.then(() => {
 						// console.log('cb done')
 					})
@@ -269,9 +301,9 @@ export class CoreHandler {
 		functionObject.killProcess(0)
 		functionObject._observers.push(observer)
 		const addedChangedCommand = (id: string) => {
-			const cmds = functionObject.core.getCollection('peripheralDeviceCommands')
+			const cmds = functionObject.core.getCollection<PeripheralDeviceCommand>('peripheralDeviceCommands')
 			if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
-			const cmd = cmds.findOne(id) as PeripheralDeviceCommand
+			const cmd = cmds.findOne(id)
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			// console.log('addedChangedCommand', id)
 			if (cmd.deviceId === unprotectString(functionObject.core.deviceId)) {

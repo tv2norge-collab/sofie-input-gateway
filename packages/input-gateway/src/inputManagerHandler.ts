@@ -4,19 +4,19 @@ import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { CoreHandler } from './coreHandler'
 import { DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
+import {
+	DeviceTriggerMountedAction,
+	DeviceTriggerMountedActionId,
+	PreviewWrappedAdLib,
+} from '@sofie-automation/shared-lib/dist/input-gateway/deviceTriggerPreviews'
+import { SourceLayerType } from '@sofie-automation/shared-lib/dist/core/model/ShowStyle'
 import { Process } from './process'
 import { Config } from './connector'
 import { InputManager, TriggerEventArgs, ClassNames, Tally, SomeFeedback } from '@sofie-automation/input-manager'
 import { SendQueue } from './SendQueue'
-import {
-	DeviceTriggerMountedAction,
-	interpollateTranslation,
-	ITranslatableMessage,
-	PreviewWrappedAdLib,
-	SourceLayerType,
-	translateMessage,
-} from './lib/coreInterfaces'
+import { interpollateTranslation, ITranslatableMessage, translateMessage } from './lib/coreInterfaces'
 import { SomeDeviceConfig } from '@sofie-automation/input-manager'
+import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -72,7 +72,7 @@ export class InputManagerHandler {
 			}
 			this.#logger.info('Initializing InputManager...')
 
-			await this.initInputManager(peripheralDevice.settings || {})
+			await this.initInputManager((peripheralDevice.settings || {}) as DeviceSettings)
 			this.#logger.info('InputManager initialized')
 
 			this.#logger.info('Initialization done')
@@ -138,7 +138,7 @@ export class InputManagerHandler {
 
 		const mountedTriggersObserver = this.#coreHandler.core.observe('mountedTriggers')
 		mountedTriggersObserver.added = (id, _obj) => {
-			this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
+			this.#handleChangedMountedTrigger(protectString(id)).catch(this.#logger.error)
 		}
 		mountedTriggersObserver.changed = (
 			id,
@@ -146,7 +146,9 @@ export class InputManagerHandler {
 			cleared: string[],
 			newFields: Partial<DeviceTriggerMountedAction>
 		) => {
-			const obj = this.#coreHandler.core.getCollection('mountedTriggers').findOne(id) as DeviceTriggerMountedAction
+			const obj = this.#coreHandler.core
+				.getCollection<DeviceTriggerMountedAction>('mountedTriggers')
+				.findOne(protectString(id))
 			if (
 				newFields['deviceId'] ||
 				newFields['deviceTriggerId'] ||
@@ -157,11 +159,11 @@ export class InputManagerHandler {
 					oldFields.deviceId ?? obj.deviceId,
 					oldFields.deviceTriggerId ?? obj.deviceTriggerId
 				)
-					.then(async () => this.#handleChangedMountedTrigger(id))
+					.then(async () => this.#handleChangedMountedTrigger(protectString(id)))
 					.catch(this.#logger.error)
 				return
 			}
-			this.#handleChangedMountedTrigger(id).catch(this.#logger.error)
+			this.#handleChangedMountedTrigger(protectString(id)).catch(this.#logger.error)
 		}
 		mountedTriggersObserver.removed = (_id, obj) => {
 			const obj0 = obj as any as DeviceTriggerMountedAction
@@ -170,9 +172,9 @@ export class InputManagerHandler {
 		const triggersPreviewsObserver = this.#coreHandler.core.observe('mountedTriggersPreviews')
 		triggersPreviewsObserver.added = (id, obj) => {
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
+			const mountedActions = this.#coreHandler.core.getCollection<DeviceTriggerMountedAction>('mountedTriggers').find({
 				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction[]
+			})
 			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${id}"`)
 				return
@@ -182,12 +184,13 @@ export class InputManagerHandler {
 			}
 		}
 		triggersPreviewsObserver.changed = (id, _old, _cleared, _new) => {
-			const obj = this.#coreHandler.core.getCollection('mountedTriggersPreviews').findOne(id)
-			if (!obj) {
+			const changedPreview = this.#coreHandler.core
+				.getCollection<PreviewWrappedAdLib>('mountedTriggersPreviews')
+				.findOne(protectString(id))
+			if (!changedPreview) {
 				this.#logger.error(`Could not find PreviewAdlib: "${id}"`)
 				return
 			}
-			const changedPreview = obj as PreviewWrappedAdLib
 			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
 				actionId: changedPreview.actionId,
 			}) as DeviceTriggerMountedAction[]
@@ -224,7 +227,7 @@ export class InputManagerHandler {
 				if (!device) return
 				if (_.isEqual(device.settings, this.#deviceSettings)) return
 
-				const settings: DeviceSettings = device.settings
+				const settings: DeviceSettings = device.settings as DeviceSettings
 
 				this.#logger.debug(`Device configuration changed`)
 
@@ -278,7 +281,7 @@ export class InputManagerHandler {
 		this.#queue
 			.add(
 				async () =>
-					this.#coreHandler.core.callMethod('peripheralDevice.input.inputDeviceTrigger', [
+					this.#coreHandler.core.callMethodRaw('peripheralDevice.input.inputDeviceTrigger', [
 						deviceId,
 						triggerId,
 						args ?? null,
@@ -308,11 +311,11 @@ export class InputManagerHandler {
 		return manager
 	}
 
-	async #handleChangedMountedTrigger(id: string): Promise<void> {
-		const obj = this.#coreHandler.core.getCollection('mountedTriggers').findOne(id)
+	async #handleChangedMountedTrigger(id: DeviceTriggerMountedActionId): Promise<void> {
+		const mountedTrigger = this.#coreHandler.core
+			.getCollection<DeviceTriggerMountedAction>('mountedTriggers')
+			.findOne(id)
 		if (!this.#inputManager) return
-
-		const mountedTrigger = obj as DeviceTriggerMountedAction | undefined
 
 		const feedbackDeviceId = mountedTrigger?.deviceId
 		const feedbackTriggerId = mountedTrigger?.deviceTriggerId
@@ -360,7 +363,6 @@ export class InputManagerHandler {
 			if (contentTypes.includes(SourceLayerType.AUDIO)) classNames.push(ClassNames.AUDIO)
 			if (contentTypes.includes(SourceLayerType.CAMERA)) classNames.push(ClassNames.CAMERA)
 			if (contentTypes.includes(SourceLayerType.GRAPHICS)) classNames.push(ClassNames.GRAPHICS)
-			if (contentTypes.includes(SourceLayerType.LIGHTS)) classNames.push(ClassNames.LIGHTS)
 			if (contentTypes.includes(SourceLayerType.LIVE_SPEAK)) classNames.push(ClassNames.LIVE_SPEAK)
 			if (contentTypes.includes(SourceLayerType.LOCAL)) classNames.push(ClassNames.LOCAL)
 			if (contentTypes.includes(SourceLayerType.LOWER_THIRD)) classNames.push(ClassNames.LOWER_THIRD)

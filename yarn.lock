@@ -1771,19 +1771,18 @@
     read-pkg-up "^9.1.0"
     shelljs "^0.8.5"
 
-"@sofie-automation/server-core-integration@1.44.0-in-testing.1":
-  version "1.44.0-in-testing.1"
-  resolved "https://registry.yarnpkg.com/@sofie-automation/server-core-integration/-/server-core-integration-1.44.0-in-testing.1.tgz#43576fc56dbc9ebc2d06087d1a1a78d3fe313d7d"
-  integrity sha512-F0j+0qFmcKeB93SJfJ5/fVz4zJ/RkgjaLmGN3xgOsmSitNZIvlTql2Ctzt7P3RjZfc1ZNq75c+fUHOEQkCkK+Q==
+"@sofie-automation/server-core-integration@1.49.0-nightly-feat-triggerGateways-20230104-152414-b8e0493.0":
+  version "1.49.0-nightly-feat-triggerGateways-20230104-152414-b8e0493.0"
+  resolved "https://registry.yarnpkg.com/@sofie-automation/server-core-integration/-/server-core-integration-1.49.0-nightly-feat-triggerGateways-20230104-152414-b8e0493.0.tgz#bdb58cb239f724d2331ee75a033ebecbf4a03643"
+  integrity sha512-Z2m91bqg0E8sKz+aN2WjRfpW84q3ItdCT6cvs2jcsAatB6VAtVxl/l9GsX5X5TGyMJI2uTZVd63XlPc7c1j9BQ==
   dependencies:
-    "@sofie-automation/shared-lib" "1.44.0-in-testing.1"
-    data-store "^4.0.3"
-    ejson "^2.2.2"
+    "@sofie-automation/shared-lib" "1.49.0-nightly-feat-triggerGateways-20230104-152414-b8e0493.0"
+    ejson "^2.2.3"
     eventemitter3 "^4.0.7"
     faye-websocket "^0.11.4"
     got "^11.8.5"
     tslib "^2.4.0"
-    underscore "^1.13.3"
+    underscore "^1.13.4"
 
 "@sofie-automation/shared-lib@1.44.0-in-testing.1":
   version "1.44.0-in-testing.1"
@@ -1792,6 +1791,14 @@
   dependencies:
     tslib "^2.4.0"
     type-fest "^2.12.2"
+
+"@sofie-automation/shared-lib@1.49.0-nightly-feat-triggerGateways-20230104-152414-b8e0493.0":
+  version "1.49.0-nightly-feat-triggerGateways-20230104-152414-b8e0493.0"
+  resolved "https://registry.yarnpkg.com/@sofie-automation/shared-lib/-/shared-lib-1.49.0-nightly-feat-triggerGateways-20230104-152414-b8e0493.0.tgz#98791f7f96c42c24dd6d4c10feb7078c70391473"
+  integrity sha512-rHHqrFT3NIP1nx18av9S95BWs1jOqH90+6yYRwxTpU9YREMF2HFcFbDzZELwNbvynapAn8q/MMMOnYRTlIBBAw==
+  dependencies:
+    tslib "^2.4.0"
+    type-fest "^2.19.0"
 
 "@szmarczak/http-timer@^4.0.5":
   version "4.0.6"
@@ -3313,14 +3320,6 @@ dargs@^7.0.0:
   resolved "https://registry.yarnpkg.com/dargs/-/dargs-7.0.0.tgz#04015c41de0bcb69ec84050f3d9be0caf8d6d5cc"
   integrity sha512-2iy1EkLdlBzQGvbweYRFxmFath8+K7+AKB0TlhHWkNuH+TmovaMH/Wp7V7R4u7f4SnX3OgLsU9t1NI9ioDnUpg==
 
-data-store@^4.0.3:
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/data-store/-/data-store-4.0.3.tgz#d055c55f3fa776daa3a5664cf715d3fe689c3afb"
-  integrity sha512-AhPSqGVCSrFgi1PtkOLxYRrVhzbsma/drtxNkwTrT2q+LpLTG3AhOW74O/IMRy1cWftBx93SuLLKF19YsKkUMg==
-  dependencies:
-    get-value "^3.0.1"
-    set-value "^3.0.1"
-
 data-urls@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/data-urls/-/data-urls-2.0.0.tgz#156485a72963a970f5d5821aaf642bef2bf2db9b"
@@ -3582,7 +3581,7 @@ ejs@^3.1.7:
   dependencies:
     jake "^10.8.5"
 
-ejson@^2.2.2:
+ejson@^2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/ejson/-/ejson-2.2.3.tgz#2b18c2d8f5d61a5cfc6e3eab72c3343909e7afd2"
   integrity sha512-hsFvJp6OpGxFRQfBR3PSxFpaPALdHDY+SB3TRbMpLWNhvu8GzLiZutof5+/DFd2QekZo3KyXau75ngdJqQUSrw==
@@ -4341,13 +4340,6 @@ get-value@^2.0.3, get-value@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/get-value/-/get-value-2.0.6.tgz#dc15ca1c672387ca76bd37ac0a395ba2042a2c28"
   integrity sha512-Ln0UQDlxH1BapMu3GPtf7CuYNwRZf2gwCuPqbyG6pB8WfmFpzqcy4xtAaAMUhnNqjMKTiCPZG2oMT3YSx8U2NA==
-
-get-value@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/get-value/-/get-value-3.0.1.tgz#5efd2a157f1d6a516d7524e124ac52d0a39ef5a8"
-  integrity sha512-mKZj9JLQrwMBtj5wxi6MH8Z5eSKaERpAwjg43dPtlGI1ZVEgH/qC7T8/6R2OBSUA+zzHBZgICsVJaEIV2tKTDA==
-  dependencies:
-    isobject "^3.0.1"
 
 git-raw-commits@^2.0.8:
   version "2.0.11"
@@ -7817,13 +7809,6 @@ set-value@^2.0.0, set-value@^2.0.1:
     is-plain-object "^2.0.3"
     split-string "^3.0.1"
 
-set-value@^3.0.1:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/set-value/-/set-value-3.0.3.tgz#178e190d29cec6c086167222177b2fcb92f7ad56"
-  integrity sha512-Xsn/XSatoVOGBbp5hs3UylFDs5Bi9i+ArpVJKdHPniZHoEgRniXTqHWrWrGQ0PbEClVT6WtfnBwR8CAHC9sveg==
-  dependencies:
-    is-plain-object "^2.0.4"
-
 shallow-clone@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/shallow-clone/-/shallow-clone-3.0.1.tgz#8f2981ad92531f55035b01fb230769a40e02efa3"
@@ -8726,7 +8711,7 @@ type-fest@^1.0.1, type-fest@^1.2.1, type-fest@^1.2.2:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-1.4.0.tgz#e9fb813fe3bf1744ec359d55d1affefa76f14be1"
   integrity sha512-yGSza74xk0UG8k+pLh5oeoYirvIiWo5t0/o3zHHAO2tRDiZcxWP7fywNlXhqb6/r6sWvwi+RsyQMWhVLe4BVuA==
 
-type-fest@^2.0.0, type-fest@^2.12.2, type-fest@^2.16.0, type-fest@^2.5.0:
+type-fest@^2.0.0, type-fest@^2.12.2, type-fest@^2.16.0, type-fest@^2.19.0, type-fest@^2.5.0:
   version "2.19.0"
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-2.19.0.tgz#88068015bb33036a598b952e55e9311a60fd3a9b"
   integrity sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==
@@ -8779,7 +8764,7 @@ underscore-deep-extend@^1.1.5:
   resolved "https://registry.yarnpkg.com/underscore-deep-extend/-/underscore-deep-extend-1.1.5.tgz#962ba1f8b3bb2e2afd182ed86f2e5275543c52bd"
   integrity sha512-Snk/OnraiskaFowKhKrxbE/UzYvYmsE3gHNrGWKCb7gceuz3ebFRwxw9X9wgklrIUt6xDxR5TcE1yj0LneOmnQ==
 
-underscore@^1.13.3, underscore@^1.13.4:
+underscore@^1.13.4:
   version "1.13.6"
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.13.6.tgz#04786a1f589dc6c09f761fc5f45b89e935136441"
   integrity sha512-+A5Sja4HP1M08MaXya7p5LvjuM7K6q/2EaC0+iovj/wOcMsTzMvDFbasi/oSapiwOlt252IqsKqPjCl7huKS0A==
