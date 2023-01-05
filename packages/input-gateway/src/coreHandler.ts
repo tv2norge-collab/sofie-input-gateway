@@ -5,7 +5,7 @@ import * as Winston from 'winston'
 import { DeviceConfig } from './inputManagerHandler'
 import fs from 'fs'
 import { INPUT_DEVICE_CONFIG } from './configManifest'
-import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
+import { PeripheralDeviceCommandId, PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import { PeripheralDevicePublic } from '@sofie-automation/shared-lib/dist/core/model/peripheralDevice'
 import {
 	PeripheralDeviceCategory,
@@ -14,7 +14,7 @@ import {
 	PERIPHERAL_SUBTYPE_PROCESS,
 } from '@sofie-automation/shared-lib/dist/peripheralDevice/peripheralDeviceAPI'
 import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
-import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
+import { PeripheralDeviceCommand } from '@sofie-automation/shared-lib/dist/core/model/PeripheralDeviceCommand'
 import { Process } from './process'
 import { stringifyError } from './lib/lib'
 
@@ -24,19 +24,7 @@ export interface CoreConfig {
 	ssl?: boolean
 	watchdog: boolean
 }
-export interface PeripheralDeviceCommand {
-	_id: string
 
-	deviceId: string
-	functionName: string
-	args: Array<any>
-
-	hasReply: boolean
-	reply?: any
-	replyError?: any
-
-	time: number // time
-}
 /**
  * Represents a connection between the Core and the media-manager
  */
@@ -254,23 +242,29 @@ export class CoreHandler {
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	executeFunction(cmd: PeripheralDeviceCommand, fcnObject: any): void {
 		if (cmd) {
-			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
-			this.logger.info(cmd.functionName, cmd.args)
-			this._executedFunctions[cmd._id] = true
+			if (this._executedFunctions[unprotectString(cmd._id)]) return // prevent it from running multiple times
+			this.logger.info(cmd.functionName ?? '(undefined)', cmd.args)
+			this._executedFunctions[unprotectString(cmd._id)] = true
 			// console.log('executeFunction', cmd)
 			const cb = (err: any, res?: any) => {
 				// console.log('cb', err, res)
 				if (err) {
 					this.logger.error('executeFunction error', err, err.stack)
 				}
-				this.core
-					.callMethodRaw(PeripheralDeviceAPIMethods.functionReply, [cmd._id, err, res])
+				this.core.coreMethods
+					.functionReply(cmd._id, err, res)
 					.then(() => {
 						// console.log('cb done')
 					})
 					.catch((e) => {
 						this.logger.error(e)
 					})
+			}
+
+			if (cmd.functionName === undefined) {
+				this.logger.error(`No function name provided in command "${cmd._id}", aborting`)
+				cb('No function name provided')
+				return
 			}
 
 			const fcn = fcnObject[cmd.functionName]
@@ -300,23 +294,23 @@ export class CoreHandler {
 		const observer = functionObject.core.observe('peripheralDeviceCommands')
 		functionObject.killProcess(0)
 		functionObject._observers.push(observer)
-		const addedChangedCommand = (id: string) => {
+		const addedChangedCommand = (id: PeripheralDeviceCommandId) => {
 			const cmds = functionObject.core.getCollection<PeripheralDeviceCommand>('peripheralDeviceCommands')
 			if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 			const cmd = cmds.findOne(id)
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			// console.log('addedChangedCommand', id)
-			if (cmd.deviceId === unprotectString(functionObject.core.deviceId)) {
+			if (cmd.deviceId === functionObject.core.deviceId) {
 				this.executeFunction(cmd, functionObject)
 			} else {
 				// console.log('not mine', cmd.deviceId, this.core.deviceId)
 			}
 		}
 		observer.added = (id: string) => {
-			addedChangedCommand(id)
+			addedChangedCommand(protectString(id))
 		}
 		observer.changed = (id: string) => {
-			addedChangedCommand(id)
+			addedChangedCommand(protectString(id))
 		}
 		observer.removed = (id: string) => {
 			this.retireExecuteFunction(id)
@@ -324,7 +318,7 @@ export class CoreHandler {
 		const cmds = functionObject.core.getCollection('peripheralDeviceCommands')
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 		;(cmds.find({}) as PeripheralDeviceCommand[]).forEach((cmd: PeripheralDeviceCommand) => {
-			if (cmd.deviceId === unprotectString(functionObject.core.deviceId)) {
+			if (cmd.deviceId === functionObject.core.deviceId) {
 				this.executeFunction(cmd, functionObject)
 			}
 		})

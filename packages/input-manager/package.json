@@ -93,7 +93,6 @@
 	"dependencies": {
 		"@elgato-stream-deck/node": "^5.6.0",
 		"@julusian/jpeg-turbo": "^2.0.0",
-		"@sofie-automation/shared-lib": "1.44.0-in-testing.1",
 		"easymidi": "^3.0.1",
 		"eventemitter3": "^4.0.7",
 		"fold-to-ascii": "^5.0.1",
@@ -102,7 +101,8 @@
 		"xkeys": "^2.4.0"
 	},
 	"peerDependencies": {
-		"@sofie-automation/server-core-integration": "*"
+		"@sofie-automation/server-core-integration": "*",
+		"@sofie-automation/shared-lib": "*"
 	},
 	"publishConfig": {
 		"access": "public"

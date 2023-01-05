@@ -280,17 +280,9 @@ export class InputManagerHandler {
 		const className = `${deviceId}_${triggerId}`
 		if (replacesUnsent) this.#queue.remove(className)
 		this.#queue
-			.add(
-				async () =>
-					this.#coreHandler.core.callMethodRaw('peripheralDevice.input.inputDeviceTrigger', [
-						deviceId,
-						triggerId,
-						args ?? null,
-					]),
-				{
-					className,
-				}
-			)
+			.add(async () => this.#coreHandler.core.coreMethods.inputDeviceTrigger(deviceId, triggerId, args ?? null), {
+				className,
+			})
 			.catch((e) => {
 				this.#logger.error(`peripheralDevice.input.inputDeviceTrigger failed: ${e}`)
 				this.#logger.error(e)

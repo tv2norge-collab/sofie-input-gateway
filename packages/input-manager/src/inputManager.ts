@@ -180,10 +180,12 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 
 	async setFeedback(deviceId: string, triggerId: string, feedback: SomeFeedback): Promise<void> {
+		if (!this.config.devices[deviceId]) throw new Error(`Unknown device "${deviceId}"`)
+		this.cacheFeedback(deviceId, triggerId, feedback)
+
 		const device = this.#devices[deviceId]
 		if (!device) throw new Error(`Could not find device "${deviceId}"`)
 
-		this.cacheFeedback(deviceId, triggerId, feedback)
 		await device.setFeedback(triggerId, feedback)
 	}
 
