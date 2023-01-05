@@ -1,7 +1,7 @@
 {
 	"files": [],
 	"references": [
-		{ "path": "packages/timeline-state-resolver" },
-		{ "path": "packages/timeline-state-resolver-types" }
+		{ "path": "packages/input-gateway" },
+		{ "path": "packages/input-manager" }
 	]
 }

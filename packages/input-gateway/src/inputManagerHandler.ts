@@ -14,9 +14,10 @@ import { Process } from './process'
 import { Config } from './connector'
 import { InputManager, TriggerEventArgs, ClassNames, Tally, SomeFeedback } from '@sofie-automation/input-manager'
 import { SendQueue } from './SendQueue'
-import { interpollateTranslation, ITranslatableMessage, translateMessage } from './lib/coreInterfaces'
+import { interpollateTranslation, translateMessage } from './lib/translatableMessage'
 import { SomeDeviceConfig } from '@sofie-automation/input-manager'
 import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
+import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
