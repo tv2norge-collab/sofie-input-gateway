@@ -21,9 +21,9 @@ interface Config {
 	devices: Record<string, SomeDeviceConfig>
 }
 
-type DeviceConfig<Type extends string, T> = {
+type DeviceConfig<Type extends string, ConfigInterface extends Record<string, any>> = {
 	type: Type
-} & T
+} & ConfigInterface
 
 type SomeDeviceConfig =
 	| DeviceConfig<DeviceType.MIDI, MIDIDeviceConfig>
@@ -180,10 +180,13 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 
 	async setFeedback(deviceId: string, triggerId: string, feedback: SomeFeedback): Promise<void> {
+		// Check if we know of the device
 		if (!this.config.devices[deviceId]) throw new Error(`Unknown device "${deviceId}"`)
+		// Cache this feedback, in case we need to restore it later, after a device driver restart
 		this.cacheFeedback(deviceId, triggerId, feedback)
 
 		const device = this.#devices[deviceId]
+		// The device can be configured, but a device driver may have failed to initialize
 		if (!device) throw new Error(`Could not find device "${deviceId}"`)
 
 		await device.setFeedback(triggerId, feedback)

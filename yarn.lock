@@ -1771,12 +1771,12 @@
     read-pkg-up "^9.1.0"
     shelljs "^0.8.5"
 
-"@sofie-automation/server-core-integration@1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0":
-  version "1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0"
-  resolved "https://registry.yarnpkg.com/@sofie-automation/server-core-integration/-/server-core-integration-1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0.tgz#35b33dce89e97b283d2d61acb813b90ba99d3e99"
-  integrity sha512-D5j2avaGJ9aL3cBrx0ZNwA70AoQ2Nb8vVzTrOuwYDme5tL4bwO3v1+Mx7/3nqGWb63WmuLftnPgv4B1sEIl6+w==
+"@sofie-automation/server-core-integration@1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0":
+  version "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0"
+  resolved "https://registry.yarnpkg.com/@sofie-automation/server-core-integration/-/server-core-integration-1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0.tgz#9ca3f6fdcdf0a6700bbb577ccc947d95aacbc921"
+  integrity sha512-O1hTXPjLzPzbjaoLP5K45MSBKwmadymzHZ2HrWg2jVT+2nazdsMooKFFP6/29VYxNs8U+Ws2KBErFLS/aEAzHw==
   dependencies:
-    "@sofie-automation/shared-lib" "1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0"
+    "@sofie-automation/shared-lib" "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0"
     ejson "^2.2.3"
     eventemitter3 "^4.0.7"
     faye-websocket "^0.11.4"
@@ -1784,10 +1784,10 @@
     tslib "^2.4.0"
     underscore "^1.13.4"
 
-"@sofie-automation/shared-lib@1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0":
-  version "1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0"
-  resolved "https://registry.yarnpkg.com/@sofie-automation/shared-lib/-/shared-lib-1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0.tgz#cba028f9a63f2e69054bd000359e6b65dffe7659"
-  integrity sha512-ysYrvMkFPv0CBlrPewIgwQSr8hWV+4jzYJf0T9WetGex0mCu9AFmloWIH21AjZ6TinL+iJ0fobHvOY5ednl8RQ==
+"@sofie-automation/shared-lib@1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0":
+  version "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0"
+  resolved "https://registry.yarnpkg.com/@sofie-automation/shared-lib/-/shared-lib-1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0.tgz#db02bbd2df2383b18e7aa97a8f0a4a9095e7c78f"
+  integrity sha512-6xrA7S3aCSb/1t/XZ4mtSpNF3wbgl7dqElaNS1QjmQLVtGO6NIbl/64Qy+MAsO9TYffmTyn99i4kMCVFeBkihA==
   dependencies:
     tslib "^2.4.0"
     type-fest "^2.19.0"

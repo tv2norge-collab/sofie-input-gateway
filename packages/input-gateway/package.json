@@ -70,8 +70,8 @@
 	],
 	"dependencies": {
 		"@sofie-automation/input-manager": "*",
-		"@sofie-automation/server-core-integration": "1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0",
-		"@sofie-automation/shared-lib": "1.49.0-nightly-feat-triggerGateways-20230105-123551-7717a1d.0",
+		"@sofie-automation/server-core-integration": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
+		"@sofie-automation/shared-lib": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
 		"debug": "^4.3.1",
 		"eventemitter3": "^4.0.7",
 		"p-all": "^3.0.0",

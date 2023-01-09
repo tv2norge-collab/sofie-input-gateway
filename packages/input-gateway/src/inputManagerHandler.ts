@@ -13,11 +13,11 @@ import { SourceLayerType } from '@sofie-automation/shared-lib/dist/core/model/Sh
 import { Process } from './process'
 import { Config } from './connector'
 import { InputManager, TriggerEventArgs, ClassNames, Tally, SomeFeedback } from '@sofie-automation/input-manager'
-import { SendQueue } from './SendQueue'
 import { interpollateTranslation, translateMessage } from './lib/translatableMessage'
 import { SomeDeviceConfig } from '@sofie-automation/input-manager'
 import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
+import { JobQueueWithClasses } from '@sofie-automation/shared-lib/dist/lib/JobQueueWithClasses'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -40,11 +40,11 @@ export class InputManagerHandler {
 	#process!: Process
 
 	#inputManager: InputManager | undefined
-	#queue: SendQueue
+	#queue: JobQueueWithClasses
 
 	constructor(logger: Winston.Logger) {
 		this.#logger = logger
-		this.#queue = new SendQueue()
+		this.#queue = new JobQueueWithClasses()
 	}
 
 	async init(config: Config): Promise<void> {
