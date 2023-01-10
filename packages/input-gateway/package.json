@@ -90,7 +90,6 @@
 		"access": "public"
 	},
 	"pkg": {
-		"assets": "./assets/**/*",
 		"targets": ["node16-win"],
 		"outputPath": "deploy" 
 	}

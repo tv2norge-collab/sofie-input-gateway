@@ -1,6 +1,8 @@
 import { Canvas, FontLibrary } from 'skia-canvas'
 import { SomeFeedback } from '../feedback'
 import { rendererFactory } from './typeRenderers/factory'
+import path from 'path'
+import process from 'process'
 
 async function makeBitmapFromFeedback(
 	feedback: SomeFeedback,
@@ -48,7 +50,12 @@ export async function init(): Promise<void> {
 	const canvas = new Canvas()
 	const ctx = canvas.getContext('2d')
 
-	FontLibrary.use('RobotoCnd', ['./assets/roboto-condensed-regular.ttf', './assets/roboto-condensed-700.ttf'])
+	const cwd = process.cwd()
+
+	FontLibrary.use('RobotoCnd', [
+		path.join(cwd, './assets/roboto-condensed-regular.ttf'),
+		path.join(cwd, './assets/roboto-condensed-700.ttf'),
+	])
 
 	void canvas, ctx
 }
