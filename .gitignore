@@ -1,11 +1,13 @@
 node_modules
 dist
 test
+deploy
 src/**.js
 
 /docs
 .nyc_output
 *.log
+*.pfx
 
 wallaby.conf.js
 

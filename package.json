@@ -33,7 +33,10 @@
     "release:bump-release": "lerna version --exact --conventional-commits --conventional-graduate --tag-version-prefix='' --no-push --force-publish=*",
     "release:bump-prerelease": "lerna version --exact --conventional-commits --conventional-prerelease --tag-version-prefix='' --no-push --force-publish=*",
     "validate:dependencies": "yarn lerna exec --parallel yarn validate:dependencies",
-    "validate:dev-dependencies": "yarn lerna exec --parallel yarn validate:dev-dependencies"
+    "validate:dev-dependencies": "yarn lerna exec --parallel yarn validate:dev-dependencies",
+    "do:build-win32": "yarn build-win32 && yarn sign-executables",
+    "build-win32": "pkg -t node16-win --public ./packages/input-gateway",
+    "sign-executables": "node scripts/sign-executables.js"
   },
   "devDependencies": {
     "@sofie-automation/code-standard-preset": "~2.0.2",
@@ -51,6 +54,7 @@
     "lerna": "^5.5.2",
     "nodemon": "^2.0.20",
     "open-cli": "^7.0.1",
+    "pkg": "^5.8.0",
     "rimraf": "^3.0.2",
     "symlink-dir": "^5.0.1",
     "ts-jest": "^26.1.0",

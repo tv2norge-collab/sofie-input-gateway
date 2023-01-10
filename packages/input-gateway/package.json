@@ -3,6 +3,9 @@
 	"version": "0.0.1",
 	"description": "Have devices, trigger stuff",
 	"main": "dist/index.js",
+	"bin": {
+		"input-gateway": "dist/index.js"
+	},
 	"license": "MIT",
 	"contributors": [
 		{
@@ -85,5 +88,10 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"pkg": {
+		"assets": "./assets/**/*",
+		"targets": ["node16-win"],
+		"outputPath": "deploy" 
 	}
 }
