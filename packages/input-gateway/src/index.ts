@@ -1,6 +1,7 @@
 import { InputManagerHandler } from './inputManagerHandler'
 import { config, logPath, disableWatchdog } from './config'
 import Winston from 'winston'
+import process from 'process'
 
 export interface LoggerInstance extends Winston.Logger {
 	warning: never // logger.warning is not a function
@@ -91,4 +92,17 @@ logger.info('Core:          ' + config.core.host + ':' + config.core.port)
 logger.info('------------------------------------------------------------------')
 inputHandler.init(config).catch((e) => {
 	logger.error(e)
+})
+
+process.on('SIGINT', () => {
+	logger.warn('Received SIGINT, shutting down...')
+	inputHandler
+		.destroy()
+		.catch((error) => {
+			logger.error(`Error when shutting down: ${error}`)
+		})
+		.finally(() => {
+			// eslint-disable-next-line no-process-exit
+			process.exit(0)
+		})
 })

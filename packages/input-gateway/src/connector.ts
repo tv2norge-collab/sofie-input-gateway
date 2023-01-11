@@ -48,7 +48,9 @@ export class Connector {
 
 			try {
 				if (this.coreHandler) {
-					this.coreHandler.destroy().catch(this._logger.error)
+					this.coreHandler.destroy().catch((err) => {
+						this._logger.error(`Error when trying to destroy coreHandler after error: ${err}`)
+					})
 				}
 			} catch (e) {
 				// Handle the edge case where destroy() throws synchronously:

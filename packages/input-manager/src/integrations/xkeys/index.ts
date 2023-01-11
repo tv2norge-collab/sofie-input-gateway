@@ -90,7 +90,7 @@ export class XKeysDevice extends Device {
 		)
 			.map((promiseResult) => {
 				if (promiseResult.status === 'rejected') {
-					this.logger.error(promiseResult.reason) // TODO: Stringify error
+					this.logger.error(`X-Keys: Error when snooping on device: ${promiseResult.reason}`) // TODO: Stringify error
 					return null
 				}
 				return promiseResult.value
@@ -172,7 +172,7 @@ export class XKeysDevice extends Device {
 		})
 
 		this.#device.addListener('error', (err) => {
-			this.logger.error(String(err))
+			this.logger.error(`X-Keys: Received Error: ${err}`)
 			this.emit('error', { error: err instanceof Error ? err : new Error(String(err)) })
 		})
 	}

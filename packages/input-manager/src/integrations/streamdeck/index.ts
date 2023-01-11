@@ -72,7 +72,7 @@ export class StreamDeckDevice extends Device {
 				triggerId,
 			})
 
-			this.updateFeedback(key, true).catch(console.error)
+			this.updateFeedback(key, true).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
 		})
 		this.#streamDeck.addListener('up', (key) => {
 			const triggerId = `${key} ${Symbols.UP}`
@@ -80,7 +80,7 @@ export class StreamDeckDevice extends Device {
 				triggerId,
 			})
 
-			this.updateFeedback(key, false).catch(console.error)
+			this.updateFeedback(key, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
 		})
 		this.#streamDeck.addListener('error', (err) => {
 			this.logger.error(String(err))

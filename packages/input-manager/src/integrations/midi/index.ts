@@ -185,7 +185,9 @@ export class MIDIDevice extends Device {
 				})
 				// Some MIDI Devices clear backlight state when pressing a button, this will attempt
 				// to restore the correct state
-				this.updateFeedback(`${msg.channel}_${msg.note}`).catch(console.error)
+				this.updateFeedback(`${msg.channel}_${msg.note}`).catch((err) =>
+					this.logger.error(`MIDI: Error updating feedback: ${err}`)
+				)
 			})
 			this.#input.on('noteoff', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.UP}`
@@ -195,7 +197,9 @@ export class MIDIDevice extends Device {
 						velocity: msg.velocity,
 					},
 				})
-				this.updateFeedback(`${msg.channel}_${msg.note}`).catch(console.error)
+				this.updateFeedback(`${msg.channel}_${msg.note}`).catch((err) =>
+					this.logger.error(`MIDI: Error updating feedback: ${err}`)
+				)
 			})
 			this.#input.on('cc', (msg) => {
 				const triggerId = `${msg.channel}_${msg.controller} ${MIDISymbols.CC}`

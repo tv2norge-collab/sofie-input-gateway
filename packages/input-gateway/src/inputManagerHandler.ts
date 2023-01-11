@@ -18,6 +18,7 @@ import { SomeDeviceConfig } from '@sofie-automation/input-manager'
 import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
 import { JobQueueWithClasses } from '@sofie-automation/shared-lib/dist/lib/JobQueueWithClasses'
+import { Observer } from '@sofie-automation/server-core-integration'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -41,6 +42,7 @@ export class InputManagerHandler {
 
 	#inputManager: InputManager | undefined
 	#queue: JobQueueWithClasses
+	#observers: Observer[] = []
 
 	constructor(logger: Winston.Logger) {
 		this.#logger = logger
@@ -84,7 +86,9 @@ export class InputManagerHandler {
 			if (e instanceof Error) this.#logger.error(e.stack)
 			try {
 				if (this.#coreHandler) {
-					this.#coreHandler.destroy().catch(this.#logger.error)
+					this.#coreHandler
+						.destroy()
+						.catch((err) => this.#logger.error(`Error when trying to destroy CoreHandler: ${err}`))
 				}
 			} catch (e1) {
 				this.#logger.error(e1)
@@ -134,12 +138,14 @@ export class InputManagerHandler {
 				.then(() => {
 					this.#refreshMountedTriggers()
 				})
-				.catch(this.#logger.error)
+				.catch((err) => this.#logger.error(`Error in refreshMountedTriggers() on coreHandler.onConnected: ${err}`))
 		})
 
 		const mountedTriggersObserver = this.#coreHandler.core.observe('mountedTriggers')
 		mountedTriggersObserver.added = (id, _obj) => {
-			this.#handleChangedMountedTrigger(protectString(id)).catch(this.#logger.error)
+			this.#handleChangedMountedTrigger(protectString(id)).catch((err) =>
+				this.#logger.error(`Error in handleChangedMountedTrigger() on mountedTriggersObserver.added: ${err}`)
+			)
 		}
 		mountedTriggersObserver.changed = (
 			id,
@@ -161,14 +167,20 @@ export class InputManagerHandler {
 					oldFields.deviceTriggerId ?? obj.deviceTriggerId
 				)
 					.then(async () => this.#handleChangedMountedTrigger(protectString(id)))
-					.catch(this.#logger.error)
+					.catch((err) => {
+						this.#logger.error(`Error in handleRemovedMountedTrigger() on mountedTriggersObserver.changed: ${err}`)
+					})
 				return
 			}
-			this.#handleChangedMountedTrigger(protectString(id)).catch(this.#logger.error)
+			this.#handleChangedMountedTrigger(protectString(id)).catch((err) => {
+				this.#logger.error(`Error in handleChangedMountedTrigger() on mountedTriggersObserver.changed: ${err}`)
+			})
 		}
 		mountedTriggersObserver.removed = (_id, obj) => {
 			const obj0 = obj as any as DeviceTriggerMountedAction
-			this.#handleRemovedMountedTrigger(obj0.deviceId, obj0.deviceTriggerId).catch(this.#logger.error)
+			this.#handleRemovedMountedTrigger(obj0.deviceId, obj0.deviceTriggerId).catch((err) => {
+				this.#logger.error(`Error in handleRemovedMountedTrigger() on mountedTriggersObserver.removed: ${err}`)
+			})
 		}
 		const triggersPreviewsObserver = this.#coreHandler.core.observe('mountedTriggersPreviews')
 		triggersPreviewsObserver.added = (id, obj) => {
@@ -181,7 +193,9 @@ export class InputManagerHandler {
 				return
 			}
 			for (const action of mountedActions) {
-				this.#handleChangedMountedTrigger(action._id).catch(this.#logger.error)
+				this.#handleChangedMountedTrigger(action._id).catch((err) => {
+					this.#logger.error(`Error in handleChangedMountedTrigger() on triggersPreviewsObserver.added: ${err}`)
+				})
 			}
 		}
 		triggersPreviewsObserver.changed = (id, _old, _cleared, _new) => {
@@ -200,7 +214,9 @@ export class InputManagerHandler {
 				return
 			}
 			for (const action of mountedActions) {
-				this.#handleChangedMountedTrigger(action._id).catch(this.#logger.error)
+				this.#handleChangedMountedTrigger(action._id).catch((err) => {
+					this.#logger.error(`Error in handleChangedMountedTrigger() on triggersPreviewsObserver.changed: ${err}`)
+				})
 			}
 		}
 		triggersPreviewsObserver.removed = (_id, obj) => {
@@ -213,12 +229,23 @@ export class InputManagerHandler {
 				return
 			}
 			for (const action of mountedActions) {
-				this.#handleChangedMountedTrigger(action._id).catch(this.#logger.error)
+				this.#handleChangedMountedTrigger(action._id).catch((err) => {
+					this.#logger.error(`Error in handleChangedMountedTrigger() on triggersPreviewsObserver.removed: ${err}`)
+				})
 			}
 		}
+		this.#observers.push(triggersPreviewsObserver, mountedTriggersObserver)
 
 		// Monitor for changes in settings:
 		this.#coreHandler.onChanged(() => this.#onCoreHandlerChanged())
+	}
+
+	async destroy(): Promise<void> {
+		for (const obs of this.#observers) {
+			obs.stop()
+		}
+		if (this.#inputManager) await this.#inputManager.destroy()
+		if (this.#coreHandler) await this.#coreHandler.destroy()
 	}
 
 	#onCoreHandlerChanged() {
@@ -267,7 +294,9 @@ export class InputManagerHandler {
 			.find({})
 			.forEach((obj) => {
 				const mountedTrigger = obj as DeviceTriggerMountedAction
-				this.#handleChangedMountedTrigger(mountedTrigger._id).catch(this.#logger.error)
+				this.#handleChangedMountedTrigger(mountedTrigger._id).catch((err) =>
+					this.#logger.error(`Error in #handleChangedMountedTrigger in #refreshMountedTriggers: ${err}`)
+				)
 			})
 	}
 
