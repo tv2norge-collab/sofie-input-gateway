@@ -1,7 +1,8 @@
 {
   "name": "input-gateway-packages",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "homepage": "https://github.com/nrkno/sofie-input-gateway",
   "workspaces": {
     "packages": [
       "packages/**"
@@ -37,10 +38,11 @@
     "do:build-win32": "rimraf deploy && yarn build && yarn build-win32 && yarn copy-assets && yarn sign-executables",
     "build-win32": "pkg -t node16-win --public ./packages/input-gateway",
     "sign-executables": "node scripts/sign-executables.js",
-    "copy-assets": "node scripts/copy-assets.js"
+    "copy-assets": "node scripts/copy-assets.js",
+    "release": "sofie-version"
   },
   "devDependencies": {
-    "@sofie-automation/code-standard-preset": "~2.0.2",
+    "@sofie-automation/code-standard-preset": "~2.2",
     "@types/jest": "^26.0.9",
     "@types/node": "^14.18.12",
     "@types/request": "^2.48.8",
