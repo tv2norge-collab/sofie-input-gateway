@@ -35,10 +35,11 @@
     "release:bump-prerelease": "lerna version --exact --conventional-commits --conventional-prerelease --tag-version-prefix='' --no-push --force-publish=*",
     "validate:dependencies": "yarn lerna exec --parallel yarn validate:dependencies",
     "validate:dev-dependencies": "yarn lerna exec --parallel yarn validate:dev-dependencies",
-    "do:build-win32": "rimraf deploy && yarn build && yarn build-win32 && yarn copy-assets && yarn sign-executables",
+    "do:build-win32": "rimraf deploy && yarn install && yarn build && yarn build-win32 && yarn copy-assets && yarn sign-executables && yarn zip-deploy",
     "build-win32": "pkg -t node16-win --public ./packages/input-gateway",
     "sign-executables": "node scripts/sign-executables.js",
     "copy-assets": "node scripts/copy-assets.js",
+    "zip-deploy": "node scripts/zip-deploy.js",
     "release": "sofie-version"
   },
   "devDependencies": {
@@ -64,7 +65,8 @@
     "ts-node": "^10.9.1",
     "type-fest": "^2.16.0",
     "typedoc": "^0.22.14",
-    "typescript": "~4.6"
+    "typescript": "~4.6",
+    "zip-a-folder": "^1.1.5"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json"
 }
