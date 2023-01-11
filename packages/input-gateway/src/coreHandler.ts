@@ -17,6 +17,7 @@ import { protectString, unprotectString } from '@sofie-automation/shared-lib/dis
 import { PeripheralDeviceCommand } from '@sofie-automation/shared-lib/dist/core/model/PeripheralDeviceCommand'
 import { Process } from './process'
 import { stringifyError } from './lib/lib'
+import path from 'path'
 
 export interface CoreConfig {
 	host: string
@@ -425,11 +426,11 @@ export class CoreHandler {
 
 		const dirNames = ['@sofie-automation/server-core-integration']
 		try {
-			const nodeModulesDirectories = fs.readdirSync('node_modules')
+			const nodeModulesDirectories = fs.readdirSync(path.join(__dirname, '../../../', 'node_modules'))
 			for (const dir of nodeModulesDirectories) {
 				try {
 					if (dirNames.indexOf(dir) !== -1) {
-						let file = 'node_modules/' + dir + '/package.json'
+						let file = path.join(__dirname, 'node_modules', dir, 'package.json')
 						file = fs.readFileSync(file, 'utf8')
 						const json = JSON.parse(file)
 						versions[dir] = json.version || 'N/A'

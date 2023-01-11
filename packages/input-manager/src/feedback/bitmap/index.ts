@@ -2,6 +2,7 @@ import { Canvas, FontLibrary } from 'skia-canvas'
 import { SomeFeedback } from '../feedback'
 import { rendererFactory } from './typeRenderers/factory'
 import path from 'path'
+import fs from 'fs/promises'
 import process from 'process'
 
 async function makeBitmapFromFeedback(
@@ -50,12 +51,33 @@ export async function init(): Promise<void> {
 	const canvas = new Canvas()
 	const ctx = canvas.getContext('2d')
 
-	const cwd = process.cwd()
+	const fonts = ['roboto-condensed-regular.ttf', 'roboto-condensed-700.ttf']
 
-	FontLibrary.use('RobotoCnd', [
-		path.join(cwd, './assets/roboto-condensed-regular.ttf'),
-		path.join(cwd, './assets/roboto-condensed-700.ttf'),
-	])
+	const searchPaths = [path.join(process.execPath, './assets'), path.join(process.cwd(), './assets')]
+
+	const foundFiles = await findFiles(fonts, searchPaths)
+
+	FontLibrary.use('RobotoCnd', foundFiles)
 
 	void canvas, ctx
+}
+
+async function findFiles(files: string[], paths: string[]): Promise<string[]> {
+	const result: string[] = []
+	for (const file of files) {
+		let foundPath: string | null = null
+		for (const pathOption of paths) {
+			try {
+				const pathToTest = path.join(pathOption, file)
+				await fs.access(pathToTest, fs.constants.O_RDONLY)
+				foundPath = pathToTest
+				break
+			} catch (e) {
+				// Doesn't exist or can't read
+			}
+		}
+		if (foundPath) result.push(foundPath)
+	}
+
+	return result
 }

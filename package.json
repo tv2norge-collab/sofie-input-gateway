@@ -34,7 +34,7 @@
     "release:bump-prerelease": "lerna version --exact --conventional-commits --conventional-prerelease --tag-version-prefix='' --no-push --force-publish=*",
     "validate:dependencies": "yarn lerna exec --parallel yarn validate:dependencies",
     "validate:dev-dependencies": "yarn lerna exec --parallel yarn validate:dev-dependencies",
-    "do:build-win32": "rimraf deploy && yarn build-win32 && yarn copy-assets && yarn sign-executables",
+    "do:build-win32": "rimraf deploy && yarn build && yarn build-win32 && yarn copy-assets && yarn sign-executables",
     "build-win32": "pkg -t node16-win --public ./packages/input-gateway",
     "sign-executables": "node scripts/sign-executables.js",
     "copy-assets": "node scripts/copy-assets.js"

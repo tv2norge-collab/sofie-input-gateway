@@ -90,6 +90,10 @@
 		"access": "public"
 	},
 	"pkg": {
+		"assets": [
+			"../../node_modules/@sofie-automation/server-core-integration/package.json",
+			"../input-manager/node_modules/node-hid/build/Release/HID.node"
+		],
 		"targets": ["node16-win"],
 		"outputPath": "deploy" 
 	}
