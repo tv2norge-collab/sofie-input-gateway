@@ -1,15 +1,19 @@
 node_modules
 dist
 test
+deploy
 src/**.js
 
-coverage
+/docs
 .nyc_output
 *.log
+*.pfx
 
 wallaby.conf.js
 
 .DS_Store
+packages/*/coverage/
+.npmrc
 
-local/
-certs/
+# Ignore JetBrains IDE specific files
+.idea

@@ -1,0 +1,7 @@
+{
+    "eslint.workingDirectories": [
+        "packages/input-gateway",
+        "packages/input-manager",
+    ],
+    "prettier.enable": true,
+}

@@ -1,0 +1,113 @@
+{
+	"name": "@sofie-automation/input-manager",
+	"version": "0.0.1",
+	"description": "Have devices, send events, receive feedback",
+	"main": "dist/index.js",
+	"typings": "dist/index.d.ts",
+	"module": "dist/module/index.js",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nrkno/sofie-input-gateway.git"
+	},
+	"bugs": {
+		"url": "https://github.com/nrkno/sofie-input-gateway/issues"
+	},
+	"homepage": "https://github.com/nrkno/sofie-input-gateway#readme",
+	"contributors": [
+		{
+			"name": "Johan Nyman",
+			"email": "johan@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Balte de Wit",
+			"email": "balte@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Jesper Stærkær",
+			"email": "jesper@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Jan Starzak",
+			"email": "jan@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Stephan Nordnes Eriksen",
+			"email": "Stephanruler@gmail.com"
+		},
+		{
+			"name": "Julian Waller",
+			"email": "julian@superfly.tv",
+			"url": "http://superfly.tv"
+		}
+	],
+	"scripts": {
+		"build": "rimraf dist && yarn build:main",
+		"build:main": "tsc -p tsconfig.build.json",
+		"build:watch": "tsc -p tsconfig.build.json --watch",
+		"lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
+		"lint": "yarn lint:raw .",
+		"lint-fix": "yarn lint --fix",
+		"license-validate": "yarn sofie-licensecheck",
+		"unit": "jest --forceExit",
+		"unitci": "jest --forceExit --coverage",
+		"test": "yarn lint && yarn unit",
+		"test:integration": "yarn lint && jest --config=jest-integration.config.js",
+		"watch": "jest --watch",
+		"cov": "jest --coverage && yarn cov-open",
+		"cov-open": "open-cli coverage/lcov-report/index.html",
+		"validate:dependencies": "yarn audit --groups dependencies && yarn license-validate",
+		"validate:dev-dependencies": "yarn audit --groups devDependencies",
+		"precommit": "lint-staged"
+	},
+	"engines": {
+		"node": "^16.14"
+	},
+	"lint-staged": {
+		"*.{css,json,md,scss}": [
+			"prettier"
+		],
+		"*.{ts,tsx,js,jsx}": [
+			"yarn lint:raw"
+		]
+	},
+	"files": [
+		"/dist",
+		"/LICENSE"
+	],
+	"keywords": [
+		"broadcast",
+		"socket",
+		"typescript",
+		"javascript",
+		"open",
+		"source",
+		"automation",
+		"rundown",
+		"production"
+	],
+	"dependencies": {
+		"@elgato-stream-deck/node": "^5.6.0",
+		"@julusian/jpeg-turbo": "^2.0.0",
+		"easymidi": "^3.0.1",
+		"eventemitter3": "^4.0.7",
+		"fold-to-ascii": "^5.0.1",
+		"osc": "^2.4.3",
+		"skia-canvas": "^1.0.1",
+		"xkeys": "^2.4.0"
+	},
+	"peerDependencies": {
+		"@sofie-automation/server-core-integration": "*",
+		"@sofie-automation/shared-lib": "*"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"@types/fold-to-ascii": "^5.0.0"
+	}
+}

@@ -1,0 +1,15 @@
+{
+	"extends": "../../node_modules/@sofie-automation/code-standard-preset/eslint/main",
+	"overrides": [
+		{
+			"files": ["*.ts"],
+			"rules": {}
+		},
+		{
+			"files": ["examples/*"],
+			"rules": {
+				"node/no-extraneous-require": 0
+			}
+		}
+	]
+}

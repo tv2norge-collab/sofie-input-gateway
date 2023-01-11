@@ -1,0 +1,100 @@
+{
+	"name": "input-gateway",
+	"version": "0.0.1",
+	"description": "Have devices, trigger stuff",
+	"main": "dist/index.js",
+	"bin": {
+		"input-gateway": "dist/index.js"
+	},
+	"license": "MIT",
+	"contributors": [
+		{
+			"name": "Balte de Wit",
+			"email": "balte@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Jan Starzak",
+			"email": "jan@superfly.tv",
+			"url": "http://superfly.tv"
+		},
+		{
+			"name": "Julian Waller",
+			"email": "julian@superfly.tv",
+			"url": "http://superfly.tv"
+		}
+	],
+	"scripts": {
+		"start": "node dist/index.js",
+		"build": "rimraf dist && yarn build:main",
+		"build:main": "tsc -p tsconfig.build.json",
+		"lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
+		"lint": "yarn lint:raw .",
+		"lint-fix": "yarn lint --fix",
+		"license-validate": "yarn sofie-licensecheck",
+		"unit": "jest --forceExit",
+		"unitci": "jest --forceExit --coverage",
+		"test": "yarn lint && yarn unit",
+		"test:integration": "yarn lint && jest --config=jest-integration.config.js",
+		"watch": "jest --watch",
+		"cov": "jest --coverage && yarn cov-open",
+		"cov-open": "open-cli coverage/lcov-report/index.html",
+		"validate:dependencies": "yarn audit --groups dependencies && yarn license-validate",
+		"validate:dev-dependencies": "yarn audit --groups devDependencies",
+		"precommit": "lint-staged"
+	},
+	"lint-staged": {
+		"*.{css,json,md,scss}": [
+			"prettier"
+		],
+		"*.{ts,tsx,js,jsx}": [
+			"yarn lint:raw"
+		]
+	},
+	"engines": {
+		"node": "^16.14"
+	},
+	"files": [
+		"/dist",
+		"/CHANGELOG.md",
+		"/README.md",
+		"/LICENSE"
+	],
+	"keywords": [
+		"broadcast",
+		"socket",
+		"typescript",
+		"javascript",
+		"open",
+		"source",
+		"automation",
+		"rundown",
+		"production"
+	],
+	"dependencies": {
+		"@sofie-automation/input-manager": "*",
+		"@sofie-automation/server-core-integration": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
+		"@sofie-automation/shared-lib": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
+		"debug": "^4.3.1",
+		"eventemitter3": "^4.0.7",
+		"p-all": "^3.0.0",
+		"p-queue": "^6.4.0",
+		"p-timeout": "^3.2.0",
+		"sprintf-js": "^1.1.2",
+		"tslib": "^2.3.1",
+		"underscore": "^1.13.4",
+		"underscore-deep-extend": "^1.1.5",
+		"winston": "^3.8.2"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"pkg": {
+		"assets": [
+			"../../node_modules/@sofie-automation/server-core-integration/package.json",
+			"../input-manager/node_modules/node-hid/build/Release/HID.node"
+		],
+		"targets": ["node16-win"],
+		"outputPath": "deploy" 
+	}
+}
