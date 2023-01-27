@@ -3,7 +3,7 @@
 	"ignore": [".git", "node_modules/", "packages/input-gateway/dist/", "packages/input-gateway/node_modules/", "packages/input-manager/node_modules/"],
 	"watch": ["packages/input-gateway/", "packages/input-manager/dist/"],
 	"execMap": {
-		"ts": "node -r ts-node/register"
+		"ts": "ts-node -P ./packages/input-gateway/tsconfig.build.json"
 	},
 	"env": {
 		"NODE_ENV": "development"
