@@ -55,10 +55,10 @@ describe('HTTP Server', () => {
 			}
 		)
 
-		expect(triggerHandler).toBeCalledTimes(1)
+		expect(triggerHandler).toHaveBeenCalledTimes(1)
 		expect(triggerHandler.mock.calls[0][0]).toMatchObject({
 			triggerId: `${method} ${url}`,
 		})
-		expect(responseEnd).toBeCalledTimes(1)
+		expect(responseEnd).toHaveBeenCalledTimes(1)
 	})
 })

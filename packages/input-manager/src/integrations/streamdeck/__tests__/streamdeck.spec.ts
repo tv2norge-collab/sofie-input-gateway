@@ -66,10 +66,10 @@ describe('Stream Deck', () => {
 	it('Connects to a specified Stream Deck on initialization', async () => {
 		await connectToMockStreamDeck()
 
-		expect(mockStreamDeck.addListener).toBeCalled()
+		expect(mockStreamDeck.addListener).toHaveBeenCalled()
 		expect(mockStreamDeck.addListener).toHaveBeenCalledWith('down', expect.any(Function))
 		expect(mockStreamDeck.addListener).toHaveBeenCalledWith('up', expect.any(Function))
-		expect(mockStreamDeck.clearPanel).toBeCalled()
+		expect(mockStreamDeck.clearPanel).toHaveBeenCalled()
 	})
 	it('Emits a trigger event when it receives a button press', async () => {
 		const device = await connectToMockStreamDeck()
@@ -79,14 +79,14 @@ describe('Stream Deck', () => {
 
 		mockListeners['down'](1)
 
-		expect(triggerHandler).toBeCalledTimes(1)
+		expect(triggerHandler).toHaveBeenCalledTimes(1)
 		expect(triggerHandler.mock.calls[0][0]).toMatchObject({
 			triggerId: `1 ${Symbols.DOWN}`,
 		})
 
 		mockListeners['up'](1)
 
-		expect(triggerHandler).toBeCalledTimes(2)
+		expect(triggerHandler).toHaveBeenCalledTimes(2)
 		expect(triggerHandler.mock.calls[1][0]).toMatchObject({
 			triggerId: `1 ${Symbols.UP}`,
 		})
