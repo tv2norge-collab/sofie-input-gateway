@@ -31,6 +31,7 @@ jobs:
           # try and avoid timeout errors
           yarn config set network-timeout 100000 -g
 
+          yarn install
           yarn do:build-win32:ci
 
       - name: Sign executables
