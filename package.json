@@ -36,6 +36,7 @@
     "validate:dependencies": "lerna exec --parallel yarn validate:dependencies",
     "validate:dev-dependencies": "lerna exec --parallel yarn validate:dev-dependencies",
     "do:build-win32": "rimraf deploy && yarn install && yarn build && yarn build-win32 && yarn copy-assets && yarn sign-executables && yarn zip-deploy",
+    "do:build-win32:ci": "rimraf deploy && yarn install && yarn build && yarn build-win32 && yarn copy-assets",
     "build-win32": "pkg -t node16-win --public ./packages/input-gateway",
     "sign-executables": "node scripts/sign-executables.js",
     "copy-assets": "node scripts/copy-assets.js",
