@@ -171,7 +171,12 @@ export class XKeysDevice extends Device {
 			})
 		})
 
-		this.#device.addListener('error', (err) => {
+		this.#device.on('disconnected', () => {
+			this.logger.warn(`X-Keys: Disconnected`)
+			this.emit('error', { error: new Error('X-Keys: Disconnected') })
+		})
+
+		this.#device.on('error', (err) => {
 			this.logger.error(`X-Keys: Received Error: ${err}`)
 			this.emit('error', { error: err instanceof Error ? err : new Error(String(err)) })
 		})
@@ -180,6 +185,7 @@ export class XKeysDevice extends Device {
 	async destroy(): Promise<void> {
 		await super.destroy()
 		if (!this.#device) return
+		this.#device.removeAllListeners()
 		await this.#device.close()
 	}
 
