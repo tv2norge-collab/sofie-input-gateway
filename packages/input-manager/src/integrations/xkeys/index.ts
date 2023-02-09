@@ -176,7 +176,7 @@ export class XKeysDevice extends Device {
 			this.emit('error', { error: new Error('X-Keys: Disconnected') })
 		})
 
-		this.#device.addListener('error', (err) => {
+		this.#device.on('error', (err) => {
 			this.logger.error(`X-Keys: Received Error: ${err}`)
 			this.emit('error', { error: err instanceof Error ? err : new Error(String(err)) })
 		})
