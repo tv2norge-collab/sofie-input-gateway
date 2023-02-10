@@ -139,7 +139,9 @@ export class CoreHandler {
 	async destroy(): Promise<void> {
 		this._statusDestroyed = true
 		await this.updateCoreStatus()
-		await this.core.destroy()
+		if (this.core) {
+			await this.core.destroy()
+		}
 	}
 	getCoreConnectionOptions(name: string, subDeviceId: string, subDeviceType?: PeripheralDeviceSubType): CoreOptions {
 		if (!this._deviceOptions.deviceId) {
@@ -377,10 +379,12 @@ export class CoreHandler {
 			messages.push('Shut down')
 		}
 
-		await this.core.setStatus({
-			statusCode: statusCode,
-			messages: messages,
-		})
+		if (this.core) {
+			await this.core.setStatus({
+				statusCode: statusCode,
+				messages: messages,
+			})
+		}
 	}
 	setProcessState = (processName: string, comments: string[], status: StatusCode): void => {
 		this._processState[processName] = {
