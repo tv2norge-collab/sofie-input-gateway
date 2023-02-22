@@ -29,7 +29,6 @@ type DeviceEvents = {
 	trigger: [e: TriggerEventArgs]
 	statusChange: [e: StatusChangeEventArgs]
 	error: [e: ErrorArgs]
-	debug: [message: string, context?: any]
 }
 
 export abstract class Device extends EventEmitter<DeviceEvents> {

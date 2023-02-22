@@ -1,4 +1,4 @@
-export const MockLogger = {
+export const MockLogger: any = {
 	data: jest.fn(),
 	debug: jest.fn(),
 	error: jest.fn(),
@@ -10,4 +10,7 @@ export const MockLogger = {
 	silly: jest.fn(),
 	verbose: jest.fn(),
 	warn: jest.fn(),
+	child: (): typeof MockLogger => {
+		return MockLogger
+	},
 }

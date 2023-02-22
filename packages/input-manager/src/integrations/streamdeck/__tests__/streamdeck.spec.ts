@@ -30,6 +30,7 @@ const mockStreamDeck = {
 	clearPanel: jest.fn(),
 	close: jest.fn(),
 	checkValidKeyIndex: jest.fn(),
+	setBrightness: jest.fn(async () => Promise.resolve()),
 }
 
 jest.mock('@elgato-stream-deck/node', () => ({

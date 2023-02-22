@@ -70,6 +70,9 @@ export class StreamDeckDevice extends Device {
 		this.ENC_SIZE_HEIGHT = this.#streamDeck.LCD_ENCODER_SIZE?.height
 		this.ENC_SIZE_WIDTH = this.#streamDeck.LCD_ENCODER_SIZE?.width
 
+		this.#streamDeck.setBrightness(100).catch((err) => {
+			this.logger.error(`Error setting brightness: ${err}`, err)
+		})
 		this.#streamDeck.addListener('down', (key) => {
 			const id = `${key}`
 			const triggerId = `${id} ${Symbols.DOWN}`
@@ -239,7 +242,7 @@ export class StreamDeckDevice extends Device {
 				})
 			}
 		} catch (e) {
-			this.emit('debug', `Exception thrown in updateFeedback()`, e)
+			this.logger.debug(`Exception thrown in updateFeedback()`, e)
 		}
 	}
 
