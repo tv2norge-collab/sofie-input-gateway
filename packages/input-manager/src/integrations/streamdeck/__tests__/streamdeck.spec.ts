@@ -26,8 +26,10 @@ const mockStreamDeck = {
 	}),
 	clearKey: jest.fn(),
 	fillKeyBuffer: jest.fn(),
+	fillEncoderLcd: jest.fn(),
 	clearPanel: jest.fn(),
 	close: jest.fn(),
+	checkValidKeyIndex: jest.fn(),
 }
 
 jest.mock('@elgato-stream-deck/node', () => ({
