@@ -328,6 +328,9 @@ export class InputManagerHandler {
 		manager.on('trigger', (e: TriggerEventArgs) => {
 			this.#throttleSendTrigger(e.deviceId, e.triggerId, e.arguments, e.replacesPrevious ?? false)
 		})
+		manager.on('debug', (message, context) => {
+			this.#logger.debug(message, { context })
+		})
 
 		await manager.init()
 		return manager

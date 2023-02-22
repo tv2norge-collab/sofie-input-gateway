@@ -48,6 +48,7 @@ interface StatusChangeEventArgs {
 type DeviceEvents = {
 	trigger: [e: TriggerEventArgs]
 	statusChange: [e: StatusChangeEventArgs]
+	debug: [message: string, ctx?: any]
 }
 
 const REFRESH_INTERVAL = 5000
@@ -142,6 +143,9 @@ class InputManager extends EventEmitter<DeviceEvents> {
 					deviceId,
 					status: statusChangeArgs.status,
 				})
+			})
+			device.on('debug', (message, context) => {
+				this.emit('debug', `Debug "${deviceId}": ${message}`, context)
 			})
 			this.#devices[deviceId] = device
 
