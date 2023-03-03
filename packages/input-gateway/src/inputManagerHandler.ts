@@ -323,7 +323,7 @@ export class InputManagerHandler {
 			{
 				devices: settings,
 			},
-			this.#logger
+			this.#logger.child({ source: 'InputManager' })
 		)
 		manager.on('trigger', (e: TriggerEventArgs) => {
 			this.#throttleSendTrigger(e.deviceId, e.triggerId, e.arguments, e.replacesPrevious ?? false)

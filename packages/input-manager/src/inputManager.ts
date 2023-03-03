@@ -112,7 +112,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 		let device
 		try {
 			this.#logger.debug(`Creating new device "${deviceId}"...`)
-			device = createNewDevice(deviceConfig, this.#logger)
+			device = createNewDevice(deviceConfig, this.#logger.child({ deviceId }))
 			device.on('trigger', (eventArgs) => {
 				this.emit('trigger', {
 					...eventArgs,
