@@ -24,9 +24,9 @@ import {
 import { interpollateTranslation, translateMessage } from './lib/translatableMessage'
 import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
-import { JobQueueWithClasses } from '@sofie-automation/shared-lib/dist/lib/JobQueueWithClasses'
 import { Observer } from '@sofie-automation/server-core-integration'
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
+import PQueue from 'p-queue'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -49,12 +49,18 @@ export class InputManagerHandler {
 	#process!: Process
 
 	#inputManager: InputManager | undefined
-	#queue: JobQueueWithClasses
+
+	#queue: PQueue
+
 	#observers: Observer[] = []
+	#devicesWithTriggersToSend: {
+		deviceId: string
+		getNextTrigger: () => TriggerEvent | undefined
+	}[] = []
 
 	constructor(logger: Winston.Logger) {
 		this.#logger = logger
-		this.#queue = new JobQueueWithClasses()
+		this.#queue = new PQueue({ concurrency: 1 })
 	}
 
 	async init(config: Config): Promise<void> {
@@ -308,18 +314,31 @@ export class InputManagerHandler {
 			})
 	}
 
-	#triggerSendTrigger(deviceId: string, getNextTrigger: () => TriggerEvent | undefined) {
+	#triggerSendTrigger() {
 		// const queueClassName = `${deviceId}_${triggerId}`
-		const queueClassName = `${deviceId}`
 
-		this.#queue.remove(queueClassName)
 		this.#queue
-			.add(
-				async (): Promise<void> => {
+			.add(async (): Promise<void> => {
+				try {
 					// Send the trigger to Core, if there is any:
-					const triggerToSend = getNextTrigger()
-					if (triggerToSend) {
-						this.#logger.verbose(`Trigger send "${queueClassName}"...`)
+
+					// Find next trigger among devices:
+					let triggerToSend: TriggerEvent | undefined = undefined
+					let deviceId: string | undefined = undefined
+					for (const device of this.#devicesWithTriggersToSend) {
+						triggerToSend = device.getNextTrigger()
+						if (triggerToSend) {
+							deviceId = device.deviceId
+							break
+						} else {
+							// Remove the device from devices to watch:
+							const i = this.#devicesWithTriggersToSend.findIndex((o) => o.deviceId === device.deviceId)
+							if (i !== -1) this.#devicesWithTriggersToSend.slice(i, 1)
+						}
+					}
+
+					if (triggerToSend && deviceId) {
+						this.#logger.verbose(`Trigger send...`)
 						this.#logger.verbose(triggerToSend.triggerId)
 						this.#logger.verbose(triggerToSend.arguments)
 
@@ -329,11 +348,12 @@ export class InputManagerHandler {
 								triggerToSend.triggerId,
 								triggerToSend.arguments ?? null
 							)
-							this.#logger.verbose(`Trigger send "${queueClassName}" done!`)
+							this.#logger.verbose(`Trigger send done!`)
 
-							// Wait a bit, to rate-limit sending of the triggers:
-							// The value, 50 ms, was chosen because it is approximate the time it takes for a human to click a key (key down + up).
-							await sleep(50)
+							if (triggerToSend.rateLimit) {
+								// Wait a bit, to rate-limit sending of the triggers:
+								await sleep(triggerToSend.rateLimit)
+							}
 						} else {
 							// If we're not connected, discard the input
 							this.#logger.warn('Skipping SendTrigger, not connected to Core')
@@ -341,15 +361,17 @@ export class InputManagerHandler {
 
 						// Queue another sendTrigger, to send any triggers that might have come in
 						// while we where busy handling this one:
-						this.#triggerSendTrigger(deviceId, getNextTrigger)
+						this.#triggerSendTrigger()
+					} else {
+						// Nothing left to send.
 					}
-				},
-				{
-					className: queueClassName,
+				} catch (e) {
+					this.#logger.error(`peripheralDevice.input.inputDeviceTrigger failed: ${e}`)
+					this.#logger.error(e)
 				}
-			)
+			})
 			.catch((e) => {
-				this.#logger.error(`peripheralDevice.input.inputDeviceTrigger failed: ${e}`)
+				this.#logger.error(`#queue.add() error: ${e}`)
 				this.#logger.error(e)
 			})
 	}
@@ -362,7 +384,10 @@ export class InputManagerHandler {
 			this.#logger.child({ source: 'InputManager' })
 		)
 		manager.on('trigger', (e: ManagerTriggerEventArgs) => {
-			this.#triggerSendTrigger(e.deviceId, e.getNextTrigger)
+			if (!this.#devicesWithTriggersToSend.find((o) => o.deviceId === e.deviceId)) {
+				this.#devicesWithTriggersToSend.push({ deviceId: e.deviceId, getNextTrigger: e.getNextTrigger })
+			}
+			this.#triggerSendTrigger()
 		})
 
 		await manager.init()

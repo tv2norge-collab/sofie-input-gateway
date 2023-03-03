@@ -43,8 +43,7 @@ export class HTTPDevice extends Device {
 
 				const triggerId = `${req.method ?? 'GET'} ${pathname}`
 
-				this.triggerKeys.push({ triggerId, arguments: triggerArguments })
-				this.emit('trigger')
+				this.addTriggerEvent({ triggerId, arguments: triggerArguments })
 			}
 
 			res.end()

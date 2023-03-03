@@ -20,11 +20,5 @@ export function assertNever(_never: never): void {
 export type DeviceConfigManifest<ConfigObj extends object> = Array<
 	{ id: keyof ConfigObj } & Omit<TableEntryConfigManifestEntry, 'id'>
 >
-/** Removes and returns the first entry in a map */
-export function shiftMapFirstEntry<T>(theMap: Map<string, T>): { key: string; value: T } | undefined {
-	for (const [key, value] of theMap.entries()) {
-		theMap.delete(key)
-		return { key, value }
-	}
-	return undefined
-}
+// The value, 50 ms, was chosen because it is approximate the time it takes for a human to click a key (key down + up).
+export const DEFAULT_ANALOG_RATE_LIMIT = 50

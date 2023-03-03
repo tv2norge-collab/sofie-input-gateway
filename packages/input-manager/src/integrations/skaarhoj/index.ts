@@ -1,7 +1,7 @@
 import net from 'net'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
 import { ClassNames, Label, SomeFeedback, Tally } from '../../feedback/feedback'
 import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
@@ -100,25 +100,23 @@ export class SkaarhojDevice extends Device {
 		if (state === 'Down') {
 			triggerId += ` ${Symbols.DOWN}`
 
-			this.triggerKeys.push({ triggerId })
-			this.emit('trigger')
+			this.addTriggerEvent({ triggerId })
 		} else if (state === 'Up') {
 			triggerId += ` ${Symbols.UP}`
 
-			this.triggerKeys.push({ triggerId })
-			this.emit('trigger')
+			this.addTriggerEvent({ triggerId })
 		} else {
 			const stateMatch = state.match(AnalogStateChange.StateChange)
 			if (stateMatch) {
-				this.triggerAnalogs.set(triggerId, {
-					[stateMatch[1]]: parseFloat(stateMatch[2]),
+				this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, () => {
+					return {
+						[stateMatch[1]]: parseFloat(stateMatch[2]),
+					}
 				})
-				this.emit('trigger')
 			} else {
 				// TODO: what should happen here?
 
-				this.triggerKeys.push({ triggerId })
-				this.emit('trigger')
+				this.addTriggerEvent({ triggerId })
 			}
 		}
 	}

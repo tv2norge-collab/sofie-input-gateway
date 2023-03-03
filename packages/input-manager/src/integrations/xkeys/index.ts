@@ -1,7 +1,7 @@
 import { listAllConnectedPanels, setupXkeysPanel, XKeys } from 'xkeys'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
 import { ClassNames, SomeFeedback, Tally } from '../../feedback/feedback'
 import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 
@@ -113,59 +113,62 @@ export class XKeysDevice extends Device {
 
 		this.#device.on('down', (keyIndex) => {
 			const triggerId = `${keyIndex} ${Symbols.DOWN}`
-			this.triggerKeys.push({ triggerId })
-			this.emit('trigger')
+			this.addTriggerEvent({ triggerId })
 		})
 
 		this.#device.on('up', (keyIndex) => {
 			const triggerId = `${keyIndex} ${Symbols.UP}`
-			this.triggerKeys.push({ triggerId })
-			this.emit('trigger')
+			this.addTriggerEvent({ triggerId })
 		})
 
 		this.#device.on('jog', (index, deltaValue) => {
 			const triggerId = `${index} ${Symbols.JOG}`
-			const event = (this.triggerAnalogs.get(triggerId) as { deltaValue: number }) || { deltaValue: 0 }
-			event.deltaValue += deltaValue
-			this.triggerAnalogs.set(triggerId, event)
-			this.emit('trigger')
+
+			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { deltaValue: number }) => {
+				if (!prev) prev = { deltaValue: 0 }
+				return {
+					deltaValue: prev.deltaValue + deltaValue,
+				}
+			})
 		})
 
 		this.#device.on('shuttle', (index, position) => {
 			const triggerId = `${index} ${Symbols.SHUTTLE}`
 
-			this.triggerAnalogs.set(triggerId, { position })
-			this.emit('trigger')
+			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { position: number }) => {
+				if (!prev) prev = { position: 0 }
+				return {
+					position: prev.position + position,
+				}
+			})
 		})
 
 		this.#device.on('tbar', (index, position) => {
 			const triggerId = `${index} ${Symbols.T_BAR}`
 
-			this.triggerAnalogs.set(triggerId, { position })
-			this.emit('trigger')
+			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { position: number }) => {
+				if (!prev) prev = { position: 0 }
+				return {
+					position: prev.position + position,
+				}
+			})
 		})
 
 		this.#device.on('joystick', (index, positions) => {
 			const triggerId = `${index} ${Symbols.MOVE}`
 
-			const event = (this.triggerAnalogs.get(triggerId) as {
-				yPosition: number
-				xPosition: number
-				zPosition: number
-				zDelta: number
-			}) || {
-				yPosition: 0,
-				xPosition: 0,
-				zPosition: 0,
-				zDelta: 0,
-			}
-			event.xPosition = positions.x
-			event.yPosition = positions.y
-			event.zPosition = positions.z
-			event.zDelta += positions.deltaZ
-
-			this.triggerAnalogs.set(triggerId, event)
-			this.emit('trigger')
+			this.updateTriggerAnalog(
+				{ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT },
+				(prev?: { yPosition: number; xPosition: number; zPosition: number; zDelta: number }) => {
+					if (!prev) prev = { yPosition: 0, xPosition: 0, zPosition: 0, zDelta: 0 }
+					return {
+						xPosition: positions.x,
+						yPosition: positions.y,
+						zPosition: positions.z,
+						zDelta: prev.zDelta + positions.deltaZ,
+					}
+				}
+			)
 		})
 
 		this.#device.on('disconnected', () => {

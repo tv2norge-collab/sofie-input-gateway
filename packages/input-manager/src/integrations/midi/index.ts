@@ -1,7 +1,7 @@
 import { Channel, Input, Output, getInputs, getOutputs } from 'easymidi'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { assertNever, DeviceConfigManifest, Symbols } from '../../lib'
+import { assertNever, DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
 import { SomeFeedback, Tally } from '../../feedback/feedback'
 import { ConfigManifestEntryType, TableConfigManifestEntry } from '@sofie-automation/server-core-integration'
 import { literal } from '@sofie-automation/shared-lib/dist/lib/lib'
@@ -178,8 +178,7 @@ export class MIDIDevice extends Device {
 			this.#input.on('noteon', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.DOWN}`
 
-				this.triggerKeys.push({ triggerId, arguments: { velocity: msg.velocity } })
-				this.emit('trigger')
+				this.addTriggerEvent({ triggerId, arguments: { velocity: msg.velocity } })
 
 				// Some MIDI Devices clear backlight state when pressing a button, this will attempt
 				// to restore the correct state
@@ -190,8 +189,7 @@ export class MIDIDevice extends Device {
 			this.#input.on('noteoff', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.UP}`
 
-				this.triggerKeys.push({ triggerId, arguments: { velocity: msg.velocity } })
-				this.emit('trigger')
+				this.addTriggerEvent({ triggerId, arguments: { velocity: msg.velocity } })
 
 				this.updateFeedback(`${msg.channel}_${msg.note}`).catch((err) =>
 					this.logger.error(`MIDI: Error updating feedback: ${err}`)
@@ -200,10 +198,11 @@ export class MIDIDevice extends Device {
 			this.#input.on('cc', (msg) => {
 				const triggerId = `${msg.channel}_${msg.controller} ${MIDISymbols.CC}`
 
-				this.triggerAnalogs.set(triggerId, {
-					value: msg.value,
+				this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, () => {
+					return {
+						value: msg.value,
+					}
 				})
-				this.emit('trigger')
 			})
 
 			this.#checkInterval = setInterval(() => this.midiPortDetection(), MIDI_RECHECK_INTERVAL)

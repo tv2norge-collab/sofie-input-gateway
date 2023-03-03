@@ -54,14 +54,18 @@ export class OSCDevice extends Device {
 			const triggerId = message.address
 
 			const messageArguments: TriggerEventArguments = {}
-			const args = Array.isArray(message.args) ? message.args : [message.args]
+			const args =
+				message.args instanceof Uint8Array
+					? [message.args]
+					: Array.isArray(message.args)
+					? message.args
+					: [message.args]
 
 			for (let i = 0; i < args.length; i++) {
 				messageArguments[`${i}`] = JSON.stringify(args[i])
 			}
 
-			this.triggerKeys.push({ triggerId, arguments: messageArguments })
-			this.emit('trigger')
+			this.addTriggerEvent({ triggerId, arguments: messageArguments })
 		})
 		this.#refreshInterval = setInterval(() => this.#refreshKnownSenders(), REFRESH_KNOWN_SENDERS)
 	}

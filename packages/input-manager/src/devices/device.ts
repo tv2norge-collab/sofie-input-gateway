@@ -2,7 +2,6 @@ import EventEmitter from 'eventemitter3'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { SomeFeedback } from '../feedback/feedback'
 import { Logger } from '../logger'
-import { shiftMapFirstEntry } from '../lib'
 
 /**
  * Description of a "trigger got triggered" event
@@ -18,6 +17,11 @@ export interface TriggerEvent {
 	 * pressure, voltage, value, etc.
 	 */
 	arguments?: TriggerEventArguments
+
+	/**
+	 * If set, how often to wait for unti sending another Trigger event
+	 */
+	rateLimit?: number
 }
 
 export type TriggerEventArguments = Record<string, string | number | boolean>
@@ -40,17 +44,8 @@ type DeviceEvents = {
 export abstract class Device extends EventEmitter<DeviceEvents> {
 	protected logger: Logger
 
-	/** A list of triggered keys, in the order that they where triggered */
-	protected triggerKeys: {
-		triggerId: string
-		arguments?: any
-	}[] = []
-	/**
-	 * A map of trigger-analog values.
-	 * Keys are triggerIds
-	 * Values are the trigger Arguments
-	 */
-	protected triggerAnalogs = new Map<string, TriggerEventArguments>()
+	/** A list of triggers, in the order that they where triggered / updated */
+	#triggerEvents: TriggerEvent[] = []
 
 	constructor(logger: Logger) {
 		super()
@@ -65,20 +60,32 @@ export abstract class Device extends EventEmitter<DeviceEvents> {
 		this.removeAllListeners()
 	}
 
+	protected addTriggerEvent(triggerEvent: TriggerEvent): void {
+		this.#triggerEvents.push(triggerEvent)
+		this.emit('trigger')
+	}
+	protected updateTriggerAnalog<T extends TriggerEventArguments>(
+		triggerEvent: Omit<TriggerEvent, 'arguments'>,
+		updateArgumnets: (triggerAnalog: T | undefined) => T
+	): void {
+		const existingIndex = this.#triggerEvents.findIndex((t) => t.triggerId === triggerEvent.triggerId)
+		const trigger: TriggerEvent = existingIndex !== -1 ? this.#triggerEvents[existingIndex] : triggerEvent
+
+		// Update the analog value:
+		trigger.arguments = updateArgumnets(trigger.arguments as T | undefined)
+
+		// Move the trigger to end:
+		this.#triggerEvents.splice(existingIndex, 1)
+		this.#triggerEvents.push(trigger)
+
+		this.emit('trigger')
+	}
+
 	/**
 	 * Returns the next trigger to send to Core.
 	 * If there are no more triggers to send, return undefined
 	 */
 	getNextTrigger(): TriggerEvent | undefined {
-		{
-			const e = this.triggerKeys.shift()
-			if (e) return { triggerId: e.triggerId, arguments: e.arguments }
-		}
-		{
-			const e = shiftMapFirstEntry(this.triggerAnalogs)
-			if (e) return { triggerId: e.key, arguments: e.value }
-		}
-
-		return undefined
+		return this.#triggerEvents.shift()
 	}
 }
