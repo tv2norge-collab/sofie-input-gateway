@@ -1,6 +1,6 @@
 import { Server } from 'http'
 import { Logger } from '../../logger'
-import { Device } from '../../devices/device'
+import { Device, TriggerEventArguments } from '../../devices/device'
 import { DeviceConfigManifest } from '../../lib'
 import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 
@@ -27,10 +27,26 @@ export class HTTPDevice extends Device {
 
 	async init(): Promise<void> {
 		this.#server = new Server((req, res) => {
-			const triggerId = `${req.method ?? 'GET'} ${req.url}`
+			if (req.url) {
+				// Example: "https://localhost:8000/my/trigger/path?param0=hey#myHash"
 
-			this.triggerKeys.push({ triggerId })
-			this.emit('trigger')
+				const triggerArguments: TriggerEventArguments = {}
+
+				const url = new URL(req.url)
+				const searchParams: Record<string, any> = {}
+				for (const [key, value] of url.searchParams.entries()) {
+					searchParams[key] = value
+				}
+				triggerArguments.searchParams = JSON.stringify(searchParams) // {"param0": "hey"}
+				triggerArguments.hash = url.hash // "#myHash"
+
+				const pathname = url.pathname // "/my/trigger/path"
+
+				const triggerId = `${req.method ?? 'GET'} ${pathname}`
+
+				this.triggerKeys.push({ triggerId, arguments: triggerArguments })
+				this.emit('trigger')
+			}
 
 			res.end()
 		})
