@@ -177,12 +177,10 @@ export class MIDIDevice extends Device {
 			if (this.#config.outputName) this.#output = new Output(this.#config.outputName)
 			this.#input.on('noteon', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.DOWN}`
-				this.emit('trigger', {
-					triggerId,
-					arguments: {
-						velocity: msg.velocity,
-					},
-				})
+
+				this.triggerKeys.push({ triggerId, arguments: { velocity: msg.velocity } })
+				this.emit('trigger')
+
 				// Some MIDI Devices clear backlight state when pressing a button, this will attempt
 				// to restore the correct state
 				this.updateFeedback(`${msg.channel}_${msg.note}`).catch((err) =>
@@ -191,25 +189,21 @@ export class MIDIDevice extends Device {
 			})
 			this.#input.on('noteoff', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.UP}`
-				this.emit('trigger', {
-					triggerId,
-					arguments: {
-						velocity: msg.velocity,
-					},
-				})
+
+				this.triggerKeys.push({ triggerId, arguments: { velocity: msg.velocity } })
+				this.emit('trigger')
+
 				this.updateFeedback(`${msg.channel}_${msg.note}`).catch((err) =>
 					this.logger.error(`MIDI: Error updating feedback: ${err}`)
 				)
 			})
 			this.#input.on('cc', (msg) => {
 				const triggerId = `${msg.channel}_${msg.controller} ${MIDISymbols.CC}`
-				this.emit('trigger', {
-					triggerId,
-					arguments: {
-						value: msg.value,
-					},
-					replacesPrevious: true,
+
+				this.triggerAnalogs.set(triggerId, {
+					value: msg.value,
 				})
+				this.emit('trigger')
 			})
 
 			this.#checkInterval = setInterval(() => this.midiPortDetection(), MIDI_RECHECK_INTERVAL)

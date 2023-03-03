@@ -113,62 +113,59 @@ export class XKeysDevice extends Device {
 
 		this.#device.on('down', (keyIndex) => {
 			const triggerId = `${keyIndex} ${Symbols.DOWN}`
-			this.emit('trigger', {
-				triggerId,
-			})
+			this.triggerKeys.push({ triggerId })
+			this.emit('trigger')
 		})
 
 		this.#device.on('up', (keyIndex) => {
 			const triggerId = `${keyIndex} ${Symbols.UP}`
-			this.emit('trigger', {
-				triggerId,
-			})
+			this.triggerKeys.push({ triggerId })
+			this.emit('trigger')
 		})
 
-		this.#device.on('jog', (index, value) => {
+		this.#device.on('jog', (index, deltaValue) => {
 			const triggerId = `${index} ${Symbols.JOG}`
-			this.emit('trigger', {
-				triggerId,
-				arguments: {
-					value,
-				},
-			})
+			const event = (this.triggerAnalogs.get(triggerId) as { deltaValue: number }) || { deltaValue: 0 }
+			event.deltaValue += deltaValue
+			this.triggerAnalogs.set(triggerId, event)
+			this.emit('trigger')
 		})
 
-		this.#device.on('shuttle', (index, value) => {
+		this.#device.on('shuttle', (index, position) => {
 			const triggerId = `${index} ${Symbols.SHUTTLE}`
-			this.emit('trigger', {
-				triggerId,
-				arguments: {
-					value,
-				},
-				replacesPrevious: true,
-			})
+
+			this.triggerAnalogs.set(triggerId, { position })
+			this.emit('trigger')
 		})
 
-		this.#device.on('tbar', (index, value) => {
+		this.#device.on('tbar', (index, position) => {
 			const triggerId = `${index} ${Symbols.T_BAR}`
-			this.emit('trigger', {
-				triggerId,
-				arguments: {
-					value,
-				},
-				replacesPrevious: true,
-			})
+
+			this.triggerAnalogs.set(triggerId, { position })
+			this.emit('trigger')
 		})
 
-		this.#device.on('joystick', (index, value) => {
+		this.#device.on('joystick', (index, positions) => {
 			const triggerId = `${index} ${Symbols.MOVE}`
-			this.emit('trigger', {
-				triggerId,
-				arguments: {
-					x: value.x,
-					y: value.y,
-					z: value.z,
-					deltaZ: value.deltaZ,
-				},
-				replacesPrevious: true,
-			})
+
+			const event = (this.triggerAnalogs.get(triggerId) as {
+				yPosition: number
+				xPosition: number
+				zPosition: number
+				zDelta: number
+			}) || {
+				yPosition: 0,
+				xPosition: 0,
+				zPosition: 0,
+				zDelta: 0,
+			}
+			event.xPosition = positions.x
+			event.yPosition = positions.y
+			event.zPosition = positions.z
+			event.zDelta += positions.deltaZ
+
+			this.triggerAnalogs.set(triggerId, event)
+			this.emit('trigger')
 		})
 
 		this.#device.on('disconnected', () => {

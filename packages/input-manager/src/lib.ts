@@ -20,3 +20,11 @@ export function assertNever(_never: never): void {
 export type DeviceConfigManifest<ConfigObj extends object> = Array<
 	{ id: keyof ConfigObj } & Omit<TableEntryConfigManifestEntry, 'id'>
 >
+/** Removes and returns the first entry in a map */
+export function shiftMapFirstEntry<T>(theMap: Map<string, T>): { key: string; value: T } | undefined {
+	for (const [key, value] of theMap.entries()) {
+		theMap.delete(key)
+		return { key, value }
+	}
+	return undefined
+}

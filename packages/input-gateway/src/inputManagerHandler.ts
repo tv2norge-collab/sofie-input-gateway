@@ -12,13 +12,21 @@ import {
 import { SourceLayerType } from '@sofie-automation/shared-lib/dist/core/model/ShowStyle'
 import { Process } from './process'
 import { Config } from './connector'
-import { InputManager, TriggerEventArgs, ClassNames, Tally, SomeFeedback } from '@sofie-automation/input-manager'
+import {
+	InputManager,
+	ClassNames,
+	ManagerTriggerEventArgs,
+	Tally,
+	SomeFeedback,
+	SomeDeviceConfig,
+	TriggerEvent,
+} from '@sofie-automation/input-manager'
 import { interpollateTranslation, translateMessage } from './lib/translatableMessage'
-import { SomeDeviceConfig } from '@sofie-automation/input-manager'
 import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
 import { JobQueueWithClasses } from '@sofie-automation/shared-lib/dist/lib/JobQueueWithClasses'
 import { Observer } from '@sofie-automation/server-core-integration'
+import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
 
@@ -300,18 +308,46 @@ export class InputManagerHandler {
 			})
 	}
 
-	#throttleSendTrigger(
-		deviceId: string,
-		triggerId: string,
-		args: Record<string, string | number | boolean> | undefined,
-		replacesUnsent: boolean
-	) {
-		const className = `${deviceId}_${triggerId}`
-		if (replacesUnsent) this.#queue.remove(className)
+	#triggerSendTrigger(deviceId: string, getNextTrigger: () => TriggerEvent | undefined) {
+		// const queueClassName = `${deviceId}_${triggerId}`
+		const queueClassName = `${deviceId}`
+
+		this.#queue.remove(queueClassName)
 		this.#queue
-			.add(async () => this.#coreHandler.core.coreMethods.inputDeviceTrigger(deviceId, triggerId, args ?? null), {
-				className,
-			})
+			.add(
+				async (): Promise<void> => {
+					// Send the trigger to Core, if there is any:
+					const triggerToSend = getNextTrigger()
+					if (triggerToSend) {
+						this.#logger.verbose(`Trigger send "${queueClassName}"...`)
+						this.#logger.verbose(triggerToSend.triggerId)
+						this.#logger.verbose(triggerToSend.arguments)
+
+						if (this.#coreHandler.core.connected) {
+							await this.#coreHandler.core.coreMethods.inputDeviceTrigger(
+								deviceId,
+								triggerToSend.triggerId,
+								triggerToSend.arguments ?? null
+							)
+							this.#logger.verbose(`Trigger send "${queueClassName}" done!`)
+
+							// Wait a bit, to rate-limit sending of the triggers:
+							// The value, 50 ms, was chosen because it is approximate the time it takes for a human to click a key (key down + up).
+							await sleep(50)
+						} else {
+							// If we're not connected, discard the input
+							this.#logger.warn('Skipping SendTrigger, not connected to Core')
+						}
+
+						// Queue another sendTrigger, to send any triggers that might have come in
+						// while we where busy handling this one:
+						this.#triggerSendTrigger(deviceId, getNextTrigger)
+					}
+				},
+				{
+					className: queueClassName,
+				}
+			)
 			.catch((e) => {
 				this.#logger.error(`peripheralDevice.input.inputDeviceTrigger failed: ${e}`)
 				this.#logger.error(e)
@@ -325,8 +361,8 @@ export class InputManagerHandler {
 			},
 			this.#logger.child({ source: 'InputManager' })
 		)
-		manager.on('trigger', (e: TriggerEventArgs) => {
-			this.#throttleSendTrigger(e.deviceId, e.triggerId, e.arguments, e.replacesPrevious ?? false)
+		manager.on('trigger', (e: ManagerTriggerEventArgs) => {
+			this.#triggerSendTrigger(e.deviceId, e.getNextTrigger)
 		})
 
 		await manager.init()

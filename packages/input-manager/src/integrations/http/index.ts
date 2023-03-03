@@ -28,9 +28,10 @@ export class HTTPDevice extends Device {
 	async init(): Promise<void> {
 		this.#server = new Server((req, res) => {
 			const triggerId = `${req.method ?? 'GET'} ${req.url}`
-			this.emit('trigger', {
-				triggerId,
-			})
+
+			this.triggerKeys.push({ triggerId })
+			this.emit('trigger')
+
 			res.end()
 		})
 		this.#server.listen(this.#config.port)

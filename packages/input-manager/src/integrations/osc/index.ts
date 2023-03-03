@@ -53,9 +53,8 @@ export class OSCDevice extends Device {
 
 			const triggerId = message.address
 
-			this.emit('trigger', {
-				triggerId,
-			})
+			this.triggerKeys.push({ triggerId })
+			this.emit('trigger')
 		})
 		this.#refreshInterval = setInterval(() => this.#refreshKnownSenders(), REFRESH_KNOWN_SENDERS)
 	}

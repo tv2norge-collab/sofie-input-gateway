@@ -90,33 +90,37 @@ export class SkaarhojDevice extends Device {
 			this.logger.debug(`Uknown message from device: ${data}`)
 			return
 		}
-		let args: Record<string, number> | undefined = undefined
-		let trigger = match[1]
-		let replacesPrevious = false
+
+		let triggerId = match[1]
 		const mask = match[2]
 		const state = match[3]
 		if (mask) {
-			trigger += mask
+			triggerId += mask
 		}
 		if (state === 'Down') {
-			trigger += ` ${Symbols.DOWN}`
+			triggerId += ` ${Symbols.DOWN}`
+
+			this.triggerKeys.push({ triggerId })
+			this.emit('trigger')
 		} else if (state === 'Up') {
-			trigger += ` ${Symbols.UP}`
+			triggerId += ` ${Symbols.UP}`
+
+			this.triggerKeys.push({ triggerId })
+			this.emit('trigger')
 		} else {
 			const stateMatch = state.match(AnalogStateChange.StateChange)
 			if (stateMatch) {
-				args = {
+				this.triggerAnalogs.set(triggerId, {
 					[stateMatch[1]]: parseFloat(stateMatch[2]),
-				}
-				replacesPrevious = true
+				})
+				this.emit('trigger')
+			} else {
+				// TODO: what should happen here?
+
+				this.triggerKeys.push({ triggerId })
+				this.emit('trigger')
 			}
 		}
-
-		this.emit('trigger', {
-			triggerId: trigger,
-			arguments: args,
-			replacesPrevious,
-		})
 	}
 
 	async destroy(): Promise<void> {
