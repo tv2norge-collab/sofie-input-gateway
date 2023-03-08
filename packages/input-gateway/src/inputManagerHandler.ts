@@ -53,10 +53,8 @@ export class InputManagerHandler {
 	#queue: PQueue
 
 	#observers: Observer[] = []
-	#devicesWithTriggersToSend: {
-		deviceId: string
-		getNextTrigger: () => TriggerEvent | undefined
-	}[] = []
+	/** Set of deviceIds to check for triggers to send  */
+	#devicesWithTriggersToSend = new Set<string>()
 
 	constructor(logger: Winston.Logger) {
 		this.#logger = logger
@@ -325,15 +323,14 @@ export class InputManagerHandler {
 					// Find next trigger among devices:
 					let triggerToSend: TriggerEvent | undefined = undefined
 					let deviceId: string | undefined = undefined
-					for (const device of this.#devicesWithTriggersToSend) {
-						triggerToSend = device.getNextTrigger()
+					for (const checkDeviceId of this.#devicesWithTriggersToSend.values()) {
+						triggerToSend = this.#inputManager?.getNextTrigger(checkDeviceId)
 						if (triggerToSend) {
-							deviceId = device.deviceId
+							deviceId = checkDeviceId
 							break
 						} else {
-							// Remove the device from devices to watch:
-							const i = this.#devicesWithTriggersToSend.findIndex((o) => o.deviceId === device.deviceId)
-							if (i !== -1) this.#devicesWithTriggersToSend.slice(i, 1)
+							// Remove the device from devices to check:
+							this.#devicesWithTriggersToSend.delete(checkDeviceId)
 						}
 					}
 
@@ -384,9 +381,7 @@ export class InputManagerHandler {
 			this.#logger.child({ source: 'InputManager' })
 		)
 		manager.on('trigger', (e: ManagerTriggerEventArgs) => {
-			if (!this.#devicesWithTriggersToSend.find((o) => o.deviceId === e.deviceId)) {
-				this.#devicesWithTriggersToSend.push({ deviceId: e.deviceId, getNextTrigger: e.getNextTrigger })
-			}
+			this.#devicesWithTriggersToSend.add(e.deviceId)
 			this.#triggerSendTrigger()
 		})
 

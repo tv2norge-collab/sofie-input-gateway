@@ -36,9 +36,6 @@ type SomeDeviceConfig =
 export interface ManagerTriggerEventArgs {
 	/** The ID of the device that issued this event */
 	deviceId: string
-
-	/** Callback to retrieve the next trigger, to be used when it's time to send the trigger to Core. */
-	getNextTrigger: () => TriggerEvent | undefined
 }
 
 interface StatusChangeEventArgs {
@@ -77,6 +74,19 @@ class InputManager extends EventEmitter<DeviceEvents> {
 		)
 
 		this.#refreshInterval = setInterval(this.refreshDevicesInterval, REFRESH_INTERVAL)
+	}
+
+	/**
+	 * Returns the next trigger to send to Core, for a given device.
+	 * If there are no more triggers to send, return undefined
+	 * (This is used after the 'trigger' event has been emitted.)
+	 */
+	getNextTrigger(deviceId: string): TriggerEvent | undefined {
+		const device = this.#devices[deviceId]
+		if (device) {
+			return device.getNextTrigger()
+		}
+		return undefined
 	}
 
 	private refreshDevicesInterval = (): void => {
@@ -118,10 +128,9 @@ class InputManager extends EventEmitter<DeviceEvents> {
 			device.on('trigger', () => {
 				// Device notifies us that a trigger has changed.
 
-				this.emit('trigger', {
-					deviceId,
-					getNextTrigger: () => device.getNextTrigger(),
-				})
+				// Notify that that a trigger on a certain device has changed.
+				// The event listener should call this.getNextTrigger() to get the next trigger event.
+				this.emit('trigger', { deviceId })
 			})
 			const erroredDevice = device
 			device.on('error', (errorArgs) => {
