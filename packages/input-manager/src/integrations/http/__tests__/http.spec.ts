@@ -44,11 +44,18 @@ describe('HTTP Server', () => {
 
 		const method = 'POST'
 		const url = '/mock/0'
+		const headers = {
+			'accept-encoding': 'gzip, deflate, br',
+			accept: '*/*',
+			'user-agent': 'Unit test',
+			host: 'localhost:8000',
+		}
 
 		mockRequestClb(
 			{
 				method,
 				url,
+				headers,
 			},
 			{
 				end: responseEnd,

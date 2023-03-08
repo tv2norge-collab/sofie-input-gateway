@@ -31,7 +31,7 @@ export class HTTPDevice extends Device {
 				// Example: "https://localhost:8000/my/trigger/path?param0=hey#myHash"
 
 				const triggerArguments: TriggerEventArguments = {}
-				const url = new URL(req.url, 'http://localhost')
+				const url = new URL(req.url, `http://${req.headers.host}`)
 				const searchParams: Record<string, any> = {}
 				for (const [key, value] of url.searchParams.entries()) {
 					searchParams[key] = value
