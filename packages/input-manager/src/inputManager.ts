@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3'
-import { Device, TriggerEventArgs as DeviceTriggerEventArgs } from './devices/device'
+import { Device, TriggerEvent } from './devices/device'
 import { SomeFeedback } from './feedback/feedback'
 import { HTTPDevice, HTTPDeviceConfig, DEVICE_CONFIG as HTTP_CONFIG } from './integrations/http'
 import { MIDIDevice, MIDIDeviceConfig, DEVICE_CONFIG as MIDI_CONFIG } from './integrations/midi'
@@ -33,11 +33,9 @@ type SomeDeviceConfig =
 	| DeviceConfig<DeviceType.SKAARHOJ, SkaarhojDeviceConfig>
 	| DeviceConfig<DeviceType.OSC, OSCDeviceConfig>
 
-interface TriggerEventArgs extends DeviceTriggerEventArgs {
+export interface ManagerTriggerEventArgs {
 	/** The ID of the device that issued this event */
 	deviceId: string
-	/** Should this event replace whatever unsent events there are */
-	replacesPrevious?: boolean
 }
 
 interface StatusChangeEventArgs {
@@ -46,7 +44,7 @@ interface StatusChangeEventArgs {
 }
 
 type DeviceEvents = {
-	trigger: [e: TriggerEventArgs]
+	trigger: [e: ManagerTriggerEventArgs]
 	statusChange: [e: StatusChangeEventArgs]
 }
 
@@ -76,6 +74,19 @@ class InputManager extends EventEmitter<DeviceEvents> {
 		)
 
 		this.#refreshInterval = setInterval(this.refreshDevicesInterval, REFRESH_INTERVAL)
+	}
+
+	/**
+	 * Returns the next trigger to send to Core, for a given device.
+	 * If there are no more triggers to send, return undefined
+	 * (This is used after the 'trigger' event has been emitted.)
+	 */
+	getNextTrigger(deviceId: string): TriggerEvent | undefined {
+		const device = this.#devices[deviceId]
+		if (device) {
+			return device.getNextTrigger()
+		}
+		return undefined
 	}
 
 	private refreshDevicesInterval = (): void => {
@@ -109,15 +120,17 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 
 	private async createDevice(deviceId: string, deviceConfig: SomeDeviceConfig): Promise<void> {
-		let device
+		let createdDevice: Device | undefined = undefined
 		try {
 			this.#logger.debug(`Creating new device "${deviceId}"...`)
-			device = createNewDevice(deviceConfig, this.#logger)
-			device.on('trigger', (eventArgs) => {
-				this.emit('trigger', {
-					...eventArgs,
-					deviceId,
-				})
+			const device = createNewDevice(deviceConfig, this.#logger.child({ deviceId }))
+			createdDevice = device
+			device.on('trigger', () => {
+				// Device notifies us that a trigger has changed.
+
+				// Notify that that a trigger on a certain device has changed.
+				// The event listener should call this.getNextTrigger() to get the next trigger event.
+				this.emit('trigger', { deviceId })
 			})
 			const erroredDevice = device
 			device.on('error', (errorArgs) => {
@@ -151,7 +164,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 				status: StatusCode.GOOD,
 			})
 		} catch (e) {
-			if (device) await device.destroy()
+			if (createdDevice) await createdDevice.destroy()
 			delete this.#devices[deviceId]
 			this.emit('statusChange', {
 				deviceId,
@@ -211,7 +224,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 }
 
-function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger) {
+function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger): Device {
 	switch (deviceConfig.type) {
 		case DeviceType.HTTP:
 			return new HTTPDevice(deviceConfig, logger)
@@ -241,4 +254,4 @@ function getIntegrationsConfigManifest(): Record<string, DeviceConfigManifest<an
 	}
 }
 
-export { InputManager, SomeDeviceConfig, TriggerEventArgs, getIntegrationsConfigManifest }
+export { InputManager, SomeDeviceConfig, ManagerTriggerEventArgs as TriggerEventArgs, getIntegrationsConfigManifest }

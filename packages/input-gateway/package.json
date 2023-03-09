@@ -1,6 +1,6 @@
 {
 	"name": "input-gateway",
-	"version": "0.1.0",
+	"version": "0.1.2",
 	"description": "Have devices, trigger stuff",
 	"main": "dist/index.js",
 	"bin": {
@@ -27,6 +27,7 @@
 	"scripts": {
 		"start": "node dist/index.js",
 		"build": "rimraf dist && yarn build:main",
+		"buildstart": "yarn build && yarn start -id devxxsofie",
 		"build:main": "tsc -p tsconfig.build.json",
 		"lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
 		"lint": "yarn lint:raw .",
@@ -72,7 +73,7 @@
 		"production"
 	],
 	"dependencies": {
-		"@sofie-automation/input-manager": "0.1.0",
+		"@sofie-automation/input-manager": "0.1.2",
 		"@sofie-automation/server-core-integration": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
 		"@sofie-automation/shared-lib": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
 		"debug": "^4.3.1",

@@ -15,4 +15,5 @@ export interface Logger {
 	verbose: LeveledLogMethod
 	input: LeveledLogMethod
 	silly: LeveledLogMethod
+	child: (options: object) => Logger
 }

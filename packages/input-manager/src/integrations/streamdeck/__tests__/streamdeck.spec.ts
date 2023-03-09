@@ -26,8 +26,11 @@ const mockStreamDeck = {
 	}),
 	clearKey: jest.fn(),
 	fillKeyBuffer: jest.fn(),
+	fillEncoderLcd: jest.fn(),
 	clearPanel: jest.fn(),
 	close: jest.fn(),
+	checkValidKeyIndex: jest.fn(),
+	setBrightness: jest.fn(async () => Promise.resolve()),
 }
 
 jest.mock('@elgato-stream-deck/node', () => ({
@@ -66,10 +69,10 @@ describe('Stream Deck', () => {
 	it('Connects to a specified Stream Deck on initialization', async () => {
 		await connectToMockStreamDeck()
 
-		expect(mockStreamDeck.addListener).toBeCalled()
+		expect(mockStreamDeck.addListener).toHaveBeenCalled()
 		expect(mockStreamDeck.addListener).toHaveBeenCalledWith('down', expect.any(Function))
 		expect(mockStreamDeck.addListener).toHaveBeenCalledWith('up', expect.any(Function))
-		expect(mockStreamDeck.clearPanel).toBeCalled()
+		expect(mockStreamDeck.clearPanel).toHaveBeenCalled()
 	})
 	it('Emits a trigger event when it receives a button press', async () => {
 		const device = await connectToMockStreamDeck()
@@ -79,17 +82,20 @@ describe('Stream Deck', () => {
 
 		mockListeners['down'](1)
 
-		expect(triggerHandler).toBeCalledTimes(1)
-		expect(triggerHandler.mock.calls[0][0]).toMatchObject({
+		expect(triggerHandler).toHaveBeenCalledTimes(1)
+		expect(device.getNextTrigger()).toMatchObject({
 			triggerId: `1 ${Symbols.DOWN}`,
 		})
+		expect(device.getNextTrigger()).toBeUndefined() // No more triggers to send
+		triggerHandler.mockClear()
 
 		mockListeners['up'](1)
 
-		expect(triggerHandler).toBeCalledTimes(2)
-		expect(triggerHandler.mock.calls[1][0]).toMatchObject({
+		expect(triggerHandler).toHaveBeenCalledTimes(1)
+		expect(device.getNextTrigger()).toMatchObject({
 			triggerId: `1 ${Symbols.UP}`,
 		})
+		expect(device.getNextTrigger()).toBeUndefined() // No more triggers to send
 	})
 	it('Changes the display on the button to match the Feedback', async () => {
 		const device = await connectToMockStreamDeck()

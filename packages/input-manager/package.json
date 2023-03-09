@@ -1,6 +1,6 @@
 {
 	"name": "@sofie-automation/input-manager",
-	"version": "0.1.0",
+	"version": "0.1.2",
 	"description": "Have devices, send events, receive feedback",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
@@ -91,7 +91,7 @@
 		"production"
 	],
 	"dependencies": {
-		"@elgato-stream-deck/node": "^5.6.0",
+		"@elgato-stream-deck/node": "^5.7.2",
 		"@julusian/jpeg-turbo": "^2.0.0",
 		"easymidi": "^3.0.1",
 		"eventemitter3": "^4.0.7",

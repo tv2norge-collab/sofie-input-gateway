@@ -1,6 +1,6 @@
 import * as osc from 'osc'
 import { Logger } from '../../logger'
-import { Device } from '../../devices/device'
+import { Device, TriggerEventArguments } from '../../devices/device'
 import { DeviceConfigManifest } from '../../lib'
 import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 import { SomeFeedback, Tally } from '../../feedback/feedback'
@@ -53,9 +53,19 @@ export class OSCDevice extends Device {
 
 			const triggerId = message.address
 
-			this.emit('trigger', {
-				triggerId,
-			})
+			const messageArguments: TriggerEventArguments = {}
+			const args =
+				message.args instanceof Uint8Array
+					? [message.args]
+					: Array.isArray(message.args)
+					? message.args
+					: [message.args]
+
+			for (let i = 0; i < args.length; i++) {
+				messageArguments[`${i}`] = JSON.stringify(args[i])
+			}
+
+			this.addTriggerEvent({ triggerId, arguments: messageArguments })
 		})
 		this.#refreshInterval = setInterval(() => this.#refreshKnownSenders(), REFRESH_KNOWN_SENDERS)
 	}
