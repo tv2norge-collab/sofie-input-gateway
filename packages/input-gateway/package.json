@@ -1,6 +1,6 @@
 {
 	"name": "input-gateway",
-	"version": "0.2.0-alpha.1",
+	"version": "0.2.0-alpha.2",
 	"description": "Have devices, trigger stuff",
 	"main": "dist/index.js",
 	"bin": {
@@ -73,7 +73,7 @@
 		"production"
 	],
 	"dependencies": {
-		"@sofie-automation/input-manager": "0.2.0-alpha.1",
+		"@sofie-automation/input-manager": "0.2.0-alpha.2",
 		"@sofie-automation/server-core-integration": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
 		"@sofie-automation/shared-lib": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
 		"debug": "^4.3.1",
