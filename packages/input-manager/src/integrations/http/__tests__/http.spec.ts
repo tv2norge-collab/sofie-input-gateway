@@ -44,11 +44,18 @@ describe('HTTP Server', () => {
 
 		const method = 'POST'
 		const url = '/mock/0'
+		const headers = {
+			'accept-encoding': 'gzip, deflate, br',
+			accept: '*/*',
+			'user-agent': 'Unit test',
+			host: 'localhost:8000',
+		}
 
 		mockRequestClb(
 			{
 				method,
 				url,
+				headers,
 			},
 			{
 				end: responseEnd,
@@ -56,9 +63,11 @@ describe('HTTP Server', () => {
 		)
 
 		expect(triggerHandler).toHaveBeenCalledTimes(1)
-		expect(triggerHandler.mock.calls[0][0]).toMatchObject({
+		expect(device.getNextTrigger()).toMatchObject({
 			triggerId: `${method} ${url}`,
 		})
+		expect(device.getNextTrigger()).toBeUndefined() // No more triggers to send
+
 		expect(responseEnd).toHaveBeenCalledTimes(1)
 	})
 })

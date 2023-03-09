@@ -20,3 +20,5 @@ export function assertNever(_never: never): void {
 export type DeviceConfigManifest<ConfigObj extends object> = Array<
 	{ id: keyof ConfigObj } & Omit<TableEntryConfigManifestEntry, 'id'>
 >
+// The value, 50 ms, was chosen because it is approximate the time it takes for a human to click a key (key down + up).
+export const DEFAULT_ANALOG_RATE_LIMIT = 50

@@ -83,16 +83,19 @@ describe('Stream Deck', () => {
 		mockListeners['down'](1)
 
 		expect(triggerHandler).toHaveBeenCalledTimes(1)
-		expect(triggerHandler.mock.calls[0][0]).toMatchObject({
+		expect(device.getNextTrigger()).toMatchObject({
 			triggerId: `1 ${Symbols.DOWN}`,
 		})
+		expect(device.getNextTrigger()).toBeUndefined() // No more triggers to send
+		triggerHandler.mockClear()
 
 		mockListeners['up'](1)
 
-		expect(triggerHandler).toHaveBeenCalledTimes(2)
-		expect(triggerHandler.mock.calls[1][0]).toMatchObject({
+		expect(triggerHandler).toHaveBeenCalledTimes(1)
+		expect(device.getNextTrigger()).toMatchObject({
 			triggerId: `1 ${Symbols.UP}`,
 		})
+		expect(device.getNextTrigger()).toBeUndefined() // No more triggers to send
 	})
 	it('Changes the display on the button to match the Feedback', async () => {
 		const device = await connectToMockStreamDeck()

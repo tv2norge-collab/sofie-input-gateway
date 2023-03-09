@@ -1,7 +1,7 @@
 import { Channel, Input, Output, getInputs, getOutputs } from 'easymidi'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { assertNever, DeviceConfigManifest, Symbols } from '../../lib'
+import { assertNever, DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
 import { SomeFeedback, Tally } from '../../feedback/feedback'
 import { ConfigManifestEntryType, TableConfigManifestEntry } from '@sofie-automation/server-core-integration'
 import { literal } from '@sofie-automation/shared-lib/dist/lib/lib'
@@ -177,12 +177,9 @@ export class MIDIDevice extends Device {
 			if (this.#config.outputName) this.#output = new Output(this.#config.outputName)
 			this.#input.on('noteon', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.DOWN}`
-				this.emit('trigger', {
-					triggerId,
-					arguments: {
-						velocity: msg.velocity,
-					},
-				})
+
+				this.addTriggerEvent({ triggerId, arguments: { velocity: msg.velocity } })
+
 				// Some MIDI Devices clear backlight state when pressing a button, this will attempt
 				// to restore the correct state
 				this.updateFeedback(`${msg.channel}_${msg.note}`).catch((err) =>
@@ -191,24 +188,20 @@ export class MIDIDevice extends Device {
 			})
 			this.#input.on('noteoff', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.UP}`
-				this.emit('trigger', {
-					triggerId,
-					arguments: {
-						velocity: msg.velocity,
-					},
-				})
+
+				this.addTriggerEvent({ triggerId, arguments: { velocity: msg.velocity } })
+
 				this.updateFeedback(`${msg.channel}_${msg.note}`).catch((err) =>
 					this.logger.error(`MIDI: Error updating feedback: ${err}`)
 				)
 			})
 			this.#input.on('cc', (msg) => {
 				const triggerId = `${msg.channel}_${msg.controller} ${MIDISymbols.CC}`
-				this.emit('trigger', {
-					triggerId,
-					arguments: {
+
+				this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, () => {
+					return {
 						value: msg.value,
-					},
-					replacesPrevious: true,
+					}
 				})
 			})
 

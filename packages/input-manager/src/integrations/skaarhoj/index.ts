@@ -1,7 +1,7 @@
 import net from 'net'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
 import { ClassNames, Label, SomeFeedback, Tally } from '../../feedback/feedback'
 import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
@@ -90,33 +90,35 @@ export class SkaarhojDevice extends Device {
 			this.logger.debug(`Uknown message from device: ${data}`)
 			return
 		}
-		let args: Record<string, number> | undefined = undefined
-		let trigger = match[1]
-		let replacesPrevious = false
+
+		let triggerId = match[1]
 		const mask = match[2]
 		const state = match[3]
 		if (mask) {
-			trigger += mask
+			triggerId += mask
 		}
 		if (state === 'Down') {
-			trigger += ` ${Symbols.DOWN}`
+			triggerId += ` ${Symbols.DOWN}`
+
+			this.addTriggerEvent({ triggerId })
 		} else if (state === 'Up') {
-			trigger += ` ${Symbols.UP}`
+			triggerId += ` ${Symbols.UP}`
+
+			this.addTriggerEvent({ triggerId })
 		} else {
 			const stateMatch = state.match(AnalogStateChange.StateChange)
 			if (stateMatch) {
-				args = {
-					[stateMatch[1]]: parseFloat(stateMatch[2]),
-				}
-				replacesPrevious = true
+				this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, () => {
+					return {
+						[stateMatch[1]]: parseFloat(stateMatch[2]),
+					}
+				})
+			} else {
+				// TODO: what should happen here?
+
+				this.addTriggerEvent({ triggerId })
 			}
 		}
-
-		this.emit('trigger', {
-			triggerId: trigger,
-			arguments: args,
-			replacesPrevious,
-		})
 	}
 
 	async destroy(): Promise<void> {

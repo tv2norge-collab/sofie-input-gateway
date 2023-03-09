@@ -1,7 +1,7 @@
 import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
 import { SomeFeedback } from '../../feedback/feedback'
 import { getBitmap } from '../../feedback/bitmap'
 import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
@@ -76,59 +76,57 @@ export class StreamDeckDevice extends Device {
 		this.#streamDeck.addListener('down', (key) => {
 			const id = `${key}`
 			const triggerId = `${id} ${Symbols.DOWN}`
-			this.emit('trigger', {
-				triggerId,
-			})
+
+			this.addTriggerEvent({ triggerId })
 
 			this.updateFeedback(id, true).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
 		})
 		this.#streamDeck.addListener('up', (key) => {
 			const id = `${key}`
 			const triggerId = `${id} ${Symbols.UP}`
-			this.emit('trigger', {
-				triggerId,
-			})
+
+			this.addTriggerEvent({ triggerId })
 
 			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
 		})
 		this.#streamDeck.addListener('encoderDown', (encoder) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} ${Symbols.DOWN}`
-			this.emit('trigger', {
-				triggerId,
-			})
+
+			this.addTriggerEvent({ triggerId })
 
 			this.updateFeedback(id, true).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
 		})
 		this.#streamDeck.addListener('encoderUp', (encoder) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} ${Symbols.UP}`
-			this.emit('trigger', {
-				triggerId,
+
+			this.addTriggerEvent({ triggerId })
+
+			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+		})
+		this.#streamDeck.addListener('rotateLeft', (encoder, deltaValue) => {
+			const id = `Enc${encoder}`
+			const triggerId = `${id} ${Symbols.JOG}`
+
+			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { deltaValue: number }) => {
+				if (!prev) prev = { deltaValue: 0 }
+				return {
+					deltaValue: prev.deltaValue - deltaValue,
+				}
 			})
 
 			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
 		})
-		this.#streamDeck.addListener('rotateLeft', (encoder) => {
+		this.#streamDeck.addListener('rotateRight', (encoder, deltaValue) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} ${Symbols.JOG}`
-			this.emit('trigger', {
-				triggerId,
-				arguments: {
-					value: -1,
-				},
-			})
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
-		})
-		this.#streamDeck.addListener('rotateRight', (encoder) => {
-			const id = `Enc${encoder}`
-			const triggerId = `${id} ${Symbols.JOG}`
-			this.emit('trigger', {
-				triggerId,
-				arguments: {
-					value: 1,
-				},
+			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { deltaValue: number }) => {
+				if (!prev) prev = { deltaValue: 0 }
+				return {
+					deltaValue: prev.deltaValue + deltaValue,
+				}
 			})
 
 			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
@@ -136,11 +134,12 @@ export class StreamDeckDevice extends Device {
 		this.#streamDeck.addListener('lcdShortPress', (encoder, position) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} Tap`
-			this.emit('trigger', {
+
+			this.addTriggerEvent({
 				triggerId,
 				arguments: {
-					x: position.x,
-					y: position.y,
+					xPosition: position.x,
+					yPosition: position.y,
 				},
 			})
 
@@ -149,11 +148,12 @@ export class StreamDeckDevice extends Device {
 		this.#streamDeck.addListener('lcdLongPress', (encoder, position) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} Press`
-			this.emit('trigger', {
+
+			this.addTriggerEvent({
 				triggerId,
 				arguments: {
-					x: position.x,
-					y: position.y,
+					xPosition: position.x,
+					yPosition: position.y,
 				},
 			})
 
@@ -162,14 +162,16 @@ export class StreamDeckDevice extends Device {
 		this.#streamDeck.addListener('lcdSwipe', (fromEncoder, toEncoder, from, to) => {
 			const id = `Enc${fromEncoder}`
 			const triggerId = `${id} Swipe`
-			this.emit('trigger', {
+
+			this.addTriggerEvent({
 				triggerId,
 				arguments: {
+					fromEncoder,
 					toEncoder,
-					fromX: from.x,
-					fromY: from.y,
-					toX: to.x,
-					toY: to.y,
+					fromXPosition: from.x,
+					fromYPosition: from.y,
+					toXPosition: to.x,
+					toYPosition: to.y,
 				},
 			})
 
