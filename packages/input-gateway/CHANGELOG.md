@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0-alpha.3](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.0-alpha.2...v0.2.0-alpha.3) (2023-03-13)
+
+### Bug Fixes
+
+- add https flag ([2a3444b](https://github.com/nrkno/sofie-input-gateway/commit/2a3444bb7c293129a6d31c864eb91617725b02fa))
+
 # [0.2.0-alpha.2](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.0-alpha.1...v0.2.0-alpha.2) (2023-03-09)
 
 **Note:** Version bump only for package input-gateway
