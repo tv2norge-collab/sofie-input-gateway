@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0-alpha.4](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.0-alpha.3...v0.2.0-alpha.4) (2023-03-13)
+
+### Bug Fixes
+
+- handle CERTIFICATES env variable correctly ([5dce810](https://github.com/nrkno/sofie-input-gateway/commit/5dce8109a7c20b3c3a316e7617d9ac95ea64478b))
+
 # [0.2.0-alpha.3](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.0-alpha.2...v0.2.0-alpha.3) (2023-03-13)
 
 ### Bug Fixes
