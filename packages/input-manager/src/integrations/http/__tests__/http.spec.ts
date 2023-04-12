@@ -2,7 +2,13 @@ import { HTTPDevice } from '../index'
 import { IncomingMessage, ServerResponse } from 'http'
 import { MockLogger } from '../../../__mocks__/logger'
 
-let mockRequestClb: (req: Partial<IncomingMessage>, res: Partial<ServerResponse>) => void
+type DeepPartial<T> = T extends object
+	? {
+			[P in keyof T]?: DeepPartial<T[P]>
+	  }
+	: T
+
+let mockRequestClb: (req: DeepPartial<IncomingMessage>, res: DeepPartial<ServerResponse>) => void
 let mockServerPort: number
 
 jest.mock('http', () => ({
@@ -56,6 +62,11 @@ describe('HTTP Server', () => {
 				method,
 				url,
 				headers,
+				socket: {
+					remoteAddress: '127.0.0.1',
+					remotePort: 1234,
+				},
+				httpVersion: '1.0',
 			},
 			{
 				end: responseEnd,
