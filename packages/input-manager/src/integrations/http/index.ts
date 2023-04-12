@@ -27,11 +27,20 @@ export class HTTPDevice extends Device {
 
 	async init(): Promise<void> {
 		this.#server = new Server((req, res) => {
-			if (req.url) {
-				// Example: "https://localhost:8000/my/trigger/path?param0=hey#myHash"
+			if (!req.url) {
+				this.logger.error(`HTTP: Request has no URL`)
+				res.end()
+				return
+			}
 
+			// Example: "https://localhost:8000/my/trigger/path?param0=hey#myHash"
+
+			try {
+				this.logger.silly(
+					`HTTP: ${req.method} "${req.url}" ${req.httpVersion} ${req.socket.remoteAddress}:${req.socket.remotePort}`
+				)
 				const triggerArguments: TriggerEventArguments = {}
-				const url = new URL(req.url, `http://${req.headers.host}`)
+				const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`) // req.headers.host can be undefined when using HTTP/1.0
 				const searchParams: Record<string, any> = {}
 				for (const [key, value] of url.searchParams.entries()) {
 					searchParams[key] = value
@@ -44,9 +53,12 @@ export class HTTPDevice extends Device {
 				const triggerId = `${req.method ?? 'GET'} ${pathname}`
 
 				this.addTriggerEvent({ triggerId, arguments: triggerArguments })
+			} catch (err) {
+				this.logger.error(`HTTP: Unknown error when processing request: ${err}`)
 			}
 
 			res.end()
+			return
 		})
 		this.#server.listen(this.#config.port)
 	}
