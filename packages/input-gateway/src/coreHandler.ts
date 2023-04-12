@@ -424,17 +424,27 @@ export class CoreHandler {
 	private _getVersions() {
 		const versions: { [packageName: string]: string } = {}
 
+		const entrypointDir = path.dirname((require as any).main.filename)
+
 		if (process.env.npm_package_version) {
 			versions['_process'] = process.env.npm_package_version
+		} else {
+			try {
+				const packageJson = fs.readFileSync(path.join(entrypointDir, '../package.json'), 'utf8')
+				const json = JSON.parse(packageJson)
+				versions['_process'] = json.version || 'N/A'
+			} catch (e) {
+				this.logger.error(`Error in _getVersions, own package.json: ${stringifyError(e)}`)
+			}
 		}
 
 		const dirNames = ['@sofie-automation/server-core-integration']
 		try {
-			const nodeModulesDirectories = fs.readdirSync(path.join(__dirname, '../../../', 'node_modules'))
+			const nodeModulesDirectories = fs.readdirSync(path.join(entrypointDir, '../../../node_modules'))
 			for (const dir of nodeModulesDirectories) {
 				try {
-					if (dirNames.indexOf(dir) !== -1) {
-						let file = path.join(__dirname, 'node_modules', dir, 'package.json')
+					if (dirNames.includes(dir)) {
+						let file = path.join(entrypointDir, '../node_modules', dir, 'package.json')
 						file = fs.readFileSync(file, 'utf8')
 						const json = JSON.parse(file)
 						versions[dir] = json.version || 'N/A'
