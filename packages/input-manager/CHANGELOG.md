@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.0...v0.2.1) (2023-04-12)
+
+### Bug Fixes
+
+- HTTP/1.0 are not handled if "Host" header is not specified ([01dacf0](https://github.com/nrkno/sofie-input-gateway/commit/01dacf02199c4cf9be8d397537cbe8f4dfebc816))
+
 # [0.2.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.0-alpha.5...v0.2.0) (2023-04-12)
 
 **Note:** Version bump only for package @sofie-automation/input-manager

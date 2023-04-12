@@ -1,6 +1,6 @@
 {
 	"name": "@sofie-automation/input-manager",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Have devices, send events, receive feedback",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
