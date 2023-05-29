@@ -88,4 +88,8 @@ export abstract class Device extends EventEmitter<DeviceEvents> {
 	getNextTrigger(): TriggerEvent | undefined {
 		return this.#triggerEvents.shift()
 	}
+
+	static getOptionsManifest(): object {
+		return {}
+	}
 }

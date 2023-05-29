@@ -87,7 +87,7 @@ export class InputManagerHandler {
 			}
 			this.#logger.info('Initializing InputManager...')
 
-			await this.initInputManager((peripheralDevice.settings || {}) as DeviceSettings)
+			await this.initInputManager((peripheralDevice.inputDevices || {}) as DeviceSettings)
 			this.#logger.info('InputManager initialized')
 
 			this.#logger.info('Initialization done')
@@ -168,6 +168,7 @@ export class InputManagerHandler {
 			const obj = this.#coreHandler.core
 				.getCollection<DeviceTriggerMountedAction>('mountedTriggers')
 				.findOne(protectString(id))
+			if (!obj) return
 			if (
 				newFields['deviceId'] ||
 				newFields['deviceTriggerId'] ||
@@ -265,9 +266,9 @@ export class InputManagerHandler {
 			.getPeripheralDevice()
 			.then(async (device) => {
 				if (!device) return
-				if (_.isEqual(device.settings, this.#deviceSettings)) return
+				if (_.isEqual(device.inputDevices, this.#deviceSettings)) return
 
-				const settings: DeviceSettings = device.settings as DeviceSettings
+				const settings: DeviceSettings = device.inputDevices as DeviceSettings
 
 				this.#logger.debug(`Device configuration changed`)
 

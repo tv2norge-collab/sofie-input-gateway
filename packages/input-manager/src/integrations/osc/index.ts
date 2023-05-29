@@ -1,27 +1,18 @@
 import * as osc from 'osc'
 import { Logger } from '../../logger'
 import { Device, TriggerEventArguments } from '../../devices/device'
-import { DeviceConfigManifest } from '../../lib'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 import { SomeFeedback, Tally } from '../../feedback/feedback'
 import { clearInterval } from 'timers'
+import { OSCServerOptions } from '../../generated'
+
+import DEVICE_OPTIONS from './$schemas/options.json'
 
 const PING_MESSAGE_ADDRESS = '/ping'
 const KNOWN_SENDER_EXPIRATION = 30 * 1000
 
 const REFRESH_KNOWN_SENDERS = 5000
 
-export interface OSCDeviceConfig {
-	port: number
-}
-
-export const DEVICE_CONFIG: DeviceConfigManifest<OSCDeviceConfig> = [
-	{
-		id: 'port',
-		type: ConfigManifestEntryType.INT,
-		name: 'Port number',
-	},
-]
+const DEFAULT_PORT = 57121
 
 interface KnownSender {
 	address: string
@@ -29,21 +20,21 @@ interface KnownSender {
 	lastSeen: number
 }
 
-export class OSCDevice extends Device {
+export class OSCServer extends Device {
 	#port: osc.UDPPort | undefined
 	#knownSenders: KnownSender[] = []
-	#config: OSCDeviceConfig
+	#config: OSCServerOptions
 	#feedbacks: Record<string, SomeFeedback> = {}
 	#refreshInterval: NodeJS.Timer | undefined
 
-	constructor(config: OSCDeviceConfig, logger: Logger) {
+	constructor(config: OSCServerOptions, logger: Logger) {
 		super(logger)
 		this.#config = config
 	}
 
 	async init(): Promise<void> {
 		this.#port = new osc.UDPPort({
-			localPort: this.#config.port,
+			localPort: this.#config.port ?? DEFAULT_PORT,
 		})
 		this.#port.on('bundle', (_bundle, _timeTag, info) => {
 			this.#updateKnownSenderLastSeen(info.address, info.port)
@@ -89,9 +80,9 @@ export class OSCDevice extends Device {
 		this.#knownSenders = this.#knownSenders.filter((entry) => entry.lastSeen < expiresNow)
 
 		if (!this.#port) return
-		for (const [triggerId, feedback] of Object.entries(this.#feedbacks)) {
+		for (const [triggerId, feedback] of Object.entries<SomeFeedback>(this.#feedbacks)) {
 			for (const sender of this.#knownSenders) {
-				this.#port.send(OSCDevice.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
+				this.#port.send(OSCServer.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
 			}
 		}
 	}
@@ -154,7 +145,7 @@ export class OSCDevice extends Device {
 		if (!this.#port) return
 
 		for (const sender of this.#knownSenders) {
-			this.#port.send(OSCDevice.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
+			this.#port.send(OSCServer.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
 		}
 	}
 
@@ -162,5 +153,9 @@ export class OSCDevice extends Device {
 		for (const triggerId of Object.keys(this.#feedbacks)) {
 			await this.setFeedback(triggerId, null)
 		}
+	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
 	}
 }

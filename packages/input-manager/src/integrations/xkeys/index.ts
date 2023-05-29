@@ -1,9 +1,11 @@
 import { listAllConnectedPanels, setupXkeysPanel, XKeys } from 'xkeys'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, Symbols } from '../../lib'
 import { ClassNames, SomeFeedback, Tally } from '../../feedback/feedback'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
+import { XKeysDeviceOptions } from '../../generated'
+
+import DEVICE_OPTIONS from './$schemas/options.json'
 
 enum Colors {
 	RED = '#ff0000',
@@ -14,43 +16,12 @@ enum Colors {
 	ORANGE = '#ff8000',
 }
 
-export interface XKeysDeviceConfig {
-	unitId?: number
-	path?: string
-	productId?: number
-	serialNumber?: string
-}
-
-export const DEVICE_CONFIG: DeviceConfigManifest<XKeysDeviceConfig> = [
-	{
-		id: 'unitId',
-		type: ConfigManifestEntryType.INT,
-		name: 'Unit ID',
-		hint: 'This is a user-configurable ID that is supposed to identify the set of physical labels on the buttons',
-	},
-	{
-		id: 'path',
-		type: ConfigManifestEntryType.STRING,
-		name: 'Device Path',
-	},
-	{
-		id: 'productId',
-		type: ConfigManifestEntryType.INT,
-		name: 'Product ID',
-	},
-	{
-		id: 'serialNumber',
-		type: ConfigManifestEntryType.INT,
-		name: 'Serial Number',
-	},
-]
-
 export class XKeysDevice extends Device {
-	#config: XKeysDeviceConfig
+	#config: XKeysDeviceOptions
 	#feedbacks: Record<number, SomeFeedback> = {}
 	#device: XKeys | undefined
 
-	constructor(config: XKeysDeviceConfig, logger: Logger) {
+	constructor(config: XKeysDeviceOptions, logger: Logger) {
 		super(logger)
 		this.#config = config
 	}
@@ -235,5 +206,9 @@ export class XKeysDevice extends Device {
 			this.#feedbacks[key] = null
 			await this.updateFeedback(key)
 		}
+	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
 	}
 }

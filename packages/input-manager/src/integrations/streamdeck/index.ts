@@ -1,44 +1,22 @@
 import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, Symbols } from '../../lib'
 import { SomeFeedback } from '../../feedback/feedback'
 import { getBitmap } from '../../feedback/bitmap'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
+import { StreamDeckDeviceOptions } from '../../generated'
 
-export interface StreamDeckDeviceConfig {
-	path?: string
-	serialNumber?: string
-	index?: number
-}
-
-export const DEVICE_CONFIG: DeviceConfigManifest<StreamDeckDeviceConfig> = [
-	{
-		id: 'path',
-		type: ConfigManifestEntryType.STRING,
-		name: 'Device Path',
-	},
-	{
-		id: 'serialNumber',
-		type: ConfigManifestEntryType.STRING,
-		name: 'Serial Number',
-	},
-	{
-		id: 'index',
-		type: ConfigManifestEntryType.INT,
-		name: 'Device Index',
-	},
-]
+import DEVICE_OPTIONS from './$schemas/options.json'
 
 export class StreamDeckDevice extends Device {
 	#streamDeck: StreamDeck | undefined
-	#config: StreamDeckDeviceConfig
+	#config: StreamDeckDeviceOptions
 	#feedbacks: Record<string, SomeFeedback> = {}
 	private BTN_SIZE: number | undefined = undefined
 	private ENC_SIZE_WIDTH: number | undefined = undefined
 	private ENC_SIZE_HEIGHT: number | undefined = undefined
 
-	constructor(config: StreamDeckDeviceConfig, logger: Logger) {
+	constructor(config: StreamDeckDeviceOptions, logger: Logger) {
 		super(logger)
 		this.#config = config
 	}
@@ -266,5 +244,9 @@ export class StreamDeckDevice extends Device {
 			this.#feedbacks[key] = null
 			await this.updateFeedback(key, false)
 		}
+	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
 	}
 }

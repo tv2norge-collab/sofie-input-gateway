@@ -1,26 +1,17 @@
 import { Server } from 'http'
 import { Logger } from '../../logger'
 import { Device, TriggerEventArguments } from '../../devices/device'
-import { DeviceConfigManifest } from '../../lib'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
+import { HTTPServerOptions } from '../../generated'
 
-export interface HTTPDeviceConfig {
-	port: number
-}
+import DEVICE_OPTIONS from './$schemas/options.json'
 
-export const DEVICE_CONFIG: DeviceConfigManifest<HTTPDeviceConfig> = [
-	{
-		id: 'port',
-		type: ConfigManifestEntryType.INT,
-		name: 'Port number',
-	},
-]
+const DEFAULT_PORT = 8080
 
-export class HTTPDevice extends Device {
+export class HTTPServer extends Device {
 	#server: Server | undefined
-	#config: HTTPDeviceConfig
+	#config: HTTPServerOptions
 
-	constructor(config: HTTPDeviceConfig, logger: Logger) {
+	constructor(config: HTTPServerOptions, logger: Logger) {
 		super(logger)
 		this.#config = config
 	}
@@ -60,7 +51,7 @@ export class HTTPDevice extends Device {
 			res.end()
 			return
 		})
-		this.#server.listen(this.#config.port)
+		this.#server.listen(this.#config.port ?? DEFAULT_PORT)
 	}
 
 	async destroy(): Promise<void> {
@@ -85,5 +76,9 @@ export class HTTPDevice extends Device {
 
 	async clearFeedbackAll(): Promise<void> {
 		void ''
+	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
 	}
 }
