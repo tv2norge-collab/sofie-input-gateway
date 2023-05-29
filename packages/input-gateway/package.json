@@ -3,9 +3,7 @@
 	"version": "0.2.1",
 	"description": "Have devices, trigger stuff",
 	"main": "dist/index.js",
-	"bin": {
-		"input-gateway": "dist/index.js"
-	},
+	"bin": "dist/index.js",
 	"license": "MIT",
 	"contributors": [
 		{
