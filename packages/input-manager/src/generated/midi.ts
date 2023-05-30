@@ -6,26 +6,14 @@
  */
 
 export interface MIDIControllerOptions {
-	/**
-	 * The name of the MIDI Input to connect to for incoming messages
-	 */
 	inputName: string
-	/**
-	 * The name of the MIDI Output to connect to for sending feedback
-	 */
 	outputName?: string
-	/**
-	 * Configuration of the feedback behavior
-	 */
 	feedbackSettings?: {
 		note?: MIDINoteOnFeedback[]
 		cc?: MIDICCFeedback[]
 	}
 }
 export interface MIDINoteOnFeedback {
-	/**
-	 * The trigger that this feedback relates to
-	 */
 	trigger: string
 	channel: number
 	note: number
@@ -35,9 +23,6 @@ export interface MIDINoteOnFeedback {
 	velocityOnAir?: number
 }
 export interface MIDICCFeedback {
-	/**
-	 * The trigger that this feedback relates to
-	 */
 	trigger: string
 	channel: number
 	cc: number

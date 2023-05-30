@@ -6,12 +6,6 @@
  */
 
 export interface HTTPServerOptions {
-	/**
-	 * The port to listen on for incoming connections, by default will use 8080
-	 */
 	port?: number
-	/**
-	 * The interface on which to listen for connections, will use all if empty
-	 */
 	host?: string
 }

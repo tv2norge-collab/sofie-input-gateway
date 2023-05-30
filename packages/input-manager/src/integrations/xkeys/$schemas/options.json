@@ -7,23 +7,23 @@
         "unitId": {
             "type": "integer",
             "ui:title": "Unit ID",
-            "ui:description": "This is a user-configurable ID that is supposed to identify the set of physical labels on the buttons",
-            "description": "User-configurable ID, indetyfing a particular device configuration"
+            "description": "This is a user-configurable ID that is supposed to identify the set of physical labels on the buttons",
+            "ui:description": "User-configurable ID, identyfing a particular device configuration"
         },
         "path": {
             "type": "string",
             "ui:title": "Device Path",
-            "description": "The device path or part of it, where the device is attached in the system device tree"
+            "ui:description": "The device path or part of it, where the device is attached in the system device tree"
         },
         "productId": {
             "type": "integer",
             "ui:title": "Product ID",
-            "description": "Device type identifier"
+            "ui:description": "Device type identifier"
         },
         "serialNumber": {
             "type": "string",
             "ui:title": "Serial Number",
-            "description": "The serial number of the device"
+            "ui:description": "The serial number of the device"
         }
     },
     "required": [],

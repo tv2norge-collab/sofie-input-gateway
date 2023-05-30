@@ -6,16 +6,7 @@
  */
 
 export interface StreamDeckDeviceOptions {
-	/**
-	 * The device path or part of it, where the device is attached in the system device tree
-	 */
 	path?: string
-	/**
-	 * The serial number of the device
-	 */
 	serialNumber?: string
-	/**
-	 * The index on the list of attached Stream Deck devices
-	 */
 	index?: number
 }

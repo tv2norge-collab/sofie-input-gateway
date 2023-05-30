@@ -7,12 +7,12 @@
 		"port": {
 			"type": "integer",
 			"ui:title": "Port",
-			"description": "The port to listen on for incoming connections"
+			"ui:description": "The port to listen on for incoming connections"
 		},
 		"host": {
 			"type": "string",
 			"ui:title": "Host",
-			"description": "The interface on which to listen for connections, will use all if empty"
+			"ui:description": "The interface on which to listen for connections, will use all if empty"
 		}
 	},
 	"required": [],

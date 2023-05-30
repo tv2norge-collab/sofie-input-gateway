@@ -6,12 +6,6 @@
  */
 
 export interface OSCServerOptions {
-	/**
-	 * The port to listen on for incoming connections
-	 */
 	port?: number
-	/**
-	 * The interface on which to listen for connections, will use all if empty
-	 */
 	host?: string
 }

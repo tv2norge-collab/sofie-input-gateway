@@ -7,12 +7,12 @@
 		"host": {
 			"type": "string",
 			"ui:title": "Address",
-			"description": "The hostname or IP address of the device to connect to"
+			"ui:description": "The hostname or IP address of the device to connect to"
 		},
 		"port": {
 			"type": "integer",
 			"ui:title": "Port",
-			"description": "The port number used by the Raw TCP mode server"
+			"ui:description": "The port number used by the Raw TCP mode server"
 		}
 	},
 	"required": ["host", "port"],

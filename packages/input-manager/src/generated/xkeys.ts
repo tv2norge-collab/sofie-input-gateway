@@ -7,19 +7,10 @@
 
 export interface XKeysDeviceOptions {
 	/**
-	 * User-configurable ID, indetyfing a particular device configuration
+	 * This is a user-configurable ID that is supposed to identify the set of physical labels on the buttons
 	 */
 	unitId?: number
-	/**
-	 * The device path or part of it, where the device is attached in the system device tree
-	 */
 	path?: string
-	/**
-	 * Device type identifier
-	 */
 	productId?: number
-	/**
-	 * The serial number of the device
-	 */
 	serialNumber?: string
 }

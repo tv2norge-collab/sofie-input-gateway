@@ -6,12 +6,6 @@
  */
 
 export interface SkaarhojPanelOptions {
-	/**
-	 * The hostname or IP address of the device to connect to
-	 */
 	host: string
-	/**
-	 * The port number used by the Raw TCP mode server
-	 */
 	port: number
 }

@@ -7,28 +7,29 @@
 		"inputName": {
 			"type": "string",
 			"ui:title": "Input Name",
-			"description": "The name of the MIDI Input to connect to for incoming messages"
+			"ui:description": "The name of the MIDI Input to connect to for incoming messages"
 		},
 		"outputName": {
 			"type": "string",
 			"ui:title": "Output Name",
-			"description": "The name of the MIDI Output to connect to for sending feedback"
+			"ui:description": "The name of the MIDI Output to connect to for sending feedback"
 		},
 		"feedbackSettings": {
 			"type": "object",
 			"ui:title": "Feedback Settings",
-			"description": "Configuration of the feedback behavior",
+			"ui:description": "Configuration of the feedback behavior",
 			"properties": {
 				"note": {
 					"type": "array",
 					"items": {
 						"type": "object",
 						"title": "MIDI Note On Feedback",
+						"ui:title": "MIDI Note On Feedback",
 						"properties": {
 							"trigger": {
 								"type": "string",
 								"ui:title": "Trigger",
-								"description": "The trigger that this feedback relates to"
+								"ui:description": "The trigger that this feedback relates to"
 							},
 							"channel": {
 								"type": "integer",
@@ -68,11 +69,12 @@
 					"items": {
 						"type": "object",
 						"title": "MIDI CC Feedback",
+						"ui:title": "MIDI CC Feedback",
 						"properties": {
 							"trigger": {
 								"type": "string",
 								"ui:title": "Trigger",
-								"description": "The trigger that this feedback relates to"
+								"ui:description": "The trigger that this feedback relates to"
 							},
 							"channel": {
 								"type": "integer",
