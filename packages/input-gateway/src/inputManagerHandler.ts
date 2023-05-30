@@ -129,14 +129,12 @@ export class InputManagerHandler {
 
 		this.#deviceSettings = settings
 
-		const devices = settings.devices ?? {}
-
-		this.#inputManager = await this.#createInputManager(devices)
+		this.#inputManager = await this.#createInputManager(settings)
 
 		this.#triggersSubscriptionId = await this.#coreHandler.core.autoSubscribe(
 			'mountedTriggersForDevice',
 			this.#coreHandler.core.deviceId,
-			InputManagerHandler.getDeviceIds(devices)
+			InputManagerHandler.getDeviceIds(settings)
 		)
 		await this.#coreHandler.core.autoSubscribe('mountedTriggersForDevicePreview', this.#coreHandler.core.deviceId)
 
@@ -284,14 +282,12 @@ export class InputManagerHandler {
 
 				this.#deviceSettings = settings
 
-				const devices = settings.devices ?? {}
-
-				this.#inputManager = await this.#createInputManager(devices)
+				this.#inputManager = await this.#createInputManager(settings)
 
 				this.#triggersSubscriptionId = await this.#coreHandler.core.autoSubscribe(
 					'mountedTriggersForDevice',
 					this.#coreHandler.core.deviceId,
-					InputManagerHandler.getDeviceIds(devices)
+					InputManagerHandler.getDeviceIds(settings)
 				)
 
 				this.#refreshMountedTriggers()
@@ -335,34 +331,35 @@ export class InputManagerHandler {
 						}
 					}
 
-					if (triggerToSend && deviceId) {
-						this.#logger.verbose(`Trigger send...`)
-						this.#logger.verbose(triggerToSend.triggerId)
-						this.#logger.verbose(triggerToSend.arguments)
-
-						if (this.#coreHandler.core.connected) {
-							await this.#coreHandler.core.coreMethods.inputDeviceTrigger(
-								deviceId,
-								triggerToSend.triggerId,
-								triggerToSend.arguments ?? null
-							)
-							this.#logger.verbose(`Trigger send done!`)
-
-							if (triggerToSend.rateLimit) {
-								// Wait a bit, to rate-limit sending of the triggers:
-								await sleep(triggerToSend.rateLimit)
-							}
-						} else {
-							// If we're not connected, discard the input
-							this.#logger.warn('Skipping SendTrigger, not connected to Core')
-						}
-
-						// Queue another sendTrigger, to send any triggers that might have come in
-						// while we where busy handling this one:
-						this.#triggerSendTrigger()
-					} else {
+					if (!triggerToSend || !deviceId) {
 						// Nothing left to send.
+						return
 					}
+
+					this.#logger.verbose(`Trigger send...`)
+					this.#logger.verbose(triggerToSend.triggerId)
+					this.#logger.verbose(triggerToSend.arguments)
+
+					if (this.#coreHandler.core.connected) {
+						await this.#coreHandler.core.coreMethods.inputDeviceTrigger(
+							deviceId,
+							triggerToSend.triggerId,
+							triggerToSend.arguments ?? null
+						)
+						this.#logger.verbose(`Trigger send done!`)
+
+						if (triggerToSend.rateLimit) {
+							// Wait a bit, to rate-limit sending of the triggers:
+							await sleep(triggerToSend.rateLimit)
+						}
+					} else {
+						// If we're not connected, discard the input
+						this.#logger.warn('Skipping SendTrigger, not connected to Core')
+					}
+
+					// Queue another sendTrigger, to send any triggers that might have come in
+					// while we where busy handling this one:
+					this.#triggerSendTrigger()
 				} catch (e) {
 					this.#logger.error(`peripheralDevice.input.inputDeviceTrigger failed: ${e}`)
 					this.#logger.error(e)
