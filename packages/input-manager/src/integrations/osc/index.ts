@@ -34,7 +34,8 @@ export class OSCServer extends Device {
 
 	async init(): Promise<void> {
 		this.#port = new osc.UDPPort({
-			localPort: this.#config.port ?? DEFAULT_PORT,
+			localPort: this.#config.port || DEFAULT_PORT,
+			localAddress: this.#config.host || undefined,
 		})
 		this.#port.on('bundle', (_bundle, _timeTag, info) => {
 			this.#updateKnownSenderLastSeen(info.address, info.port)

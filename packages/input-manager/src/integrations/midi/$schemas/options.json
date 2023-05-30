@@ -21,23 +21,27 @@
 			"properties": {
 				"note": {
 					"type": "array",
+					"ui:title": "MIDI Note On Feedback",
+					"ui:description": "Send a Note On MIDI Message to the Output with a velocity dependant on the Tally state of the trigger",
 					"items": {
 						"type": "object",
 						"title": "MIDI Note On Feedback",
-						"ui:title": "MIDI Note On Feedback",
 						"properties": {
 							"trigger": {
 								"type": "string",
 								"ui:title": "Trigger",
-								"ui:description": "The trigger that this feedback relates to"
+								"ui:description": "The trigger that this feedback relates to",
+								"ui:summaryTitle": "Trigger"
 							},
 							"channel": {
 								"type": "integer",
-								"ui:title": "Channel"
+								"ui:title": "Channel",
+								"ui:summaryTitle": "Channel"
 							},
 							"note": {
 								"type": "integer",
-								"ui:title": "Note"
+								"ui:title": "Note",
+								"ui:summaryTitle": "Note"
 							},
 							"velocity": {
 								"type": "integer",
@@ -56,7 +60,7 @@
 							},
 							"velocityOnAir": {
 								"type": "integer",
-								"ui:title": "Velocity - Next",
+								"ui:title": "Velocity - On Air",
 								"ui:description": "Use `-1` to not emit anything when condition met"
 							}
 						},
@@ -66,43 +70,51 @@
 				},
 				"cc": {
 					"type": "array",
+					"ui:title": "MIDI CC Feedback",
+					"ui:description": "Send a CC MIDI Message to the Output with a value dependant on the Tally state of the trigger",
 					"items": {
 						"type": "object",
 						"title": "MIDI CC Feedback",
-						"ui:title": "MIDI CC Feedback",
 						"properties": {
 							"trigger": {
 								"type": "string",
 								"ui:title": "Trigger",
-								"ui:description": "The trigger that this feedback relates to"
+								"ui:description": "The trigger that this feedback relates to",
+								"ui:summaryTitle": "Trigger"
 							},
 							"channel": {
 								"type": "integer",
-								"ui:title": "Channel"
+								"ui:title": "Channel",
+								"ui:summaryTitle": "Channel"
 							},
 							"cc": {
 								"type": "integer",
-								"ui:title": "Note"
+								"ui:title": "Note",
+								"ui:summaryTitle": "Note"
 							},
 							"value": {
 								"type": "integer",
 								"ui:title": "Value - Default",
-								"ui:description": "Use `-1` to not emit anything when condition met"
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
 							},
 							"valuePresent": {
 								"type": "integer",
 								"ui:title": "Value - Present",
-								"ui:description": "Use `-1` to not emit anything when condition met"
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
 							},
 							"valueNext": {
 								"type": "integer",
 								"ui:title": "Value - Next",
-								"ui:description": "Use `-1` to not emit anything when condition met"
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
 							},
 							"valueOnAir": {
 								"type": "integer",
-								"ui:title": "Value - Next",
-								"ui:description": "Use `-1` to not emit anything when condition met"
+								"ui:title": "Value - On Air",
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
 							}
 						},
 						"required": ["trigger", "channel", "cc"],
