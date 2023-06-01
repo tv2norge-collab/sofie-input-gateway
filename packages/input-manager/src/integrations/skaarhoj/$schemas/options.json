@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "https://example.com/product.schema.json",
+	"$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/skaarhoj",
 	"title": "Skaarhoj Panel Options",
 	"type": "object",
 	"properties": {
