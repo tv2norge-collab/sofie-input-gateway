@@ -100,9 +100,6 @@ export class CoreHandler {
 		this.logger.info('Core id: ' + this.core.deviceId)
 		await this.setupObserversAndSubscriptions()
 		this._statusInitialized = true
-
-		await this.setupObserversAndSubscriptions()
-
 		await this.updateCoreStatus()
 	}
 	async setupObserversAndSubscriptions(): Promise<void> {
