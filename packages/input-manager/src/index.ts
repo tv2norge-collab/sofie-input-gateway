@@ -4,6 +4,7 @@ import {
 	TriggerEventArgs,
 	getIntegrationsConfigManifest,
 	ManagerTriggerEventArgs,
+	SubdeviceManifest,
 } from './inputManager'
 import { Feedback, SomeFeedback, ClassNames, Tally } from './feedback/feedback'
 import { DeviceType } from './integrations/deviceType'
@@ -19,6 +20,7 @@ export {
 	ClassNames,
 	Tally,
 	getIntegrationsConfigManifest,
+	SubdeviceManifest,
 	ManagerTriggerEventArgs,
 	TriggerEvent,
 }

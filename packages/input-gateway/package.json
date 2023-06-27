@@ -1,11 +1,10 @@
 {
 	"name": "input-gateway",
-	"version": "0.2.1",
+	"version": "0.2.2-alpha.0",
 	"description": "Have devices, trigger stuff",
 	"main": "dist/index.js",
-	"bin": {
-		"input-gateway": "dist/index.js"
-	},
+	"private": true,
+	"bin": "dist/index.js",
 	"license": "MIT",
 	"contributors": [
 		{
@@ -42,7 +41,7 @@
 		"cov-open": "open-cli coverage/lcov-report/index.html",
 		"validate:dependencies": "yarn audit --groups dependencies && yarn license-validate",
 		"validate:dev-dependencies": "yarn audit --groups devDependencies",
-		"precommit": "lint-staged"
+		"generate-schema-types": "json2ts -i './src/$schemas/' -o ./src/generated/"
 	},
 	"lint-staged": {
 		"*.{css,json,md,scss}": [
@@ -73,9 +72,9 @@
 		"production"
 	],
 	"dependencies": {
-		"@sofie-automation/input-manager": "0.2.1",
-		"@sofie-automation/server-core-integration": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
-		"@sofie-automation/shared-lib": "1.49.0-nightly-feat-triggerGateways-20230109-123747-3c71f04.0",
+		"@sofie-automation/input-manager": "0.2.2-alpha.0",
+		"@sofie-automation/server-core-integration": "1.50.0-nightly-release50-20230529-135607-13157b3.0",
+		"@sofie-automation/shared-lib": "1.50.0-nightly-release50-20230529-135607-13157b3.0",
 		"debug": "^4.3.1",
 		"eventemitter3": "^4.0.7",
 		"p-all": "^3.0.0",

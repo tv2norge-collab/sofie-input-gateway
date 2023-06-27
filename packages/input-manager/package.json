@@ -1,6 +1,6 @@
 {
 	"name": "@sofie-automation/input-manager",
-	"version": "0.2.1",
+	"version": "0.2.2-alpha.0",
 	"description": "Have devices, send events, receive feedback",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
@@ -62,7 +62,7 @@
 		"cov-open": "open-cli coverage/lcov-report/index.html",
 		"validate:dependencies": "yarn audit --groups dependencies && yarn license-validate",
 		"validate:dev-dependencies": "yarn audit --groups devDependencies",
-		"precommit": "lint-staged"
+		"generate-schema-types": "node ./scripts/schema-types.mjs"
 	},
 	"engines": {
 		"node": "^16.14"

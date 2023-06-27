@@ -1,40 +1,24 @@
 import net from 'net'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, Symbols } from '../../lib'
 import { ClassNames, Label, SomeFeedback, Tally } from '../../feedback/feedback'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
+import { SkaarhojPanelOptions } from '../../generated'
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
 import ASCIIFolder from 'fold-to-ascii'
 
 const SEND_TIMEOUT = 1000
 const CONNECTION_TIMEOUT = 5000
 
-export interface SkaarhojDeviceConfig {
-	host: string
-	port: number
-}
-
-export const DEVICE_CONFIG: DeviceConfigManifest<SkaarhojDeviceConfig> = [
-	{
-		id: 'host',
-		type: ConfigManifestEntryType.STRING,
-		name: 'Address',
-	},
-	{
-		id: 'port',
-		type: ConfigManifestEntryType.INT,
-		name: 'Port',
-	},
-]
+import DEVICE_OPTIONS from './$schemas/options.json'
 
 export class SkaarhojDevice extends Device {
 	#socket: net.Socket | undefined
 	#closing = false
-	#config: SkaarhojDeviceConfig
+	#config: SkaarhojPanelOptions
 	#feedbacks: Record<string, SomeFeedback> = {}
 
-	constructor(config: SkaarhojDeviceConfig, logger: Logger) {
+	constructor(config: SkaarhojPanelOptions, logger: Logger) {
 		super(logger)
 		this.#config = config
 	}
@@ -249,6 +233,10 @@ export class SkaarhojDevice extends Device {
 				resolve()
 			})
 		})
+	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
 	}
 }
 

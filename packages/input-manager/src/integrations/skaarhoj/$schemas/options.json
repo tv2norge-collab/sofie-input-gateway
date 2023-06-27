@@ -1,0 +1,20 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/skaarhoj",
+	"title": "Skaarhoj Panel Options",
+	"type": "object",
+	"properties": {
+		"host": {
+			"type": "string",
+			"ui:title": "Address",
+			"ui:description": "The hostname or IP address of the device to connect to"
+		},
+		"port": {
+			"type": "integer",
+			"ui:title": "Port",
+			"ui:description": "The port number used by the Raw TCP mode server"
+		}
+	},
+	"required": ["host", "port"],
+	"additionalProperties": false
+}

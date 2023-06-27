@@ -7,31 +7,26 @@
     "packages": [
       "packages/**"
     ],
-    "nohoist": [
-      "**/easymidi",
-      "**/@elgato-stream-deck/node",
-      "**/@julusian/jpeg-turbo",
-      "**/eventemitter3",
-      "**/node-hid"
-    ]
+    "installConfig": {
+      "hoistingLimits": "workspaces"
+    }
   },
   "scripts": {
     "prepare": "husky install",
-    "build": "lerna run build",
+    "precommit": "lint-staged",
+    "build": "yarn run generate-schema-types && lerna run build",
     "build:main": "lerna --scope=input-gateway run build",
     "build:manager": "yarn lerna --scope=@sofie-automation/input-manager run build",
     "lint": "lerna run lint -- --",
     "test": "lerna run test",
     "unit": "lerna run unit",
     "unitci": "lerna run unitci",
-    "docs": "yarn typedoc .",
     "dev:manager": "cd packages/input-manager && yarn build:watch",
     "dev:gateway": "nodemon --config nodemon.json",
     "dev": "concurrently \"yarn dev:manager\" \"yarn dev:gateway\"",
-    "postinstall": "lerna bootstrap",
     "release:set-version": "lerna version --exact --no-changelog --no-git-tag-version --no-push --yes",
-    "release:bump-release": "lerna version --exact --conventional-commits --conventional-graduate --tag-version-prefix='v' --no-push --force-publish=*",
-    "release:bump-prerelease": "lerna version --exact --conventional-commits --conventional-prerelease --tag-version-prefix='v' --no-push --force-publish=*",
+    "release:bump-release": "lerna version --exact --conventional-commits --conventional-graduate --tag-version-prefix='v' --no-push",
+    "release:bump-prerelease": "lerna version --exact --conventional-commits --conventional-prerelease --tag-version-prefix='v' --no-push",
     "validate:dependencies": "lerna exec --parallel yarn validate:dependencies",
     "validate:dev-dependencies": "lerna exec --parallel yarn validate:dev-dependencies",
     "do:build-win32": "rimraf deploy && yarn install && yarn build && yarn build-win32 && yarn copy-assets && yarn sign-executables && yarn zip-deploy",
@@ -41,10 +36,11 @@
     "sign-executables": "node scripts/sign-executables.js",
     "copy-assets": "node scripts/copy-assets.js",
     "zip-deploy": "node scripts/zip-deploy.js",
-    "release": "sofie-version"
+    "release": "sofie-version",
+    "generate-schema-types": "lerna run generate-schema-types --stream"
   },
   "devDependencies": {
-    "@sofie-automation/code-standard-preset": "~2.2",
+    "@sofie-automation/code-standard-preset": "~2.4.6",
     "@types/jest": "^26.0.9",
     "@types/node": "^14.18.12",
     "@types/request": "^2.48.8",
@@ -56,7 +52,9 @@
     "jest": "^26.0.1",
     "jest-haste-map": "^26.0.1",
     "jest-resolve": "^26.0.1",
-    "lerna": "^5.5.2",
+    "json-schema-to-typescript": "^11.0.3",
+    "lerna": "^6.6.1",
+    "lint-staged": "^13.2.2",
     "nodemon": "^2.0.20",
     "open-cli": "^7.0.1",
     "pkg": "^5.8.0",
@@ -65,9 +63,9 @@
     "ts-jest": "^26.1.0",
     "ts-node": "^10.9.1",
     "type-fest": "^2.16.0",
-    "typedoc": "^0.22.14",
-    "typescript": "~4.6",
+    "typescript": "~4.9",
     "zip-a-folder": "^1.1.5"
   },
-  "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json"
+  "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
+  "packageManager": "yarn@3.5.1"
 }

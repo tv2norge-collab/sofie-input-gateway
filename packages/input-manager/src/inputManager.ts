@@ -1,21 +1,27 @@
 import EventEmitter from 'eventemitter3'
 import { Device, TriggerEvent } from './devices/device'
 import { SomeFeedback } from './feedback/feedback'
-import { HTTPDevice, HTTPDeviceConfig, DEVICE_CONFIG as HTTP_CONFIG } from './integrations/http'
-import { MIDIDevice, MIDIDeviceConfig, DEVICE_CONFIG as MIDI_CONFIG } from './integrations/midi'
-import {
-	StreamDeckDevice,
-	StreamDeckDeviceConfig,
-	DEVICE_CONFIG as STREAM_DECK_CONFIG,
-} from './integrations/streamdeck'
-import { XKeysDevice, XKeysDeviceConfig, DEVICE_CONFIG as XKEYS_CONFIG } from './integrations/xkeys'
-import { SkaarhojDevice, SkaarhojDeviceConfig, DEVICE_CONFIG as SKAARHOJ_CONFIG } from './integrations/skaarhoj'
-import { OSCDevice, OSCDeviceConfig, DEVICE_CONFIG as OSC_CONFIG } from './integrations/osc'
-import { DeviceConfigManifest, throwNever } from './lib'
+import { HTTPServer } from './integrations/http'
+import { MIDIDevice } from './integrations/midi'
+import { StreamDeckDevice } from './integrations/streamdeck'
+import { XKeysDevice } from './integrations/xkeys'
+import { SkaarhojDevice } from './integrations/skaarhoj'
+import { OSCServer } from './integrations/osc'
+import { throwNever } from './lib'
 import { Logger } from './logger'
 import { init as initBitmapFeedback } from './feedback/bitmap'
 import { DeviceType } from './integrations/deviceType'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
+import {
+	HTTPServerOptions,
+	MIDIControllerOptions,
+	OSCServerOptions,
+	SkaarhojPanelOptions,
+	StreamDeckDeviceOptions,
+	XKeysDeviceOptions,
+} from './generated'
+import { JSONBlob, JSONBlobStringify } from '@sofie-automation/shared-lib/dist/lib/JSONBlob'
+import { JSONSchema } from '@sofie-automation/shared-lib/dist/lib/JSONSchemaTypes'
 
 interface Config {
 	devices: Record<string, SomeDeviceConfig>
@@ -23,15 +29,16 @@ interface Config {
 
 type DeviceConfig<Type extends string, ConfigInterface extends Record<string, any>> = {
 	type: Type
-} & ConfigInterface
+	options: ConfigInterface
+}
 
 type SomeDeviceConfig =
-	| DeviceConfig<DeviceType.MIDI, MIDIDeviceConfig>
-	| DeviceConfig<DeviceType.HTTP, HTTPDeviceConfig>
-	| DeviceConfig<DeviceType.STREAM_DECK, StreamDeckDeviceConfig>
-	| DeviceConfig<DeviceType.X_KEYS, XKeysDeviceConfig>
-	| DeviceConfig<DeviceType.SKAARHOJ, SkaarhojDeviceConfig>
-	| DeviceConfig<DeviceType.OSC, OSCDeviceConfig>
+	| DeviceConfig<DeviceType.MIDI, MIDIControllerOptions>
+	| DeviceConfig<DeviceType.HTTP, HTTPServerOptions>
+	| DeviceConfig<DeviceType.STREAM_DECK, StreamDeckDeviceOptions>
+	| DeviceConfig<DeviceType.X_KEYS, XKeysDeviceOptions>
+	| DeviceConfig<DeviceType.SKAARHOJ, SkaarhojPanelOptions>
+	| DeviceConfig<DeviceType.OSC, OSCServerOptions>
 
 export interface ManagerTriggerEventArgs {
 	/** The ID of the device that issued this event */
@@ -68,7 +75,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 		await initBitmapFeedback()
 
 		await Promise.allSettled(
-			Object.entries(this.config.devices).map(async ([deviceId, deviceConfig]) =>
+			Object.entries<SomeDeviceConfig>(this.config.devices).map(async ([deviceId, deviceConfig]) =>
 				this.createDevice(deviceId, deviceConfig)
 			)
 		)
@@ -106,7 +113,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 
 	private async refreshDevices(): Promise<void> {
 		await Promise.allSettled(
-			Object.entries(this.config.devices).map(async ([deviceId, deviceConfig]) => {
+			Object.entries<SomeDeviceConfig>(this.config.devices).map(async ([deviceId, deviceConfig]) => {
 				if (this.#devices[deviceId] !== undefined) return
 
 				try {
@@ -179,7 +186,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 
 		if (this.#refreshInterval) clearInterval(this.#refreshInterval)
 
-		await Promise.all(Object.values(this.#devices).map(async (device) => device?.destroy()))
+		await Promise.all(Object.values<Device | undefined>(this.#devices).map(async (device) => device?.destroy()))
 		this.#devices = {}
 	}
 
@@ -206,7 +213,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const [deviceId, device] of Object.entries(this.#devices)) {
+		for (const [deviceId, device] of Object.entries<Device | undefined>(this.#devices)) {
 			this.#feedback[deviceId] = {}
 			await device?.clearFeedbackAll()
 		}
@@ -218,7 +225,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 		if (!device) throw new Error(`Could not find device "${deviceId}"`)
 
 		const cachedFeedback = this.#feedback[deviceId] ?? {}
-		for (const [triggerId, feedback] of Object.entries(cachedFeedback)) {
+		for (const [triggerId, feedback] of Object.entries<SomeFeedback>(cachedFeedback)) {
 			await device.setFeedback(triggerId, feedback)
 		}
 	}
@@ -227,31 +234,60 @@ class InputManager extends EventEmitter<DeviceEvents> {
 function createNewDevice(deviceConfig: SomeDeviceConfig, logger: Logger): Device {
 	switch (deviceConfig.type) {
 		case DeviceType.HTTP:
-			return new HTTPDevice(deviceConfig, logger)
+			return new HTTPServer(deviceConfig.options, logger)
 		case DeviceType.MIDI:
-			return new MIDIDevice(deviceConfig, logger)
+			return new MIDIDevice(deviceConfig.options, logger)
 		case DeviceType.STREAM_DECK:
-			return new StreamDeckDevice(deviceConfig, logger)
+			return new StreamDeckDevice(deviceConfig.options, logger)
 		case DeviceType.X_KEYS:
-			return new XKeysDevice(deviceConfig, logger)
+			return new XKeysDevice(deviceConfig.options, logger)
 		case DeviceType.SKAARHOJ:
-			return new SkaarhojDevice(deviceConfig, logger)
+			return new SkaarhojDevice(deviceConfig.options, logger)
 		case DeviceType.OSC:
-			return new OSCDevice(deviceConfig, logger)
+			return new OSCServer(deviceConfig.options, logger)
 		default:
 			throwNever(deviceConfig)
 	}
 }
 
-function getIntegrationsConfigManifest(): Record<string, DeviceConfigManifest<any>> {
+function getIntegrationsConfigManifest(): Record<string, SubdeviceManifest> {
 	return {
-		[DeviceType.HTTP]: HTTP_CONFIG,
-		[DeviceType.MIDI]: MIDI_CONFIG,
-		[DeviceType.STREAM_DECK]: STREAM_DECK_CONFIG,
-		[DeviceType.X_KEYS]: XKEYS_CONFIG,
-		[DeviceType.SKAARHOJ]: SKAARHOJ_CONFIG,
-		[DeviceType.OSC]: OSC_CONFIG,
+		[DeviceType.HTTP]: {
+			displayName: 'HTTP Server',
+			configSchema: JSONBlobStringify(HTTPServer.getOptionsManifest()),
+		},
+		[DeviceType.MIDI]: {
+			displayName: 'MIDI Controller',
+			configSchema: JSONBlobStringify(MIDIDevice.getOptionsManifest()),
+		},
+		[DeviceType.STREAM_DECK]: {
+			displayName: 'Stream Deck',
+			configSchema: JSONBlobStringify(StreamDeckDevice.getOptionsManifest()),
+		},
+		[DeviceType.X_KEYS]: {
+			displayName: 'X-Keys',
+			configSchema: JSONBlobStringify(XKeysDevice.getOptionsManifest()),
+		},
+		[DeviceType.SKAARHOJ]: {
+			displayName: 'Skaarhoj',
+			configSchema: JSONBlobStringify(SkaarhojDevice.getOptionsManifest()),
+		},
+		[DeviceType.OSC]: {
+			displayName: 'OSC Server',
+			configSchema: JSONBlobStringify(OSCServer.getOptionsManifest()),
+		},
 	}
 }
 
-export { InputManager, SomeDeviceConfig, ManagerTriggerEventArgs as TriggerEventArgs, getIntegrationsConfigManifest }
+interface SubdeviceManifest {
+	displayName: string
+	configSchema: JSONBlob<JSONSchema>
+}
+
+export {
+	InputManager,
+	SomeDeviceConfig,
+	ManagerTriggerEventArgs as TriggerEventArgs,
+	getIntegrationsConfigManifest,
+	SubdeviceManifest,
+}

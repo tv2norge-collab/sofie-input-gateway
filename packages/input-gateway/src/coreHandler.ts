@@ -6,7 +6,7 @@ import { DeviceConfig } from './inputManagerHandler'
 import fs from 'fs'
 import { INPUT_DEVICE_CONFIG } from './configManifest'
 import { PeripheralDeviceCommandId, PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
-import { PeripheralDevicePublic } from '@sofie-automation/shared-lib/dist/core/model/peripheralDevice'
+import { PeripheralDeviceForDevice } from '@sofie-automation/shared-lib/dist/core/model/peripheralDevice'
 import {
 	PeripheralDeviceCategory,
 	PeripheralDeviceSubType,
@@ -101,7 +101,6 @@ export class CoreHandler {
 		}
 		await this.core.init(ddpConfig)
 		this.logger.info('Core id: ' + this.core.deviceId)
-		await this.setupObserversAndSubscriptions()
 		this._statusInitialized = true
 		await this.updateCoreStatus()
 		return
@@ -110,9 +109,7 @@ export class CoreHandler {
 		this.logger.info('Core: Setting up subscriptions..')
 		this.logger.info('DeviceId: ' + this.core.deviceId)
 		await Promise.all([
-			this.core.autoSubscribe('peripheralDevices', {
-				_id: this.core.deviceId,
-			}),
+			this.core.autoSubscribe('peripheralDeviceForDevice', this.core.deviceId),
 			this.core.autoSubscribe('studioOfDevice', this.core.deviceId),
 			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
 			// @todo: subscribe to userInput
@@ -126,7 +123,7 @@ export class CoreHandler {
 			this._observers = []
 		}
 		// setup observers
-		const observer = this.core.observe('peripheralDevices')
+		const observer = this.core.observe('peripheralDeviceForDevice')
 		observer.added = (id: string) => {
 			this.onDeviceChanged(protectString(id))
 		}
@@ -155,7 +152,6 @@ export class CoreHandler {
 
 			deviceCategory: PeripheralDeviceCategory.TRIGGER_INPUT,
 			deviceType: PeripheralDeviceType.INPUT,
-			deviceSubType: subDeviceType,
 
 			deviceName: name,
 			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
@@ -163,6 +159,9 @@ export class CoreHandler {
 			configManifest: {
 				...INPUT_DEVICE_CONFIG,
 			},
+
+			versions: this._getVersions(),
+			documentationUrl: 'https://github.com/nrkno/sofie-input-gateway',
 		}
 
 		if (!options.deviceToken) {
@@ -216,19 +215,19 @@ export class CoreHandler {
 	}
 	onDeviceChanged(id: PeripheralDeviceId): void {
 		if (id === this.core.deviceId) {
-			const col = this.core.getCollection<PeripheralDevicePublic>('peripheralDevices')
-			if (!col) throw new Error('collection "peripheralDevices" not found!')
+			const col = this.core.getCollection<PeripheralDeviceForDevice>('peripheralDeviceForDevice')
+			if (!col) throw new Error('collection "peripheralDeviceForDevice" not found!')
 
 			const device = col.findOne(id)
 			if (device) {
-				if (!_.isEqual(this.deviceSettings, device.settings)) {
-					this.deviceSettings = device.settings || {}
+				if (!_.isEqual(this.deviceSettings, device.deviceSettings)) {
+					this.deviceSettings = device.deviceSettings || {}
 				}
 			} else {
 				this.deviceSettings = {}
 			}
 
-			const logLevel = this.deviceSettings['debugLogging'] ? 'debug' : 'info'
+			const logLevel = this.deviceSettings['logLevel'] ? 'debug' : 'info'
 			if (logLevel !== this.logger.level) {
 				this.logger.level = logLevel
 
@@ -239,7 +238,7 @@ export class CoreHandler {
 		}
 	}
 	get logDebug(): boolean {
-		return !!this.deviceSettings['debugLogging']
+		return !!this.deviceSettings['logLevel']
 	}
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

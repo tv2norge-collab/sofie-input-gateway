@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/stream-deck",
+    "title": "Stream Deck Device Options",
+    "type": "object",
+    "properties": {
+        "path": {
+            "type": "string",
+            "ui:title": "Device Path",
+            "ui:description": "The device path or part of it, where the device is attached in the system device tree"
+        },
+        "serialNumber": {
+            "type": "string",
+            "ui:title": "Serial Number",
+            "ui:description": "The serial number of the device"
+        },
+        "index": {
+            "type": "integer",
+            "ui:title": "Device Index",
+            "ui:description": "The index on the list of attached Stream Deck devices"
+        }
+    },
+    "required": [],
+    "additionalProperties": false
+}

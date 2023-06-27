@@ -1,0 +1,129 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/midi",
+	"title": "MIDI Controller Options",
+	"type": "object",
+	"properties": {
+		"inputName": {
+			"type": "string",
+			"ui:title": "Input Name",
+			"ui:description": "The name of the MIDI Input to connect to for incoming messages"
+		},
+		"outputName": {
+			"type": "string",
+			"ui:title": "Output Name",
+			"ui:description": "The name of the MIDI Output to connect to for sending feedback"
+		},
+		"feedbackSettings": {
+			"type": "object",
+			"ui:title": "Feedback Settings",
+			"ui:description": "Configuration of the feedback behavior",
+			"properties": {
+				"note": {
+					"type": "array",
+					"ui:title": "MIDI Note On Feedback",
+					"ui:description": "Send a Note On MIDI Message to the Output with a velocity dependant on the Tally state of the trigger",
+					"items": {
+						"type": "object",
+						"title": "MIDI Note On Feedback",
+						"properties": {
+							"trigger": {
+								"type": "string",
+								"ui:title": "Trigger",
+								"ui:description": "The trigger that this feedback relates to",
+								"ui:summaryTitle": "Trigger"
+							},
+							"channel": {
+								"type": "integer",
+								"ui:title": "Channel",
+								"ui:summaryTitle": "Channel"
+							},
+							"note": {
+								"type": "integer",
+								"ui:title": "Note",
+								"ui:summaryTitle": "Note"
+							},
+							"velocity": {
+								"type": "integer",
+								"ui:title": "Velocity - Default",
+								"ui:description": "Use `-1` to not emit anything when condition met"
+							},
+							"velocityPresent": {
+								"type": "integer",
+								"ui:title": "Velocity - Present",
+								"ui:description": "Use `-1` to not emit anything when condition met"
+							},
+							"velocityNext": {
+								"type": "integer",
+								"ui:title": "Velocity - Next",
+								"ui:description": "Use `-1` to not emit anything when condition met"
+							},
+							"velocityOnAir": {
+								"type": "integer",
+								"ui:title": "Velocity - On Air",
+								"ui:description": "Use `-1` to not emit anything when condition met"
+							}
+						},
+						"required": ["trigger", "channel", "note"],
+						"additionalProperties": false
+					}
+				},
+				"cc": {
+					"type": "array",
+					"ui:title": "MIDI CC Feedback",
+					"ui:description": "Send a CC MIDI Message to the Output with a value dependant on the Tally state of the trigger",
+					"items": {
+						"type": "object",
+						"title": "MIDI CC Feedback",
+						"properties": {
+							"trigger": {
+								"type": "string",
+								"ui:title": "Trigger",
+								"ui:description": "The trigger that this feedback relates to",
+								"ui:summaryTitle": "Trigger"
+							},
+							"channel": {
+								"type": "integer",
+								"ui:title": "Channel",
+								"ui:summaryTitle": "Channel"
+							},
+							"cc": {
+								"type": "integer",
+								"ui:title": "Note",
+								"ui:summaryTitle": "Note"
+							},
+							"value": {
+								"type": "integer",
+								"ui:title": "Value - Default",
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
+							},
+							"valuePresent": {
+								"type": "integer",
+								"ui:title": "Value - Present",
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
+							},
+							"valueNext": {
+								"type": "integer",
+								"ui:title": "Value - Next",
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
+							},
+							"valueOnAir": {
+								"type": "integer",
+								"ui:title": "Value - On Air",
+								"ui:description": "Use `-1` to not emit anything when condition met",
+								"default": -1
+							}
+						},
+						"required": ["trigger", "channel", "cc"],
+						"additionalProperties": false
+					}
+				}
+			}
+		}
+	},
+	"required": ["inputName"],
+	"additionalProperties": false
+}
