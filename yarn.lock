@@ -6512,6 +6512,7 @@ __metadata:
     jest-resolve: ^26.0.1
     json-schema-to-typescript: ^11.0.3
     lerna: ^6.6.1
+    lint-staged: ^13.2.2
     nodemon: ^2.0.20
     open-cli: ^7.0.1
     pkg: ^5.8.0

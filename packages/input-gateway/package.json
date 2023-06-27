@@ -41,7 +41,6 @@
 		"cov-open": "open-cli coverage/lcov-report/index.html",
 		"validate:dependencies": "yarn audit --groups dependencies && yarn license-validate",
 		"validate:dev-dependencies": "yarn audit --groups devDependencies",
-		"precommit": "lint-staged",
 		"generate-schema-types": "json2ts -i './src/$schemas/' -o ./src/generated/"
 	},
 	"lint-staged": {

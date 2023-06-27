@@ -13,6 +13,7 @@
   },
   "scripts": {
     "prepare": "husky install",
+    "precommit": "lint-staged",
     "build": "yarn run generate-schema-types && lerna run build",
     "build:main": "lerna --scope=input-gateway run build",
     "build:manager": "yarn lerna --scope=@sofie-automation/input-manager run build",
@@ -53,6 +54,7 @@
     "jest-resolve": "^26.0.1",
     "json-schema-to-typescript": "^11.0.3",
     "lerna": "^6.6.1",
+    "lint-staged": "^13.2.2",
     "nodemon": "^2.0.20",
     "open-cli": "^7.0.1",
     "pkg": "^5.8.0",
