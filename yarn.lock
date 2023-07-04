@@ -1813,7 +1813,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sofie-automation/input-manager@0.2.2-alpha.0, @sofie-automation/input-manager@workspace:packages/input-manager":
+"@sofie-automation/input-manager@0.2.2-alpha.1, @sofie-automation/input-manager@workspace:packages/input-manager":
   version: 0.0.0-use.local
   resolution: "@sofie-automation/input-manager@workspace:packages/input-manager"
   dependencies:
@@ -6530,7 +6530,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "input-gateway@workspace:packages/input-gateway"
   dependencies:
-    "@sofie-automation/input-manager": 0.2.2-alpha.0
+    "@sofie-automation/input-manager": 0.2.2-alpha.1
     "@sofie-automation/server-core-integration": 1.50.0-nightly-release50-20230529-135607-13157b3.0
     "@sofie-automation/shared-lib": 1.50.0-nightly-release50-20230529-135607-13157b3.0
     debug: ^4.3.1
