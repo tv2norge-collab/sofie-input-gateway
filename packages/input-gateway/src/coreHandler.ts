@@ -74,9 +74,6 @@ export class CoreHandler {
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
-			this.setupObserversAndSubscriptions().catch((e) => {
-				this.logger.error('Core Error:', e)
-			})
 			if (this._onConnected) this._onConnected()
 		})
 		this.core.onDisconnected(() => {
@@ -104,7 +101,6 @@ export class CoreHandler {
 		await this.setupObserversAndSubscriptions()
 		this._statusInitialized = true
 		await this.updateCoreStatus()
-		return
 	}
 	async setupObserversAndSubscriptions(): Promise<void> {
 		this.logger.info('Core: Setting up subscriptions..')
