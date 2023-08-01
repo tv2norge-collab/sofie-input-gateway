@@ -73,8 +73,8 @@
 	],
 	"dependencies": {
 		"@sofie-automation/input-manager": "0.2.2-alpha.1",
-		"@sofie-automation/server-core-integration": "1.50.0-nightly-release50-20230529-135607-13157b3.0",
-		"@sofie-automation/shared-lib": "1.50.0-nightly-release50-20230529-135607-13157b3.0",
+		"@sofie-automation/server-core-integration": "1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0",
+		"@sofie-automation/shared-lib": "1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0",
 		"debug": "^4.3.1",
 		"eventemitter3": "^4.0.7",
 		"p-all": "^3.0.0",

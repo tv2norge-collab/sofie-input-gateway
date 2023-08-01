@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PackageManagerSettings {
+export interface InputGatewaySettings {
   logLevel?: "error" | "warn" | "info" | "verbose" | "debug" | "silly";
   [k: string]: unknown;
 }

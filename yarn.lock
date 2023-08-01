@@ -1058,10 +1058,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mos-connection/model@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@mos-connection/model@npm:3.0.2"
-  checksum: c8acb3eff5845e71a33349131547be8ca1c8b041f5119d54253f03ad1ce7a2b21d30dbaa4709a978425237585cc4b7eab2edca8027d81984aefd9cdef9c3efc4
+"@mos-connection/model@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@mos-connection/model@npm:3.0.4"
+  checksum: 7de15fba9a818260fb57847dbc51695036720a7f499d2fe262c691630673e83c01bdc3ea62261529e661f957074a6d92e8d38305485293c5392e073dab33989b
   languageName: node
   linkType: hard
 
@@ -1832,30 +1832,30 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@sofie-automation/server-core-integration@npm:1.50.0-nightly-release50-20230529-135607-13157b3.0":
-  version: 1.50.0-nightly-release50-20230529-135607-13157b3.0
-  resolution: "@sofie-automation/server-core-integration@npm:1.50.0-nightly-release50-20230529-135607-13157b3.0"
+"@sofie-automation/server-core-integration@npm:1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0":
+  version: 1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0
+  resolution: "@sofie-automation/server-core-integration@npm:1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0"
   dependencies:
-    "@sofie-automation/shared-lib": 1.50.0-nightly-release50-20230529-135607-13157b3.0
+    "@sofie-automation/shared-lib": 1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0
     ejson: ^2.2.3
     eventemitter3: ^4.0.7
     faye-websocket: ^0.11.4
     got: ^11.8.6
-    tslib: ^2.4.0
-    underscore: ^1.13.4
-  checksum: 0a096dfd650171ef49e53191df85bbd82af0dc508ab4f69e15791fb14748c0e51afa0a71db887eb1c49f48014c4df6f954fcecf9dd85075f675d49d564b6d54b
+    tslib: ^2.6.0
+    underscore: ^1.13.6
+  checksum: 10ef3107c495f77b941795672a3c8669a4d44f13cff5c0ce528f57ab9a81c4b96db6189f0adbef228b1c3ce511221557095ddcdb99b762cd4d4c0ecb9788d97d
   languageName: node
   linkType: hard
 
-"@sofie-automation/shared-lib@npm:1.50.0-nightly-release50-20230529-135607-13157b3.0":
-  version: 1.50.0-nightly-release50-20230529-135607-13157b3.0
-  resolution: "@sofie-automation/shared-lib@npm:1.50.0-nightly-release50-20230529-135607-13157b3.0"
+"@sofie-automation/shared-lib@npm:1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0":
+  version: 1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0
+  resolution: "@sofie-automation/shared-lib@npm:1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0"
   dependencies:
-    "@mos-connection/model": ^3.0.2
-    timeline-state-resolver-types: 8.0.0-nightly-release50-20230518-100641-f60ce9709.0
-    tslib: ^2.4.0
-    type-fest: ^2.19.0
-  checksum: 91011eaa0ee74a48f705c8a7bbfdbccfdb0bd7a131a14753778ddb603e624f1c8756ee4dee5eef02d32d209b12fb0d327a166fb96a099e1bdd9211fb0d412696
+    "@mos-connection/model": ^3.0.4
+    timeline-state-resolver-types: 9.0.0-release50.5
+    tslib: ^2.6.0
+    type-fest: ^3.10.0
+  checksum: 0e818c60a2bacd81f765c6773a1ba9dcd5d5a09887701fea44d4dce443e560db98a9a8f8b1c46f1a033e808ec2af89b010a475049b2b84fd2f15fd52f334c2e4
   languageName: node
   linkType: hard
 
@@ -6531,8 +6531,8 @@ __metadata:
   resolution: "input-gateway@workspace:packages/input-gateway"
   dependencies:
     "@sofie-automation/input-manager": 0.2.2-alpha.1
-    "@sofie-automation/server-core-integration": 1.50.0-nightly-release50-20230529-135607-13157b3.0
-    "@sofie-automation/shared-lib": 1.50.0-nightly-release50-20230529-135607-13157b3.0
+    "@sofie-automation/server-core-integration": 1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0
+    "@sofie-automation/shared-lib": 1.51.0-nightly-feat-input-gw-shift-20230731-125304-43763fe.0
     debug: ^4.3.1
     eventemitter3: ^4.0.7
     p-all: ^3.0.0
@@ -12282,12 +12282,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"timeline-state-resolver-types@npm:8.0.0-nightly-release50-20230518-100641-f60ce9709.0":
-  version: 8.0.0-nightly-release50-20230518-100641-f60ce9709.0
-  resolution: "timeline-state-resolver-types@npm:8.0.0-nightly-release50-20230518-100641-f60ce9709.0"
+"timeline-state-resolver-types@npm:9.0.0-release50.5":
+  version: 9.0.0-release50.5
+  resolution: "timeline-state-resolver-types@npm:9.0.0-release50.5"
   dependencies:
     tslib: ^2.5.1
-  checksum: 02db63f168af7085899919e7d5c60cb9cbdb427263b16faab0d6393ef44215320b131467c0ff207685e02e6cf7a339979e8813515624e81867064d55fd06b392
+  checksum: bb333705c2aaccc70698333e8d13b9b95d58a5767402270b9181fee7da22fc0732d95b950e77f24f1429c5e7c789e9604fd66f0e13ea52d801320f69337ecf1a
   languageName: node
   linkType: hard
 
@@ -12559,6 +12559,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:^2.6.0":
+  version: 2.6.1
+  resolution: "tslib@npm:2.6.1"
+  checksum: b0d176d176487905b66ae4d5856647df50e37beea7571c53b8d10ba9222c074b81f1410fb91da13debaf2cbc970663609068bdebafa844ea9d69b146527c38fe
+  languageName: node
+  linkType: hard
+
 "tsutils@npm:^3.21.0":
   version: 3.21.0
   resolution: "tsutils@npm:3.21.0"
@@ -12671,7 +12678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^2.0.0, type-fest@npm:^2.12.2, type-fest@npm:^2.13.0, type-fest@npm:^2.16.0, type-fest@npm:^2.19.0, type-fest@npm:^2.5.0":
+"type-fest@npm:^2.0.0, type-fest@npm:^2.12.2, type-fest@npm:^2.13.0, type-fest@npm:^2.16.0, type-fest@npm:^2.5.0":
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: a4ef07ece297c9fba78fc1bd6d85dff4472fe043ede98bd4710d2615d15776902b595abf62bd78339ed6278f021235fb28a96361f8be86ed754f778973a0d278
@@ -12682,6 +12689,13 @@ __metadata:
   version: 3.5.1
   resolution: "type-fest@npm:3.5.1"
   checksum: b79991ef1310bd114210c8f697b510cefd2276c6ed4fd5026430b6e73a4253916c6551f773327a1e4c47ac2b31205294c8e68030e4999f262e0d47d541f7b7cb
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^3.10.0":
+  version: 3.13.1
+  resolution: "type-fest@npm:3.13.1"
+  checksum: c06b0901d54391dc46de3802375f5579868949d71f93b425ce564e19a428a0d411ae8d8cb0e300d330071d86152c3ea86e744c3f2860a42a79585b6ec2fdae8e
   languageName: node
   linkType: hard
 
@@ -12778,7 +12792,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"underscore@npm:^1.13.4":
+"underscore@npm:^1.13.4, underscore@npm:^1.13.6":
   version: 1.13.6
   resolution: "underscore@npm:1.13.6"
   checksum: d5cedd14a9d0d91dd38c1ce6169e4455bb931f0aaf354108e47bd46d3f2da7464d49b2171a5cf786d61963204a42d01ea1332a903b7342ad428deaafaf70ec36

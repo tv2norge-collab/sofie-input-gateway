@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "urn:local:nrk.no/sofie-input-gateway/gateway-settings",
-    "title": "Package Manager Settings",
+    "title": "Input Gateway Settings",
     "type": "object",
     "properties": {
         "logLevel": {
