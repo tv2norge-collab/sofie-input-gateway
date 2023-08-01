@@ -92,9 +92,17 @@ export class SkaarhojDevice extends Device {
 		} else {
 			const stateMatch = state.match(AnalogStateChange.StateChange)
 			if (stateMatch) {
+				const value = parseFloat(stateMatch[2])
+				const key = stateMatch[1]
+
+				let direction = 0
+				if (value < 0) direction = -1
+				if (value > 0) direction = 1
+
 				this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, () => {
 					return {
-						[stateMatch[1]]: parseFloat(stateMatch[2]),
+						[key]: value,
+						direction,
 					}
 				})
 			} else {

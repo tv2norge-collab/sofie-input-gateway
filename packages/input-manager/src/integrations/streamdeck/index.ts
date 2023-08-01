@@ -108,6 +108,7 @@ export class StreamDeckDevice extends Device {
 				if (!prev) prev = { deltaValue: 0 }
 				return {
 					deltaValue: prev.deltaValue - deltaValue,
+					direction: -1,
 				}
 			})
 
@@ -123,6 +124,7 @@ export class StreamDeckDevice extends Device {
 				if (!prev) prev = { deltaValue: 0 }
 				return {
 					deltaValue: prev.deltaValue + deltaValue,
+					direction: 1,
 				}
 			})
 
