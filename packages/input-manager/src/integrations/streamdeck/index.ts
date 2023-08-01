@@ -12,6 +12,7 @@ export class StreamDeckDevice extends Device {
 	#streamDeck: StreamDeck | undefined
 	#config: StreamDeckDeviceOptions
 	#feedbacks: Record<string, SomeFeedback> = {}
+	#isButtonDown: Record<string, boolean> = {}
 	private BTN_SIZE: number | undefined = undefined
 	private ENC_SIZE_WIDTH: number | undefined = undefined
 	private ENC_SIZE_HEIGHT: number | undefined = undefined
@@ -57,7 +58,11 @@ export class StreamDeckDevice extends Device {
 
 			this.addTriggerEvent({ triggerId })
 
-			this.updateFeedback(id, true).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.#isButtonDown[id] = true
+
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('up', (key) => {
 			const id = `${key}`
@@ -65,7 +70,11 @@ export class StreamDeckDevice extends Device {
 
 			this.addTriggerEvent({ triggerId })
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.#isButtonDown[id] = false
+
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('encoderDown', (encoder) => {
 			const id = `Enc${encoder}`
@@ -73,7 +82,11 @@ export class StreamDeckDevice extends Device {
 
 			this.addTriggerEvent({ triggerId })
 
-			this.updateFeedback(id, true).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.#isButtonDown[id] = true
+
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('encoderUp', (encoder) => {
 			const id = `Enc${encoder}`
@@ -81,7 +94,11 @@ export class StreamDeckDevice extends Device {
 
 			this.addTriggerEvent({ triggerId })
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.#isButtonDown[id] = false
+
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('rotateLeft', (encoder, deltaValue) => {
 			const id = `Enc${encoder}`
@@ -94,7 +111,9 @@ export class StreamDeckDevice extends Device {
 				}
 			})
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('rotateRight', (encoder, deltaValue) => {
 			const id = `Enc${encoder}`
@@ -107,7 +126,9 @@ export class StreamDeckDevice extends Device {
 				}
 			})
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('lcdShortPress', (encoder, position) => {
 			const id = `Enc${encoder}`
@@ -121,7 +142,9 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('lcdLongPress', (encoder, position) => {
 			const id = `Enc${encoder}`
@@ -135,7 +158,9 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('lcdSwipe', (fromEncoder, toEncoder, from, to) => {
 			const id = `Enc${fromEncoder}`
@@ -153,7 +178,9 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, false).catch((err) => this.logger.error(`Stream Deck: Error updating feedback: ${err}`))
+			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+			)
 		})
 		this.#streamDeck.addListener('error', (err) => {
 			this.logger.error(String(err))
@@ -235,7 +262,7 @@ export class StreamDeckDevice extends Device {
 
 		this.#feedbacks[trigger] = feedback
 
-		await this.updateFeedback(trigger, false)
+		await this.updateFeedback(trigger, this.#isButtonDown[trigger])
 	}
 
 	async clearFeedbackAll(): Promise<void> {
