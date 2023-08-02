@@ -315,17 +315,23 @@ export class InputManagerHandler {
 	async #refreshMountedTriggers() {
 		this.#deviceTriggerActions = {}
 
-		await this.#inputManager?.clearFeedbackAll()
+		if (!this.#inputManager) return
 
-		this.#coreHandler.core
+		const endReplaceTransaction = this.#inputManager.beginFeedbackReplaceTransaction()
+
+		const mountedActions = this.#coreHandler.core
 			.getCollection('mountedTriggers')
-			.find({})
-			.forEach((obj) => {
-				const mountedTrigger = obj as DeviceTriggerMountedAction
-				this.#handleChangedMountedTrigger(mountedTrigger._id).catch((err) =>
-					this.#logger.error(`Error in #handleChangedMountedTrigger in #refreshMountedTriggers: ${err}`)
-				)
-			})
+			.find({}) as DeviceTriggerMountedAction[]
+
+		for (const mountedTrigger of mountedActions) {
+			try {
+				await this.#handleChangedMountedTrigger(mountedTrigger._id)
+			} catch (err) {
+				this.#logger.error(`Error in #handleChangedMountedTrigger in #refreshMountedTriggers: ${err}`)
+			}
+		}
+
+		await endReplaceTransaction()
 	}
 
 	#triggerSendTrigger() {
