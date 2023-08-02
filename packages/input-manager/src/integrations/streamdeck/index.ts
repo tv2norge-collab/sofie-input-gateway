@@ -50,7 +50,9 @@ export class StreamDeckDevice extends Device {
 		this.ENC_SIZE_HEIGHT = this.#streamDeck.LCD_ENCODER_SIZE?.height
 		this.ENC_SIZE_WIDTH = this.#streamDeck.LCD_ENCODER_SIZE?.width
 
-		this.#streamDeck.setBrightness(100).catch((err) => {
+		const brightness = this.#config.brightness ?? DEFAULT_BRIGHTNESS
+
+		this.#streamDeck.setBrightness(brightness).catch((err) => {
 			this.logger.error(`Error setting brightness: ${err}`, err)
 		})
 		this.#streamDeck.addListener('down', (key) => {
@@ -61,7 +63,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = true
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -73,7 +75,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = false
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -85,7 +87,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = true
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -97,7 +99,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = false
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -113,7 +115,7 @@ export class StreamDeckDevice extends Device {
 				}
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -129,7 +131,7 @@ export class StreamDeckDevice extends Device {
 				}
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -145,7 +147,7 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -161,7 +163,7 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -181,7 +183,7 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id]).catch((err) =>
+			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
 				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 			)
 		})
@@ -262,7 +264,7 @@ export class StreamDeckDevice extends Device {
 
 		this.#feedbacks.set(trigger, action, feedback)
 
-		await this.updateFeedback(trigger, this.#isButtonDown[trigger])
+		await this.updateFeedback(trigger, this.#isButtonDown[trigger] ?? false)
 	}
 
 	async clearFeedbackAll(): Promise<void> {
@@ -280,3 +282,4 @@ export class StreamDeckDevice extends Device {
 }
 
 const ACTION_PRIORITIES = [Symbols.DOWN, Symbols.UP, Symbols.JOG, Symbols.MOVE, Symbols.SHUTTLE, Symbols.T_BAR]
+const DEFAULT_BRIGHTNESS = 100
