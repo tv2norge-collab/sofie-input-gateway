@@ -1,8 +1,6 @@
-# Sofie: The Modern TV News Studio Automation System (Input Gateway)
-An application for piping user input into the [Sofie Server Core](https://github.com/nrkno/tv-automation-server-core)
+# Sofie Input Gateway
 
-This application is a part of the [**Sofie** TV News Studio Automation System](https://github.com/nrkno/Sofie-TV-automation/).
-
+This is the _Input Gateway_ of the [**Sofie** TV Automation System](https://github.com/nrkno/Sofie-TV-automation/), used to pipe user input into the [Core](https://github.com/nrkno/tv-automation-server-core).
 
 ## Usage
 ```
@@ -12,7 +10,7 @@ npm run start -host 127.0.0.1 -port 3000 -log "log.log"
 npm run start
 ```
 
-**CLI arguments:**
+**CLI Arguments:**
 
 | Argument  | Description | Environment variable |
 | ------------- | ------------- | --- |
@@ -21,17 +19,31 @@ npm run start
 | -log  | Path to output log |  CORE_LOG |
 | -id   | Device ID to use | DEVICE_ID |
 
-## Installation for dev
+## Installation for Developers
 
 * yarn
 * yarn build
 * yarn test
 
-### Dev dependencies:
+### Development Dependencies:
 
 * yarn
 	https://yarnpkg.com
 
 * jest
 	yarn global add jest
+
+## Repository-specific Info for Developers
+* [Contribution Guidelines](CONTRIBUTING.md)
+
+## General Sofie System Info
+* [Documentation](https://nrkno.github.io/sofie-core/)
+* [Releases](https://nrkno.github.io/sofie-core/releases)
+
+---
+
+_The NRK logo is a registered trademark of Norsk rikskringkasting AS. The license does not grant any right to use, in any way, any trademarks, service marks or logos of Norsk rikskringkasting AS._
+
+
+
 
