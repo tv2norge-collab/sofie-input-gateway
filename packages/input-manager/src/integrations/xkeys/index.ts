@@ -97,8 +97,14 @@ export class XKeysDevice extends Device {
 
 			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { deltaValue: number }) => {
 				if (!prev) prev = { deltaValue: 0 }
+
+				let direction = 0
+				if (deltaValue < 0) direction = -1
+				if (deltaValue > 0) direction = 1
+
 				return {
 					deltaValue: prev.deltaValue + deltaValue,
+					direction,
 				}
 			})
 		})
@@ -108,6 +114,7 @@ export class XKeysDevice extends Device {
 
 			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { position: number }) => {
 				if (!prev) prev = { position: 0 }
+
 				return {
 					position: prev.position + position,
 				}

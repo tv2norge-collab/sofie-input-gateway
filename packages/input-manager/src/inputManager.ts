@@ -213,9 +213,28 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const [deviceId, device] of Object.entries<Device | undefined>(this.#devices)) {
+		const p = Object.entries<Device | undefined>(this.#devices).map(async ([deviceId, device]) => {
 			this.#feedback[deviceId] = {}
 			await device?.clearFeedbackAll()
+		})
+		await Promise.allSettled(p)
+	}
+
+	beginFeedbackReplaceTransaction(): () => Promise<void> {
+		const oldFeedback = this.#feedback
+		this.#feedback = {}
+
+		return async () => {
+			// set null feedback on all triggers that are not in the new feedback cache
+			const p = Object.entries<Record<string, SomeFeedback>>(oldFeedback).map(async ([deviceId, deviceTriggersObj]) => {
+				for (const [triggerId, feedback] of Object.entries<SomeFeedback>(deviceTriggersObj)) {
+					if (this.#feedback[deviceId]?.[triggerId] === undefined && feedback !== undefined) {
+						this.#logger.debug(`Clearing ${deviceId} "${triggerId}"...`)
+						await this.setFeedback(deviceId, triggerId, null)
+					}
+				}
+			})
+			await Promise.allSettled(p)
 		}
 	}
 

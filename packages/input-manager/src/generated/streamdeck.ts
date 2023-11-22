@@ -9,4 +9,5 @@ export interface StreamDeckDeviceOptions {
 	path?: string
 	serialNumber?: string
 	index?: number
+	brightness?: number
 }

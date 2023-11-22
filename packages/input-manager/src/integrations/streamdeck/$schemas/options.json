@@ -18,6 +18,13 @@
             "type": "integer",
             "ui:title": "Device Index",
             "ui:description": "The index on the list of attached Stream Deck devices"
+        },
+        "brightness": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "ui:title": "Display brightness",
+            "ui:description": "Set the intensity of the backlight on the Stream Deck device screen"
         }
     },
     "required": [],
