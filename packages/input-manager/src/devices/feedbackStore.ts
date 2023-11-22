@@ -16,8 +16,9 @@ export class FeedbackStore<T extends SomeFeedback> {
 	public get(feedbackId: string, triggerId: string | string[]): T | null {
 		const triggersInPriority = Array.isArray(triggerId) ? triggerId : [triggerId]
 
-		if (!this.feedbacks[feedbackId]) return null
-		const feedbackObj = this.feedbacks[feedbackId]
+		const feedbackObj = this.feedbacks[feedbackId] as Record<string, T> | undefined
+		if (!feedbackObj) return null
+
 		for (const trigger of triggersInPriority) {
 			if (feedbackObj[trigger]) return feedbackObj[trigger]
 		}
@@ -29,7 +30,7 @@ export class FeedbackStore<T extends SomeFeedback> {
 		this.feedbacks = {}
 	}
 
-	public allFeedbacks(): string[] {
+	public allFeedbackIds(): string[] {
 		return Array.from(Object.keys(this.feedbacks))
 	}
 }
