@@ -409,12 +409,18 @@ export class InputManagerHandler {
 	}
 
 	#executeModifyShiftRegister(action: ShiftRegisterActionArguments): void {
-		const register = Number(action.register)
+		const registerIndex = Number(action.register)
+
+		if (registerIndex < 0 || !Number.isInteger(registerIndex)) {
+			this.#logger.error(`Register index needs to be a non-negative integer: received "${action.register}" in action"`)
+			return
+		}
+
 		const value = Number(action.value)
 		const min = Number(action.limitMin)
 		const max = Number(action.limitMax)
 
-		const originalValue = this.#shiftRegisters[register] ?? 0
+		const originalValue = this.#shiftRegisters[registerIndex] ?? 0
 		let newValue = originalValue
 		switch (action.operation) {
 			case '=':
@@ -430,7 +436,7 @@ export class InputManagerHandler {
 
 		newValue = Math.max(Math.min(newValue, max), min)
 
-		this.#shiftRegisters[register] = newValue
+		this.#shiftRegisters[registerIndex] = newValue
 
 		this.#refreshMountedTriggers().catch(this.#logger.error)
 	}
