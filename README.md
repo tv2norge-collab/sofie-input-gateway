@@ -2,6 +2,16 @@
 
 This is the _Input Gateway_ of the [**Sofie** TV Automation System](https://github.com/nrkno/Sofie-TV-automation/), used to pipe user input into the [Core](https://github.com/nrkno/tv-automation-server-core).
 
+## Repository-specific Info for Developers
+* [Developer Info](DEVELOPER.md)
+* [Contribution Guidelines](CONTRIBUTING.md)
+
+## General Sofie System Info
+* [Documentation](https://nrkno.github.io/sofie-core/)
+* [Releases](https://nrkno.github.io/sofie-core/releases)
+
+---
+
 ## Usage
 ```
 // Development:
@@ -32,13 +42,6 @@ npm run start
 
 * jest
 	yarn global add jest
-
-## Repository-specific Info for Developers
-* [Contribution Guidelines](CONTRIBUTING.md)
-
-## General Sofie System Info
-* [Documentation](https://nrkno.github.io/sofie-core/)
-* [Releases](https://nrkno.github.io/sofie-core/releases)
 
 ---
 
