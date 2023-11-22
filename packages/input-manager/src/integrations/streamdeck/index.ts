@@ -63,9 +63,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = true
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('up', (key) => {
 			const id = `${key}`
@@ -75,9 +73,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = false
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('encoderDown', (encoder) => {
 			const id = `Enc${encoder}`
@@ -87,9 +83,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = true
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('encoderUp', (encoder) => {
 			const id = `Enc${encoder}`
@@ -99,9 +93,7 @@ export class StreamDeckDevice extends Device {
 
 			this.#isButtonDown[id] = false
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('rotateLeft', (encoder, deltaValue) => {
 			const id = `Enc${encoder}`
@@ -115,9 +107,7 @@ export class StreamDeckDevice extends Device {
 				}
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('rotateRight', (encoder, deltaValue) => {
 			const id = `Enc${encoder}`
@@ -131,9 +121,7 @@ export class StreamDeckDevice extends Device {
 				}
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('lcdShortPress', (encoder, position) => {
 			const id = `Enc${encoder}`
@@ -147,9 +135,7 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('lcdLongPress', (encoder, position) => {
 			const id = `Enc${encoder}`
@@ -163,9 +149,7 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('lcdSwipe', (fromEncoder, toEncoder, from, to) => {
 			const id = `Enc${fromEncoder}`
@@ -183,9 +167,7 @@ export class StreamDeckDevice extends Device {
 				},
 			})
 
-			this.updateFeedback(id, this.#isButtonDown[id] ?? false).catch((err) =>
-				this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
-			)
+			this.quietUpdateFeedbackWithDownState(id)
 		})
 		this.#streamDeck.addListener('error', (err) => {
 			this.logger.error(String(err))
@@ -257,6 +239,12 @@ export class StreamDeckDevice extends Device {
 		}
 	}
 
+	private quietUpdateFeedbackWithDownState(trigger: string): void {
+		this.updateFeedback(trigger, this.#isButtonDown[trigger] ?? false).catch((err) =>
+			this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
+		)
+	}
+
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
 		if (!this.#streamDeck) return
 
@@ -268,7 +256,7 @@ export class StreamDeckDevice extends Device {
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const keyStr of this.#feedbacks.allFeedbacks()) {
+		for (const keyStr of this.#feedbacks.allFeedbackIds()) {
 			const key = keyStr
 			await this.updateFeedback(key, false)
 		}
