@@ -3,6 +3,7 @@ import { SomeFeedback } from '../feedback'
 import { rendererFactory } from './typeRenderers/factory'
 import path from 'path'
 import fs from 'fs/promises'
+import { constants as fsConstants } from 'fs'
 import process from 'process'
 
 async function makeBitmapFromFeedback(
@@ -53,7 +54,11 @@ export async function init(): Promise<void> {
 
 	const fonts = ['roboto-condensed-regular.ttf', 'roboto-condensed-700.ttf']
 
-	const searchPaths = [path.join(process.execPath, './assets'), path.join(process.cwd(), './assets')]
+	const searchPaths = [
+		path.join(path.dirname(process.execPath), './assets'),
+		path.join(process.cwd(), './assets'),
+		process.cwd(),
+	]
 
 	const foundFiles = await findFiles(fonts, searchPaths)
 
@@ -65,18 +70,17 @@ export async function init(): Promise<void> {
 async function findFiles(files: string[], paths: string[]): Promise<string[]> {
 	const result: string[] = []
 	for (const file of files) {
-		let foundPath: string | null = null
 		for (const pathOption of paths) {
 			try {
 				const pathToTest = path.join(pathOption, file)
-				await fs.access(pathToTest, fs.constants.O_RDONLY)
-				foundPath = pathToTest
+				await fs.access(pathToTest, fsConstants.O_RDONLY)
+				// File exists, we can add it to result
+				result.push(pathToTest)
 				break
 			} catch (e) {
 				// Doesn't exist or can't read
 			}
 		}
-		if (foundPath) result.push(foundPath)
 	}
 
 	return result

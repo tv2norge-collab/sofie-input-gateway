@@ -93,11 +93,12 @@
 		"assets": [
 			"../../node_modules/@sofie-automation/server-core-integration/package.json",
 			"../../node_modules/node-hid/build/Release/HID.node",
+			"../input-manager/node_modules/node-hid/build/Release/HID.node",
 			"../../node_modules/xkeys/node_modules/node-hid/build/Release/HID.node",
 			"./package.json"
 		],
 		"targets": [
-			"node16-win"
+			"node18-win"
 		],
 		"outputPath": "deploy"
 	}

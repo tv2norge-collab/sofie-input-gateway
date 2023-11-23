@@ -16,7 +16,7 @@ export class TextContext {
 	#inlinePosition = 0
 	#margin: TopRightBottomLeft = [0, 0, 0, 0]
 	#padding: TopRightBottomLeft = [0, 0, 0, 0]
-	fontFamily = '"RobotoCnd", Roboto, Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
+	fontFamily = '"RobotoCnd", "Roboto Condensed", Roboto, Tahoma, Verdana, Arial, "Noto Sans", "DejaVu Sans"'
 	fontSize = '14px'
 	lineHeight = '1'
 	color = '#fff'
