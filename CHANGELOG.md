@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0-alpha.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.1...v0.3.0-alpha.0) (2023-11-23)
+
+
+### Bug Fixes
+
+* Correct path for generic node-hid bindings ([5860fa4](https://github.com/nrkno/sofie-input-gateway/commit/5860fa4bd5a2a42206e81313735fb9715884a89e))
+* **Streamdeck:** simplify feedback update ([b36616f](https://github.com/nrkno/sofie-input-gateway/commit/b36616f5dd2fede2f84fd9842879912f54d29e14))
+* **Streamdeck:** tests ([bdd5062](https://github.com/nrkno/sofie-input-gateway/commit/bdd50621a71808f65860127591600216e7dc53e5))
+
+
+### Features
+
+* add shift registers ([c6654b3](https://github.com/nrkno/sofie-input-gateway/commit/c6654b3b7fc8e25827e7cd36f016ae79c0e60b44))
+* improve feedback refresh ([b097d67](https://github.com/nrkno/sofie-input-gateway/commit/b097d671ead026442cd2ef7f0d3c1a96cf7ee363))
+* **StreamDeck, XKeys, Skaarhoj:** add direction information ([1e92094](https://github.com/nrkno/sofie-input-gateway/commit/1e92094ef59467e52ecd5180e069833b7daf789f))
+* **Streamdeck:** add a "trigger down" map for rendering feedbacks ([97aa0b8](https://github.com/nrkno/sofie-input-gateway/commit/97aa0b8f7c16e35f0ec66e38b1f05ac336e5aa41))
+
+
+
+
+
 ## [0.2.2-alpha.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.0...v0.2.2-alpha.1) (2023-07-04)
 
 

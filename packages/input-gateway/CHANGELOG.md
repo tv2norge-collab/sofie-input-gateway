@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0-alpha.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.1...v0.3.0-alpha.0) (2023-11-23)
+
+
+### Bug Fixes
+
+* Correct path for generic node-hid bindings ([5860fa4](https://github.com/nrkno/sofie-input-gateway/commit/5860fa4bd5a2a42206e81313735fb9715884a89e))
+
+
+### Features
+
+* add shift registers ([c6654b3](https://github.com/nrkno/sofie-input-gateway/commit/c6654b3b7fc8e25827e7cd36f016ae79c0e60b44))
+* improve feedback refresh ([b097d67](https://github.com/nrkno/sofie-input-gateway/commit/b097d671ead026442cd2ef7f0d3c1a96cf7ee363))
+
+
+
+
+
 ## [0.2.2-alpha.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.0...v0.2.2-alpha.1) (2023-07-04)
 
 
