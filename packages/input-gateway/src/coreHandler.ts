@@ -1,4 +1,10 @@
-import { CoreConnection, CoreOptions, DDPConnectorOptions } from '@sofie-automation/server-core-integration'
+import {
+	CoreConnection,
+	CoreOptions,
+	DDPConnectorOptions,
+	PeripheralDevicePubSub,
+	PeripheralDevicePubSubCollectionsNames,
+} from '@sofie-automation/server-core-integration'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import _ from 'underscore'
 import * as Winston from 'winston'
@@ -6,7 +12,6 @@ import { DeviceConfig } from './inputManagerHandler'
 import fs from 'fs'
 import { INPUT_DEVICE_CONFIG } from './configManifest'
 import { PeripheralDeviceCommandId, PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
-import { PeripheralDeviceForDevice } from '@sofie-automation/shared-lib/dist/core/model/peripheralDevice'
 import {
 	PeripheralDeviceCategory,
 	PeripheralDeviceSubType,
@@ -105,10 +110,16 @@ export class CoreHandler {
 		this.logger.info('Core: Setting up subscriptions..')
 		this.logger.info('DeviceId: ' + this.core.deviceId)
 		await Promise.all([
-			this.core.autoSubscribe('peripheralDeviceForDevice', this.core.deviceId),
-			this.core.autoSubscribe('studioOfDevice', this.core.deviceId),
-			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
-			// @todo: subscribe to userInput
+			this.core.autoSubscribe(
+				PeripheralDevicePubSub.peripheralDeviceForDevice,
+				this.core.deviceId,
+				this._deviceOptions?.deviceToken
+			),
+			this.core.autoSubscribe(
+				PeripheralDevicePubSub.peripheralDeviceCommands,
+				this.core.deviceId,
+				this._deviceOptions?.deviceToken
+			),
 		])
 		this.logger.info('Core: Subscriptions are set up!')
 		if (this._observers.length) {
@@ -119,12 +130,12 @@ export class CoreHandler {
 			this._observers = []
 		}
 		// setup observers
-		const observer = this.core.observe('peripheralDeviceForDevice')
-		observer.added = (id: string) => {
-			this.onDeviceChanged(protectString(id))
+		const observer = this.core.observe(PeripheralDevicePubSubCollectionsNames.peripheralDeviceForDevice)
+		observer.added = (id) => {
+			this.onDeviceChanged(id)
 		}
-		observer.changed = (id1: string) => {
-			this.onDeviceChanged(protectString(id1))
+		observer.changed = (id) => {
+			this.onDeviceChanged(id)
 		}
 		this.setupObserverForPeripheralDeviceCommands(this)
 		return
@@ -211,7 +222,7 @@ export class CoreHandler {
 	}
 	onDeviceChanged(id: PeripheralDeviceId): void {
 		if (id === this.core.deviceId) {
-			const col = this.core.getCollection<PeripheralDeviceForDevice>('peripheralDeviceForDevice')
+			const col = this.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceForDevice)
 			if (!col) throw new Error('collection "peripheralDeviceForDevice" not found!')
 
 			const device = col.findOne(id)
@@ -285,15 +296,15 @@ export class CoreHandler {
 			}
 		}
 	}
-	retireExecuteFunction(cmdId: string): void {
-		delete this._executedFunctions[cmdId]
+	retireExecuteFunction(cmdId: PeripheralDeviceCommandId): void {
+		delete this._executedFunctions[unprotectString(cmdId)]
 	}
 	setupObserverForPeripheralDeviceCommands(functionObject: CoreHandler): void {
-		const observer = functionObject.core.observe('peripheralDeviceCommands')
+		const observer = functionObject.core.observe(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
 		functionObject.killProcess(0)
 		functionObject._observers.push(observer)
 		const addedChangedCommand = (id: PeripheralDeviceCommandId) => {
-			const cmds = functionObject.core.getCollection<PeripheralDeviceCommand>('peripheralDeviceCommands')
+			const cmds = functionObject.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
 			if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 			const cmd = cmds.findOne(id)
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
@@ -304,18 +315,18 @@ export class CoreHandler {
 				// console.log('not mine', cmd.deviceId, this.core.deviceId)
 			}
 		}
-		observer.added = (id: string) => {
-			addedChangedCommand(protectString(id))
+		observer.added = (id) => {
+			addedChangedCommand(id)
 		}
-		observer.changed = (id: string) => {
-			addedChangedCommand(protectString(id))
+		observer.changed = (id) => {
+			addedChangedCommand(id)
 		}
-		observer.removed = (id: string) => {
+		observer.removed = (id) => {
 			this.retireExecuteFunction(id)
 		}
-		const cmds = functionObject.core.getCollection('peripheralDeviceCommands')
+		const cmds = functionObject.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
-		;(cmds.find({}) as PeripheralDeviceCommand[]).forEach((cmd: PeripheralDeviceCommand) => {
+		cmds.find({}).forEach((cmd: PeripheralDeviceCommand) => {
 			if (cmd.deviceId === functionObject.core.deviceId) {
 				this.executeFunction(cmd, functionObject)
 			}

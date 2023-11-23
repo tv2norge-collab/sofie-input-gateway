@@ -8,16 +8,16 @@ import DEVICE_OPTIONS from './$schemas/options.json'
 const DEFAULT_PORT = 8080
 
 export class HTTPServer extends Device {
-	#server: Server | undefined
-	#config: HTTPServerOptions
+	private server: Server | undefined
+	private config: HTTPServerOptions
 
 	constructor(config: HTTPServerOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
 	async init(): Promise<void> {
-		this.#server = new Server((req, res) => {
+		this.server = new Server((req, res) => {
 			if (!req.url) {
 				this.logger.error(`HTTP: Request has no URL`)
 				res.end()
@@ -51,13 +51,13 @@ export class HTTPServer extends Device {
 			res.end()
 			return
 		})
-		this.#server.listen(this.#config.port ?? DEFAULT_PORT)
+		this.server.listen(this.config.port ?? DEFAULT_PORT)
 	}
 
 	async destroy(): Promise<void> {
 		await super.destroy()
-		if (!this.#server) return
-		const server = this.#server
+		if (!this.server) return
+		const server = this.server
 		return new Promise((resolve, reject) => {
 			server.close((err) => {
 				if (err) {

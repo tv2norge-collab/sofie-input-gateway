@@ -76,7 +76,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 
 		await Promise.allSettled(
 			Object.entries<SomeDeviceConfig>(this.config.devices).map(async ([deviceId, deviceConfig]) =>
-				this.createDevice(deviceId, deviceConfig)
+				this.createDevice(deviceId, deviceConfig ?? {})
 			)
 		)
 
@@ -97,7 +97,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 	}
 
 	private refreshDevicesInterval = (): void => {
-		this.#logger.debug(`Refreshing devices... ${this.#refreshRunning}`)
+		this.#logger.silly(`Refreshing devices... ${this.#refreshRunning}`)
 		if (this.#refreshRunning === true) return
 
 		this.#refreshRunning = true
@@ -106,7 +106,7 @@ class InputManager extends EventEmitter<DeviceEvents> {
 				this.#logger.error(`Could not refresh devices: ${e}`)
 			})
 			.finally(() => {
-				this.#logger.debug(`Refreshing devices done.`)
+				this.#logger.silly(`Refreshing devices done.`)
 				this.#refreshRunning = false
 			})
 	}
@@ -227,12 +227,14 @@ class InputManager extends EventEmitter<DeviceEvents> {
 		return async () => {
 			// set null feedback on all triggers that are not in the new feedback cache
 			const p = Object.entries<Record<string, SomeFeedback>>(oldFeedback).map(async ([deviceId, deviceTriggersObj]) => {
-				for (const [triggerId, feedback] of Object.entries<SomeFeedback>(deviceTriggersObj)) {
-					if (this.#feedback[deviceId]?.[triggerId] === undefined && feedback !== undefined) {
-						this.#logger.debug(`Clearing ${deviceId} "${triggerId}"...`)
-						await this.setFeedback(deviceId, triggerId, null)
-					}
-				}
+				await Promise.all(
+					Object.entries<SomeFeedback>(deviceTriggersObj).map(async ([triggerId, feedback]) => {
+						if (this.#feedback[deviceId]?.[triggerId] === undefined && feedback !== undefined) {
+							this.#logger.debug(`Clearing ${deviceId} "${triggerId}" as no longer used...`)
+							await this.setFeedback(deviceId, triggerId, null)
+						}
+					})
+				)
 			})
 			await Promise.allSettled(p)
 		}

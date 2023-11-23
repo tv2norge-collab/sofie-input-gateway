@@ -14,22 +14,22 @@ enum MIDISymbols {
 const MIDI_RECHECK_INTERVAL = 5000
 
 export class MIDIDevice extends Device {
-	#input: Input | undefined
-	#output: Output | undefined
-	#config: MIDIControllerOptions
-	#feedbacks: Record<string, SomeFeedback> = {}
-	#checkInterval: NodeJS.Timer | undefined = undefined
+	private input: Input | undefined
+	private output: Output | undefined
+	private config: MIDIControllerOptions
+	private feedbacks: Record<string, SomeFeedback> = {}
+	private checkInterval: NodeJS.Timer | undefined = undefined
 
 	constructor(config: MIDIControllerOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
 	async init(): Promise<void> {
 		try {
-			this.#input = new Input(this.#config.inputName)
-			if (this.#config.outputName) this.#output = new Output(this.#config.outputName)
-			this.#input.on('noteon', (msg) => {
+			this.input = new Input(this.config.inputName)
+			if (this.config.outputName) this.output = new Output(this.config.outputName)
+			this.input.on('noteon', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.DOWN}`
 
 				this.addTriggerEvent({ triggerId, arguments: { velocity: msg.velocity } })
@@ -40,7 +40,7 @@ export class MIDIDevice extends Device {
 					this.logger.error(`MIDI: Error updating feedback: ${err}`)
 				)
 			})
-			this.#input.on('noteoff', (msg) => {
+			this.input.on('noteoff', (msg) => {
 				const triggerId = `${msg.channel}_${msg.note} ${Symbols.UP}`
 
 				this.addTriggerEvent({ triggerId, arguments: { velocity: msg.velocity } })
@@ -49,7 +49,7 @@ export class MIDIDevice extends Device {
 					this.logger.error(`MIDI: Error updating feedback: ${err}`)
 				)
 			})
-			this.#input.on('cc', (msg) => {
+			this.input.on('cc', (msg) => {
 				const triggerId = `${msg.channel}_${msg.controller} ${MIDISymbols.CC}`
 
 				this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, () => {
@@ -59,7 +59,7 @@ export class MIDIDevice extends Device {
 				})
 			})
 
-			this.#checkInterval = setInterval(() => this.midiPortDetection(), MIDI_RECHECK_INTERVAL)
+			this.checkInterval = setInterval(() => this.midiPortDetection(), MIDI_RECHECK_INTERVAL)
 		} catch (e) {
 			this.emit('error', {
 				error: new Error('MIDI init error'),
@@ -69,18 +69,18 @@ export class MIDIDevice extends Device {
 
 	private midiPortDetection(): void {
 		const inputs = getInputs()
-		if (!inputs.includes(this.#config.inputName)) {
+		if (!inputs.includes(this.config.inputName)) {
 			this.emit('error', {
-				error: new Error(`MIDI Input Device "${this.#config.inputName}" disconnected!`),
+				error: new Error(`MIDI Input Device "${this.config.inputName}" disconnected!`),
 			})
 			return
 		}
 
-		if (!this.#config.outputName) return
+		if (!this.config.outputName) return
 		const outputs = getOutputs()
-		if (!outputs.includes(this.#config.outputName)) {
+		if (!outputs.includes(this.config.outputName)) {
 			this.emit('error', {
-				error: new Error(`MIDI Output Device "${this.#config.outputName}" disconnected!`),
+				error: new Error(`MIDI Output Device "${this.config.outputName}" disconnected!`),
 			})
 			return
 		}
@@ -88,9 +88,9 @@ export class MIDIDevice extends Device {
 
 	async destroy(): Promise<void> {
 		await super.destroy()
-		if (this.#checkInterval) clearInterval(this.#checkInterval)
-		if (this.#input) this.#input.close()
-		if (this.#output) this.#output.close()
+		if (this.checkInterval) clearInterval(this.checkInterval)
+		if (this.input) this.input.close()
+		if (this.output) this.output.close()
 	}
 
 	private static parseTriggerId(triggerId: string): {
@@ -178,23 +178,23 @@ export class MIDIDevice extends Device {
 	}
 
 	private async updateFeedback(triggerId: string): Promise<void> {
-		if (!this.#config.feedbackSettings) return
+		if (!this.config.feedbackSettings) return
 
-		const output = this.#output
+		const output = this.output
 		if (!output) return
 
-		const feedback = this.#feedbacks[triggerId]
+		const feedback = this.feedbacks[triggerId]
 
-		if (this.#config.feedbackSettings.cc) {
-			for (const configEntry of this.#config.feedbackSettings.cc) {
+		if (this.config.feedbackSettings.cc) {
+			for (const configEntry of this.config.feedbackSettings.cc) {
 				if (configEntry.trigger !== triggerId) break
 
 				await this.updateCCFeedback(triggerId, feedback, configEntry, output)
 			}
 		}
 
-		if (this.#config.feedbackSettings.note) {
-			for (const configEntry of this.#config.feedbackSettings.note) {
+		if (this.config.feedbackSettings.note) {
+			for (const configEntry of this.config.feedbackSettings.note) {
 				if (configEntry.trigger !== triggerId) break
 
 				await this.updateNoteFeedback(triggerId, feedback, configEntry, output)
@@ -203,7 +203,7 @@ export class MIDIDevice extends Device {
 	}
 
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
-		if (!this.#input) return
+		if (!this.input) return
 
 		const { channel, noteOrController, isNote } = MIDIDevice.parseTriggerId(triggerId)
 
@@ -213,14 +213,14 @@ export class MIDIDevice extends Device {
 			triggerId = `${channel}_${noteOrController}`
 		}
 
-		this.#feedbacks[triggerId] = feedback
+		this.feedbacks[triggerId] = feedback
 
 		await this.updateFeedback(triggerId)
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const keyStr of Object.keys(this.#feedbacks)) {
-			this.#feedbacks[keyStr] = null
+		for (const keyStr of Object.keys(this.feedbacks)) {
+			this.feedbacks[keyStr] = null
 			await this.updateFeedback(keyStr)
 		}
 	}

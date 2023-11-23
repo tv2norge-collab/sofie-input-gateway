@@ -21,26 +21,26 @@ interface KnownSender {
 }
 
 export class OSCServer extends Device {
-	#port: osc.UDPPort | undefined
-	#knownSenders: KnownSender[] = []
-	#config: OSCServerOptions
-	#feedbacks: Record<string, SomeFeedback> = {}
-	#refreshInterval: NodeJS.Timer | undefined
+	private port: osc.UDPPort | undefined
+	private knownSenders: KnownSender[] = []
+	private config: OSCServerOptions
+	private feedbacks: Record<string, SomeFeedback> = {}
+	private refreshInterval: NodeJS.Timer | undefined
 
 	constructor(config: OSCServerOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
 	async init(): Promise<void> {
-		this.#port = new osc.UDPPort({
-			localPort: this.#config.port || DEFAULT_PORT,
-			localAddress: this.#config.host || undefined,
+		this.port = new osc.UDPPort({
+			localPort: this.config.port || DEFAULT_PORT,
+			localAddress: this.config.host || undefined,
 		})
-		this.#port.on('bundle', (_bundle, _timeTag, info) => {
+		this.port.on('bundle', (_bundle, _timeTag, info) => {
 			this.#updateKnownSenderLastSeen(info.address, info.port)
 		})
-		this.#port.on('message', (message) => {
+		this.port.on('message', (message) => {
 			if (message.address === PING_MESSAGE_ADDRESS) return
 
 			const triggerId = message.address
@@ -59,14 +59,14 @@ export class OSCServer extends Device {
 
 			this.addTriggerEvent({ triggerId, arguments: messageArguments })
 		})
-		this.#refreshInterval = setInterval(() => this.#refreshKnownSenders(), REFRESH_KNOWN_SENDERS)
+		this.refreshInterval = setInterval(() => this.#refreshKnownSenders(), REFRESH_KNOWN_SENDERS)
 	}
 
 	#updateKnownSenderLastSeen(address: string, port: number) {
 		const lastSeen = Date.now()
-		const sender = this.#knownSenders.find((entry) => entry.address === address && entry.port === port)
+		const sender = this.knownSenders.find((entry) => entry.address === address && entry.port === port)
 		if (!sender) {
-			this.#knownSenders.push({
+			this.knownSenders.push({
 				address,
 				port,
 				lastSeen,
@@ -78,22 +78,22 @@ export class OSCServer extends Device {
 
 	#refreshKnownSenders() {
 		const expiresNow = Date.now() - KNOWN_SENDER_EXPIRATION
-		this.#knownSenders = this.#knownSenders.filter((entry) => entry.lastSeen < expiresNow)
+		this.knownSenders = this.knownSenders.filter((entry) => entry.lastSeen < expiresNow)
 
-		if (!this.#port) return
-		for (const [triggerId, feedback] of Object.entries<SomeFeedback>(this.#feedbacks)) {
-			for (const sender of this.#knownSenders) {
-				this.#port.send(OSCServer.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
+		if (!this.port) return
+		for (const [triggerId, feedback] of Object.entries<SomeFeedback>(this.feedbacks)) {
+			for (const sender of this.knownSenders) {
+				this.port.send(OSCServer.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
 			}
 		}
 	}
 
 	async destroy(): Promise<void> {
 		await super.destroy()
-		clearInterval(this.#refreshInterval)
-		this.#knownSenders.length = 0
-		if (!this.#port) return
-		const server = this.#port
+		clearInterval(this.refreshInterval)
+		this.knownSenders.length = 0
+		if (!this.port) return
+		const server = this.port
 		server.close()
 	}
 
@@ -142,16 +142,16 @@ export class OSCServer extends Device {
 	}
 
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
-		this.#feedbacks[triggerId] = feedback
-		if (!this.#port) return
+		this.feedbacks[triggerId] = feedback
+		if (!this.port) return
 
-		for (const sender of this.#knownSenders) {
-			this.#port.send(OSCServer.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
+		for (const sender of this.knownSenders) {
+			this.port.send(OSCServer.makeMessageFromFeedback(triggerId, feedback), sender.address, sender.port)
 		}
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const triggerId of Object.keys(this.#feedbacks)) {
+		for (const triggerId of Object.keys(this.feedbacks)) {
 			await this.setFeedback(triggerId, null)
 		}
 	}

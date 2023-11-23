@@ -24,9 +24,13 @@ import {
 	TriggerEvent,
 } from '@sofie-automation/input-manager'
 import { interpollateTranslation, translateMessage } from './lib/translatableMessage'
-import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
-import { Observer, SubscriptionId } from '@sofie-automation/server-core-integration'
+import {
+	Observer,
+	SubscriptionId,
+	PeripheralDevicePubSub,
+	PeripheralDevicePubSubCollectionsNames,
+} from '@sofie-automation/server-core-integration'
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
 import PQueue from 'p-queue'
 import { InputGatewaySettings } from './generated/options'
@@ -60,7 +64,7 @@ export class InputManagerHandler {
 	#shiftRegisters: number[] = []
 	#deviceTriggerActions: Record<string, Record<string, DeviceActionArguments>> = {}
 
-	#observers: Observer[] = []
+	#observers: Observer<any>[] = []
 	/** Set of deviceIds to check for triggers to send  */
 	#devicesWithTriggersToSend = new Set<string>()
 
@@ -144,11 +148,16 @@ export class InputManagerHandler {
 		this.#inputManager = await this.#createInputManager(settings)
 
 		this.#triggersSubscriptionId = await this.#coreHandler.core.autoSubscribe(
-			'mountedTriggersForDevice',
+			PeripheralDevicePubSub.mountedTriggersForDevice,
 			this.#coreHandler.core.deviceId,
-			InputManagerHandler.getDeviceIds(settings)
+			InputManagerHandler.getDeviceIds(settings),
+			this.#config.device.deviceToken
 		)
-		await this.#coreHandler.core.autoSubscribe('mountedTriggersForDevicePreview', this.#coreHandler.core.deviceId)
+		await this.#coreHandler.core.autoSubscribe(
+			PeripheralDevicePubSub.mountedTriggersForDevicePreview,
+			this.#coreHandler.core.deviceId,
+			this.#config.device.deviceToken
+		)
 
 		this.#logger.info(`Subscribed to mountedTriggersForDevice: ${this.#triggersSubscriptionId}`)
 
@@ -163,9 +172,11 @@ export class InputManagerHandler {
 				.catch((err) => this.#logger.error(`Error in refreshMountedTriggers() on coreHandler.onConnected: ${err}`))
 		})
 
-		const mountedTriggersObserver = this.#coreHandler.core.observe('mountedTriggers')
+		const mountedTriggersObserver = this.#coreHandler.core.observe(
+			PeripheralDevicePubSubCollectionsNames.mountedTriggers
+		)
 		mountedTriggersObserver.added = (id, _obj) => {
-			this.#handleChangedMountedTrigger(protectString(id)).catch((err) =>
+			this.#handleChangedMountedTrigger(id).catch((err) =>
 				this.#logger.error(`Error in handleChangedMountedTrigger() on mountedTriggersObserver.added: ${err}`)
 			)
 		}
@@ -176,8 +187,8 @@ export class InputManagerHandler {
 			newFields: Partial<DeviceTriggerMountedAction>
 		) => {
 			const obj = this.#coreHandler.core
-				.getCollection<DeviceTriggerMountedAction>('mountedTriggers')
-				.findOne(protectString(id))
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.findOne(id)
 			if (!obj) return
 			if (
 				newFields['deviceId'] ||
@@ -189,13 +200,13 @@ export class InputManagerHandler {
 					oldFields.deviceId ?? obj.deviceId,
 					oldFields.deviceTriggerId ?? obj.deviceTriggerId
 				)
-					.then(async () => this.#handleChangedMountedTrigger(protectString(id)))
+					.then(async () => this.#handleChangedMountedTrigger(id))
 					.catch((err) => {
 						this.#logger.error(`Error in handleRemovedMountedTrigger() on mountedTriggersObserver.changed: ${err}`)
 					})
 				return
 			}
-			this.#handleChangedMountedTrigger(protectString(id)).catch((err) => {
+			this.#handleChangedMountedTrigger(id).catch((err) => {
 				this.#logger.error(`Error in handleChangedMountedTrigger() on mountedTriggersObserver.changed: ${err}`)
 			})
 		}
@@ -205,12 +216,16 @@ export class InputManagerHandler {
 				this.#logger.error(`Error in handleRemovedMountedTrigger() on mountedTriggersObserver.removed: ${err}`)
 			})
 		}
-		const triggersPreviewsObserver = this.#coreHandler.core.observe('mountedTriggersPreviews')
+		const triggersPreviewsObserver = this.#coreHandler.core.observe(
+			PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews
+		)
 		triggersPreviewsObserver.added = (id, obj) => {
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedActions = this.#coreHandler.core.getCollection<DeviceTriggerMountedAction>('mountedTriggers').find({
-				actionId: changedPreview.actionId,
-			})
+			const mountedActions = this.#coreHandler.core
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.find({
+					actionId: changedPreview.actionId,
+				})
 			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${id}"`)
 				return
@@ -223,15 +238,17 @@ export class InputManagerHandler {
 		}
 		triggersPreviewsObserver.changed = (id, _old, _cleared, _new) => {
 			const changedPreview = this.#coreHandler.core
-				.getCollection<PreviewWrappedAdLib>('mountedTriggersPreviews')
-				.findOne(protectString(id))
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews)
+				.findOne(id)
 			if (!changedPreview) {
 				this.#logger.error(`Could not find PreviewAdlib: "${id}"`)
 				return
 			}
-			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
-				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction[]
+			const mountedActions = this.#coreHandler.core
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.find({
+					actionId: changedPreview.actionId,
+				})
 			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
 				return
@@ -244,9 +261,11 @@ export class InputManagerHandler {
 		}
 		triggersPreviewsObserver.removed = (_id, obj) => {
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
-				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction[]
+			const mountedActions = this.#coreHandler.core
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.find({
+					actionId: changedPreview.actionId,
+				})
 			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
 				return
@@ -300,9 +319,10 @@ export class InputManagerHandler {
 				this.#inputManager = await this.#createInputManager(settings)
 
 				this.#triggersSubscriptionId = await this.#coreHandler.core.autoSubscribe(
-					'mountedTriggersForDevice',
+					PeripheralDevicePubSub.mountedTriggersForDevice,
 					this.#coreHandler.core.deviceId,
-					InputManagerHandler.getDeviceIds(settings)
+					InputManagerHandler.getDeviceIds(settings),
+					this.#config.device.deviceToken
 				)
 
 				await this.#refreshMountedTriggers()
@@ -320,16 +340,12 @@ export class InputManagerHandler {
 		const endReplaceTransaction = this.#inputManager.beginFeedbackReplaceTransaction()
 
 		const mountedActions = this.#coreHandler.core
-			.getCollection('mountedTriggers')
-			.find({}) as DeviceTriggerMountedAction[]
+			.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+			.find({})
 
-		for (const mountedTrigger of mountedActions) {
-			try {
-				await this.#handleChangedMountedTrigger(mountedTrigger._id)
-			} catch (err) {
-				this.#logger.error(`Error in #handleChangedMountedTrigger in #refreshMountedTriggers: ${err}`)
-			}
-		}
+		await Promise.allSettled(
+			mountedActions.map(async (mountedTrigger) => this.#handleChangedMountedTrigger(mountedTrigger._id))
+		)
 
 		await endReplaceTransaction()
 	}
@@ -506,7 +522,7 @@ export class InputManagerHandler {
 
 	async #handleChangedMountedTrigger(id: DeviceTriggerMountedActionId): Promise<void> {
 		const mountedTrigger = this.#coreHandler.core
-			.getCollection<DeviceTriggerMountedAction>('mountedTriggers')
+			.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
 			.findOne(id)
 		if (!this.#inputManager) return
 
@@ -608,11 +624,11 @@ export class InputManagerHandler {
 
 		if (actionId) {
 			const previewedAdlibs = this.#coreHandler.core
-				.getCollection('mountedTriggersPreviews')
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews)
 				.find({
 					actionId: mountedTrigger?.actionId,
 				})
-				.reverse() as PreviewWrappedAdLib[]
+				.reverse()
 
 			if (previewedAdlibs.length > 0) {
 				tally = tally | Tally.PRESENT

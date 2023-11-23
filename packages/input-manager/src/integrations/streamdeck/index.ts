@@ -10,26 +10,26 @@ import { StreamDeckDeviceOptions } from '../../generated'
 import DEVICE_OPTIONS from './$schemas/options.json'
 
 export class StreamDeckDevice extends Device {
-	#streamDeck: StreamDeck | undefined
-	#config: StreamDeckDeviceOptions
-	#feedbacks = new FeedbackStore()
-	#isButtonDown: Record<string, boolean> = {}
+	private streamDeck: StreamDeck | undefined
+	private config: StreamDeckDeviceOptions
+	private feedbacks = new FeedbackStore()
+	private isButtonDown: Record<string, boolean> = {}
 	private BTN_SIZE: number | undefined = undefined
 	private ENC_SIZE_WIDTH: number | undefined = undefined
 	private ENC_SIZE_HEIGHT: number | undefined = undefined
 
 	constructor(config: StreamDeckDeviceOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
-	async init(): Promise<void> {
+	init = async (): Promise<void> => {
 		const allDevices = listStreamDecks()
 		const deviceInfo = allDevices.find((thisDevice, index) => {
 			let match = true
-			if (this.#config.path && thisDevice.path !== this.#config.path) match = false
-			if (this.#config.serialNumber && thisDevice.serialNumber !== this.#config.serialNumber) match = false
-			if (this.#config.index && index !== this.#config.index) match = false
+			if (this.config.path && thisDevice.path !== this.config.path) match = false
+			if (this.config.serialNumber && thisDevice.serialNumber !== this.config.serialNumber) match = false
+			if (this.config.index && index !== this.config.index) match = false
 
 			return match
 		})
@@ -45,57 +45,57 @@ export class StreamDeckDevice extends Device {
 			resetToLogoOnClose: true,
 		})
 		if (!device) throw new Error(`Could not open device: "${deviceInfo.path}"`)
-		this.#streamDeck = device
-		this.BTN_SIZE = this.#streamDeck.ICON_SIZE
-		this.ENC_SIZE_HEIGHT = this.#streamDeck.LCD_ENCODER_SIZE?.height
-		this.ENC_SIZE_WIDTH = this.#streamDeck.LCD_ENCODER_SIZE?.width
+		this.streamDeck = device
+		this.BTN_SIZE = this.streamDeck.ICON_SIZE
+		this.ENC_SIZE_HEIGHT = this.streamDeck.LCD_ENCODER_SIZE?.height
+		this.ENC_SIZE_WIDTH = this.streamDeck.LCD_ENCODER_SIZE?.width
 
-		const brightness = this.#config.brightness ?? DEFAULT_BRIGHTNESS
+		const brightness = this.config.brightness ?? DEFAULT_BRIGHTNESS
 
-		this.#streamDeck.setBrightness(brightness).catch((err) => {
+		this.streamDeck.setBrightness(brightness).catch((err) => {
 			this.logger.error(`Error setting brightness: ${err}`, err)
 		})
-		this.#streamDeck.addListener('down', (key) => {
+		this.streamDeck.addListener('down', (key) => {
 			const id = `${key}`
 			const triggerId = `${id} ${Symbols.DOWN}`
 
 			this.addTriggerEvent({ triggerId })
 
-			this.#isButtonDown[id] = true
+			this.isButtonDown[id] = true
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('up', (key) => {
+		this.streamDeck.addListener('up', (key) => {
 			const id = `${key}`
 			const triggerId = `${id} ${Symbols.UP}`
 
 			this.addTriggerEvent({ triggerId })
 
-			this.#isButtonDown[id] = false
+			this.isButtonDown[id] = false
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('encoderDown', (encoder) => {
+		this.streamDeck.addListener('encoderDown', (encoder) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} ${Symbols.DOWN}`
 
 			this.addTriggerEvent({ triggerId })
 
-			this.#isButtonDown[id] = true
+			this.isButtonDown[id] = true
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('encoderUp', (encoder) => {
+		this.streamDeck.addListener('encoderUp', (encoder) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} ${Symbols.UP}`
 
 			this.addTriggerEvent({ triggerId })
 
-			this.#isButtonDown[id] = false
+			this.isButtonDown[id] = false
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('rotateLeft', (encoder, deltaValue) => {
+		this.streamDeck.addListener('rotateLeft', (encoder, deltaValue) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} ${Symbols.JOG}`
 
@@ -109,7 +109,7 @@ export class StreamDeckDevice extends Device {
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('rotateRight', (encoder, deltaValue) => {
+		this.streamDeck.addListener('rotateRight', (encoder, deltaValue) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} ${Symbols.JOG}`
 
@@ -123,7 +123,7 @@ export class StreamDeckDevice extends Device {
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('lcdShortPress', (encoder, position) => {
+		this.streamDeck.addListener('lcdShortPress', (encoder, position) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} Tap`
 
@@ -137,7 +137,7 @@ export class StreamDeckDevice extends Device {
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('lcdLongPress', (encoder, position) => {
+		this.streamDeck.addListener('lcdLongPress', (encoder, position) => {
 			const id = `Enc${encoder}`
 			const triggerId = `${id} Press`
 
@@ -151,7 +151,7 @@ export class StreamDeckDevice extends Device {
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('lcdSwipe', (fromEncoder, toEncoder, from, to) => {
+		this.streamDeck.addListener('lcdSwipe', (fromEncoder, toEncoder, from, to) => {
 			const id = `Enc${fromEncoder}`
 			const triggerId = `${id} Swipe`
 
@@ -169,17 +169,17 @@ export class StreamDeckDevice extends Device {
 
 			this.quietUpdateFeedbackWithDownState(id)
 		})
-		this.#streamDeck.addListener('error', (err) => {
+		this.streamDeck.addListener('error', (err) => {
 			this.logger.error(String(err))
 			this.emit('error', { error: err instanceof Error ? err : new Error(String(err)) })
 		})
-		await this.#streamDeck.clearPanel()
+		await this.streamDeck.clearPanel()
 	}
 
-	async destroy(): Promise<void> {
+	destroy = async (): Promise<void> => {
 		await super.destroy()
-		if (!this.#streamDeck) return
-		await this.#streamDeck.close()
+		if (!this.streamDeck) return
+		await this.streamDeck.close()
 	}
 
 	private static parseTriggerId(triggerId: string): {
@@ -190,7 +190,7 @@ export class StreamDeckDevice extends Device {
 	} {
 		const triggerElements = triggerId.split(/\s+/)
 		const id = triggerElements[0] ?? '0'
-		const action = triggerElements[1]
+		const action = triggerElements[1] ?? ''
 		let key: number | undefined = undefined
 		let encoder: number | undefined = undefined
 		let result = null
@@ -202,13 +202,13 @@ export class StreamDeckDevice extends Device {
 		return { id, key, encoder, action }
 	}
 
-	private async updateFeedback(trigger: string, isDown: boolean): Promise<void> {
-		const streamdeck = this.#streamDeck
+	private updateFeedback = async (trigger: string, isDown: boolean): Promise<void> => {
+		const streamdeck = this.streamDeck
 		if (!streamdeck) return
 
 		const { id, key, encoder } = StreamDeckDevice.parseTriggerId(trigger)
 
-		const feedback = this.#feedbacks.get(id, ACTION_PRIORITIES)
+		const feedback = this.feedbacks.get(id, ACTION_PRIORITIES)
 
 		try {
 			if (!feedback) {
@@ -223,9 +223,9 @@ export class StreamDeckDevice extends Device {
 			}
 
 			if (key !== undefined && this.BTN_SIZE) {
-				this.#streamDeck?.checkValidKeyIndex(key)
+				this.streamDeck?.checkValidKeyIndex(key)
 				const imgBuffer = await getBitmap(feedback, this.BTN_SIZE, this.BTN_SIZE, isDown)
-				await this.#streamDeck?.fillKeyBuffer(key, imgBuffer, {
+				await this.streamDeck?.fillKeyBuffer(key, imgBuffer, {
 					format: 'rgba',
 				})
 			} else if (encoder !== undefined && this.ENC_SIZE_HEIGHT && this.ENC_SIZE_WIDTH) {
@@ -235,33 +235,36 @@ export class StreamDeckDevice extends Device {
 				})
 			}
 		} catch (e) {
-			this.logger.debug(`Exception thrown in updateFeedback()`, e)
+			this.logger.debug(`Stream Deck: Exception thrown in updateFeedback()`, e)
 		}
 	}
 
-	private quietUpdateFeedbackWithDownState(trigger: string): void {
-		this.updateFeedback(trigger, this.#isButtonDown[trigger] ?? false).catch((err) =>
+	private quietUpdateFeedbackWithDownState = (trigger: string): void => {
+		this.updateFeedback(trigger, this.isButtonDown[trigger] ?? false).catch((err) =>
 			this.logger.error(`Stream Deck: Error updating feedback: ${err}`)
 		)
 	}
 
-	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
-		if (!this.#streamDeck) return
+	setFeedback = async (triggerId: string, feedback: SomeFeedback): Promise<void> => {
+		if (!this.streamDeck) return
 
 		const { id: trigger, action } = StreamDeckDevice.parseTriggerId(triggerId)
 
-		this.#feedbacks.set(trigger, action, feedback)
+		if (action === '') return
 
-		await this.updateFeedback(trigger, this.#isButtonDown[trigger] ?? false)
+		this.feedbacks.set(trigger, action, feedback)
+
+		await this.updateFeedback(trigger, this.isButtonDown[trigger] ?? false)
 	}
 
-	async clearFeedbackAll(): Promise<void> {
-		for (const keyStr of this.#feedbacks.allFeedbackIds()) {
-			const key = keyStr
-			await this.updateFeedback(key, false)
-		}
+	clearFeedbackAll = async (): Promise<void> => {
+		await Promise.all(
+			this.feedbacks.allFeedbackIds().map(async (key) => {
+				return this.updateFeedback(key, false)
+			})
+		)
 
-		this.#feedbacks.clear()
+		this.feedbacks.clear()
 	}
 
 	static getOptionsManifest(): object {

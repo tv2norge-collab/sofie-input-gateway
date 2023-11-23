@@ -14,14 +14,14 @@ const CONNECTION_TIMEOUT = 5000
 import DEVICE_OPTIONS from './$schemas/options.json'
 
 export class SkaarhojDevice extends Device {
-	#socket: net.Socket | undefined
-	#closing = false
-	#config: SkaarhojPanelOptions
-	#feedbacks = new FeedbackStore()
+	private socket: net.Socket | undefined
+	private isClosing = false
+	private config: SkaarhojPanelOptions
+	private feedbacks = new FeedbackStore()
 
 	constructor(config: SkaarhojPanelOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
 	async init(): Promise<void> {
@@ -29,8 +29,8 @@ export class SkaarhojDevice extends Device {
 			let isOpen = false
 			const socket = net.createConnection(
 				{
-					host: this.#config.host,
-					port: this.#config.port,
+					host: this.config.host,
+					port: this.config.port,
 					timeout: CONNECTION_TIMEOUT,
 				},
 				() => {
@@ -40,7 +40,7 @@ export class SkaarhojDevice extends Device {
 						await sleep(50)
 						await this.sendToDevice('Clear')
 						await sleep(50) // Skaarhoj needs a bit of time after the clear command to start doing something
-						for (const keyStr of Object.keys(this.#feedbacks)) {
+						for (const keyStr of Object.keys(this.feedbacks)) {
 							await this.updateFeedback(keyStr)
 						}
 						resolve()
@@ -55,16 +55,16 @@ export class SkaarhojDevice extends Device {
 					error: err,
 				})
 				socket.end()
-				this.#socket = undefined
+				this.socket = undefined
 			})
 			socket.on('close', () => {
-				if (this.#closing) return
+				if (this.isClosing) return
 				this.emit('error', {
 					error: new Error('Unexpected connection close'),
 				})
-				this.#socket = undefined
+				this.socket = undefined
 			})
-			this.#socket = socket
+			this.socket = socket
 		})
 	}
 
@@ -116,9 +116,9 @@ export class SkaarhojDevice extends Device {
 
 	async destroy(): Promise<void> {
 		await super.destroy()
-		if (!this.#socket) return
-		this.#closing = true
-		const socket = this.#socket
+		if (!this.socket) return
+		this.isClosing = true
+		const socket = this.socket
 		return new Promise((resolve) => socket.end(resolve))
 	}
 
@@ -128,7 +128,7 @@ export class SkaarhojDevice extends Device {
 			return { buttonId: '0', action: '' }
 		}
 		const buttonId = triggerElements[1] ?? '0'
-		const action = triggerElements[3]
+		const action = triggerElements[3] ?? ''
 		return { buttonId, action }
 	}
 
@@ -154,7 +154,7 @@ export class SkaarhojDevice extends Device {
 	}
 
 	private async updateFeedback(feedbackId: string): Promise<void> {
-		const feedback = this.#feedbacks.get(feedbackId, ACTION_PRIORITIES)
+		const feedback = this.feedbacks.get(feedbackId, ACTION_PRIORITIES)
 		if (!feedback) {
 			await this.sendClearFeedback(feedbackId)
 			return
@@ -210,21 +210,21 @@ export class SkaarhojDevice extends Device {
 	}
 
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
-		if (!this.#socket) return
+		if (!this.socket) return
 		const { buttonId, action } = SkaarhojDevice.parseTriggerId(triggerId)
-		this.#feedbacks.set(buttonId, action, feedback)
+		this.feedbacks.set(buttonId, action, feedback)
 		await this.updateFeedback(buttonId)
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		this.#feedbacks.clear()
-		if (!this.#socket) return
+		this.feedbacks.clear()
+		if (!this.socket) return
 		await this.sendToDevice('Clear')
 	}
 
 	private async sendToDevice(buf: string): Promise<void> {
 		return new Promise((resolve, reject) => {
-			const socket = this.#socket
+			const socket = this.socket
 			if (!socket) {
 				reject(new Error('Socket not connected'))
 				return

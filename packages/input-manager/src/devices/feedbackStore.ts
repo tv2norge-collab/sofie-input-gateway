@@ -1,36 +1,48 @@
 import { SomeFeedback } from '../feedback/feedback'
 
 export class FeedbackStore<T extends SomeFeedback> {
-	private feedbacks: Record<string, Record<string, T>> = {}
+	private store: Record<string, Record<string, T>>
 
-	public set(feedbackId: string, triggerId: string, feedback: T): void {
-		if (this.feedbacks[feedbackId] === undefined) {
-			this.feedbacks[feedbackId] = {}
-		}
-
-		this.feedbacks[feedbackId][triggerId] = feedback
+	constructor() {
+		this.store = {}
+		this.set.bind(this)
+		this.get = this.get.bind(this)
+		this.clear = this.clear.bind(this)
+		this.allFeedbackIds = this.allFeedbackIds.bind(this)
 	}
 
-	public get(feedbackId: string, acceptedTriggerIds: string[]): T | null
-	public get(feedbackId: string, triggerId: string): T | null
-	public get(feedbackId: string, triggerId: string | string[]): T | null {
-		const triggersInPriority = Array.isArray(triggerId) ? triggerId : [triggerId]
+	public set(triggerFeedbackId: string, subTriggerId: string, feedback: T): void {
+		if (this.store[triggerFeedbackId] === undefined) {
+			this.store[triggerFeedbackId] = {}
+		}
 
-		const feedbackObj = this.feedbacks[feedbackId] as Record<string, T> | undefined
-		if (!feedbackObj) return null
+		this.store[triggerFeedbackId][subTriggerId] = feedback
+	}
 
-		for (const trigger of triggersInPriority) {
-			if (feedbackObj[trigger]) return feedbackObj[trigger]
+	public get(triggerFeedbackId: string, acceptedSubTriggerIds: string[]): T | null
+	public get(triggerFeedbackId: string, subTriggerId: string): T | null
+	public get(triggerFeedbackId: string, subTriggerId: string | string[]): T | null {
+		const subTriggersInPriority = Array.isArray(subTriggerId) ? subTriggerId : [subTriggerId]
+
+		const feedbackObj = this.store[triggerFeedbackId] as Record<string, T> | undefined
+		if (!feedbackObj) {
+			return null
+		}
+
+		for (const trigger of subTriggersInPriority) {
+			if (feedbackObj[trigger]) {
+				return feedbackObj[trigger]
+			}
 		}
 
 		return null
 	}
 
 	public clear(): void {
-		this.feedbacks = {}
+		this.store = {}
 	}
 
 	public allFeedbackIds(): string[] {
-		return Array.from(Object.keys(this.feedbacks))
+		return Array.from(Object.keys(this.store))
 	}
 }
