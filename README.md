@@ -1,14 +1,12 @@
 # Sofie Input Gateway
 
-This is the _Input Gateway_ of the [**Sofie** TV Automation System](https://github.com/nrkno/Sofie-TV-automation/), used to pipe user input into the [Core](https://github.com/nrkno/tv-automation-server-core).
+This is the _Input Gateway_ of the [**Sofie** TV Automation System](https://github.com/nrkno/Sofie-TV-automation/), used to pipe user input into the [_Sofie Core_](https://github.com/nrkno/sofie-core).
 
-## Repository-specific Info for Developers
-* [Developer Info](DEVELOPER.md)
+## General Sofie System Information
+* [_Sofie_ Documentation](https://nrkno.github.io/sofie-core/)
+* [_Sofie_ Releases](https://nrkno.github.io/sofie-core/releases)
 * [Contribution Guidelines](CONTRIBUTING.md)
-
-## General Sofie System Info
-* [Documentation](https://nrkno.github.io/sofie-core/)
-* [Releases](https://nrkno.github.io/sofie-core/releases)
+* [License](LICENSE)
 
 ---
 
