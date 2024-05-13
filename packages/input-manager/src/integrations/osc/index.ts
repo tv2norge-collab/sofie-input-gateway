@@ -25,7 +25,7 @@ export class OSCServer extends Device {
 	private knownSenders: KnownSender[] = []
 	private config: OSCServerOptions
 	private feedbacks: Record<string, SomeFeedback> = {}
-	private refreshInterval: NodeJS.Timer | undefined
+	private refreshInterval: NodeJS.Timeout | undefined
 
 	constructor(config: OSCServerOptions, logger: Logger) {
 		super(logger)

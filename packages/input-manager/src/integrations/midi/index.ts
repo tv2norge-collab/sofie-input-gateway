@@ -18,7 +18,7 @@ export class MIDIDevice extends Device {
 	private output: Output | undefined
 	private config: MIDIControllerOptions
 	private feedbacks: Record<string, SomeFeedback> = {}
-	private checkInterval: NodeJS.Timer | undefined = undefined
+	private checkInterval: NodeJS.Timeout | undefined = undefined
 
 	constructor(config: MIDIControllerOptions, logger: Logger) {
 		super(logger)

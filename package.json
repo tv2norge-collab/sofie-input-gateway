@@ -45,28 +45,28 @@
     "@types/node": "^18.19.33",
     "@types/sprintf-js": "^1.1.4",
     "@types/underscore": "^1.11.15",
-    "@types/ws": "^7.4.7",
-    "@types/xml-js": "^1.0.0",
-    "concurrently": "^7.6.0",
+    "concurrently": "^8.2.2",
     "jest": "^26.6.3",
     "jest-haste-map": "^26.6.2",
     "jest-resolve": "^26.6.2",
-    "json-schema-to-typescript": "^11.0.5",
+    "json-schema-to-typescript": "^14.0.4",
     "lerna": "^6.6.2",
-    "lint-staged": "^13.3.0",
-    "nodemon": "^2.0.22",
-    "open-cli": "^7.2.0",
+    "lint-staged": "^15.2.2",
+    "nodemon": "^3.1.0",
+    "open-cli": "^8.0.0",
     "rimraf": "^5.0.7",
-    "symlink-dir": "^5.2.1",
     "ts-jest": "^26.5.6",
     "ts-node": "^10.9.2",
     "type-fest": "^2.19.0",
     "typescript": "~4.9.5",
-    "zip-a-folder": "^1.1.7"
+    "zip-a-folder": "^3.1.6"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
   "packageManager": "yarn@4.2.2",
   "dependencies": {
     "@yao-pkg/pkg": "^5.11.5"
+  },
+  "resolutions": {
+    "node-hid": "npm:@julusian/hid@3.0.1-0"
   }
 }

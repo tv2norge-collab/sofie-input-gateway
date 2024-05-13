@@ -91,14 +91,14 @@
 		"production"
 	],
 	"dependencies": {
-		"@elgato-stream-deck/node": "^5.7.2",
+		"@elgato-stream-deck/node": "^6.2.0",
 		"@julusian/jpeg-turbo": "^2.1.0",
 		"easymidi": "^3.1.0",
 		"eventemitter3": "^4.0.7",
 		"fold-to-ascii": "^5.0.1",
 		"osc": "^2.4.4",
 		"skia-canvas": "^1.0.1",
-		"xkeys": "^2.4.0"
+		"xkeys": "^3.1.1"
 	},
 	"peerDependencies": {
 		"@sofie-automation/server-core-integration": "*",
