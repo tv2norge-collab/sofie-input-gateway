@@ -65,7 +65,7 @@
 		"generate-schema-types": "node ./scripts/schema-types.mjs"
 	},
 	"engines": {
-		"node": "^16.14"
+		"node": "^18.19"
 	},
 	"lint-staged": {
 		"*.{css,json,md,scss}": [
