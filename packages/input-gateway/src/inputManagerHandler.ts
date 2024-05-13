@@ -112,15 +112,13 @@ export class InputManagerHandler {
 			this.#logger.error('Error during initialization:')
 			this.#logger.error(e)
 			if (e instanceof Error) this.#logger.error(e.stack)
-			try {
-				if (this.#coreHandler) {
-					this.#coreHandler
-						.destroy()
-						.catch((err) => this.#logger.error(`Error when trying to destroy CoreHandler: ${err}`))
-				}
-			} catch (e1) {
-				this.#logger.error(e1)
+
+			if (this.#coreHandler) {
+				this.#coreHandler
+					.destroy()
+					.catch((err) => this.#logger.error(`Error when trying to destroy CoreHandler: ${err}`))
 			}
+
 			this.#logger.info('Shutting down in 10 seconds!')
 			setTimeout(() => {
 				// eslint-disable-next-line no-process-exit

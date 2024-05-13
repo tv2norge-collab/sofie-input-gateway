@@ -21,7 +21,7 @@ import {
 import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { PeripheralDeviceCommand } from '@sofie-automation/shared-lib/dist/core/model/PeripheralDeviceCommand'
 import { Process } from './process'
-import { stringifyError } from './lib/lib'
+import { stringifyError } from '@sofie-automation/shared-lib/dist/lib/stringifyError'
 import path from 'path'
 
 export interface CoreConfig {
@@ -131,14 +131,10 @@ export class CoreHandler {
 		}
 		// setup observers
 		const observer = this.core.observe(PeripheralDevicePubSubCollectionsNames.peripheralDeviceForDevice)
-		observer.added = (id) => {
-			this.onDeviceChanged(id)
-		}
-		observer.changed = (id) => {
-			this.onDeviceChanged(id)
-		}
+		observer.added = (id) => this.onDeviceChanged(id)
+		observer.changed = (id) => this.onDeviceChanged(id)
+
 		this.setupObserverForPeripheralDeviceCommands(this)
-		return
 	}
 	async destroy(): Promise<void> {
 		this._statusDestroyed = true
@@ -178,41 +174,6 @@ export class CoreHandler {
 
 		if (subDeviceType === PERIPHERAL_SUBTYPE_PROCESS) options.versions = this._getVersions()
 		return options
-
-		// let credentials: {
-		// 	deviceId: PeripheralDeviceId
-		// 	deviceToken: string
-		// }
-
-		// if (this._deviceOptions.deviceId && this._deviceOptions.deviceToken) {
-		// 	credentials = {
-		// 		deviceId: protectString(this._deviceOptions.deviceId + subDeviceId),
-		// 		deviceToken: this._deviceOptions.deviceToken,
-		// 	}
-		// } else if (this._deviceOptions.deviceId) {
-		// 	this.logger.warn('Token not set, only id! This might be unsecure!')
-		// 	credentials = {
-		// 		deviceId: protectString(this._deviceOptions.deviceId + subDeviceId),
-		// 		deviceToken: 'unsecureToken',
-		// 	}
-		// } else {
-		// 	credentials = CoreConnection.getCredentials(subDeviceId)
-		// }
-		// const options: CoreOptions = {
-		// 	...credentials,
-
-		// 	deviceCategory: PeripheralDeviceCategory.TRIGGER_INPUT,
-		// 	deviceType: PeripheralDeviceType.INPUT,
-		// 	deviceSubType: subType || PERIPHERAL_SUBTYPE_PROCESS,
-
-		// 	deviceName: name,
-		// 	watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
-
-		// 	configManifest: INPUT_DEVICE_CONFIG,
-
-		// 	versions: this._getVersions(),
-		// }
-		// return options
 	}
 	onConnected(fcn: () => any): void {
 		this._onConnected = fcn
@@ -301,7 +262,6 @@ export class CoreHandler {
 	}
 	setupObserverForPeripheralDeviceCommands(functionObject: CoreHandler): void {
 		const observer = functionObject.core.observe(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
-		functionObject.killProcess(0)
 		functionObject._observers.push(observer)
 		const addedChangedCommand = (id: PeripheralDeviceCommandId) => {
 			const cmds = functionObject.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
@@ -315,15 +275,10 @@ export class CoreHandler {
 				// console.log('not mine', cmd.deviceId, this.core.deviceId)
 			}
 		}
-		observer.added = (id) => {
-			addedChangedCommand(id)
-		}
-		observer.changed = (id) => {
-			addedChangedCommand(id)
-		}
-		observer.removed = (id) => {
-			this.retireExecuteFunction(id)
-		}
+		observer.added = (id) => addedChangedCommand(id)
+		observer.changed = (id) => addedChangedCommand(id)
+		observer.removed = (id) => this.retireExecuteFunction(id)
+
 		const cmds = functionObject.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 		cmds.find({}).forEach((cmd: PeripheralDeviceCommand) => {
