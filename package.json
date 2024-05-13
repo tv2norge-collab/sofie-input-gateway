@@ -32,7 +32,7 @@
     "do:build-win32": "rimraf deploy && yarn install && yarn build && yarn build-win32 && yarn copy-assets && yarn sign-executables && yarn zip-deploy",
     "do:build-win32:ci": "rimraf deploy && yarn install && yarn build && yarn build-win32 && yarn copy-assets",
     "verify:build-win32": "node scripts/verify-build-win32.mjs",
-    "build-win32": "pkg -t node16-win --public ./packages/input-gateway",
+    "build-win32": "pkg -t node18-win --public ./packages/input-gateway",
     "sign-executables": "node scripts/sign-executables.js",
     "copy-assets": "node scripts/copy-assets.js",
     "zip-deploy": "node scripts/zip-deploy.js",
@@ -57,7 +57,6 @@
     "lint-staged": "^13.2.2",
     "nodemon": "^2.0.20",
     "open-cli": "^7.0.1",
-    "pkg": "^5.8.1",
     "rimraf": "^3.0.2",
     "symlink-dir": "^5.0.1",
     "ts-jest": "^26.1.0",
@@ -67,5 +66,8 @@
     "zip-a-folder": "^1.1.5"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
-  "packageManager": "yarn@3.5.1"
+  "packageManager": "yarn@3.5.1",
+  "dependencies": {
+    "@yao-pkg/pkg": "^5.11.5"
+  }
 }
