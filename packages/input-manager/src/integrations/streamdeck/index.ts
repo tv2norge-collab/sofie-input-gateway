@@ -24,7 +24,7 @@ export class StreamDeckDevice extends Device {
 	}
 
 	init = async (): Promise<void> => {
-		const allDevices = listStreamDecks()
+		const allDevices = await listStreamDecks()
 		const deviceInfo = allDevices.find((thisDevice, index) => {
 			let match = true
 			if (this.config.path && thisDevice.path !== this.config.path) match = false
@@ -41,7 +41,7 @@ export class StreamDeckDevice extends Device {
 			)}`
 		)
 
-		const device = openStreamDeck(deviceInfo.path, {
+		const device = await openStreamDeck(deviceInfo.path, {
 			resetToLogoOnClose: true,
 		})
 		if (!device) throw new Error(`Could not open device: "${deviceInfo.path}"`)
