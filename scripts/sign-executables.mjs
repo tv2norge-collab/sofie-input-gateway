@@ -1,7 +1,8 @@
-const promisify = require('util').promisify
-const glob = promisify(require('glob'))
-const { exec } = require('child_process')
-const readline = require('readline')
+// @ts-check
+import { glob } from 'glob'
+import { exec } from 'child_process'
+import readline from 'readline'
+import { promisify } from 'util'
 
 const execPromise = promisify(exec)
 
@@ -17,7 +18,7 @@ const rl = readline.createInterface({
 	output: process.stdout,
 })
 
-;(async function () {
+try {
 	let signtoolInstalled = false
 	try {
 		await execPromise('where signtool')
@@ -30,7 +31,7 @@ const rl = readline.createInterface({
 		console.log(
 			'Warning: signtool is not installed. To enable signing of the resulting executables, install the Microsoft SDK for Windows 10 and add signtool.exe to your PATH.'
 		)
-		return
+		process.exit(0)
 	}
 
 	const executables = await glob(`${folderPath}/*.exe`)
@@ -41,11 +42,11 @@ const rl = readline.createInterface({
 		console.log(
 			'Warning: No certificates found. To sign the resulting executables, add one or more certificates (*.pfx file) to the base folder.'
 		)
-		return
+		process.exit(0)
 	}
 	if (executables.length === 0) {
 		console.log(`Warning: No executables found in ${folderPath}`)
-		return
+		process.exit(0)
 	}
 
 	console.log(`Found ${executables.length} executables`)
@@ -79,11 +80,9 @@ const rl = readline.createInterface({
 	} else {
 		console.log(`Done, but didn't sign any executables.`)
 	}
-})()
-	.then(() => {
-		process.exit(0)
-	})
-	.catch((e) => {
-		console.error(e)
-		process.exit(1)
-	})
+
+	process.exit(0)
+} catch (e) {
+	console.error(e)
+	process.exit(1)
+}

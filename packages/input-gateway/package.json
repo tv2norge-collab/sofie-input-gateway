@@ -25,7 +25,7 @@
 	],
 	"scripts": {
 		"start": "node dist/index.js",
-		"build": "rimraf dist && run build:main",
+		"build": "run -T -B rimraf dist && run build:main",
 		"buildstart": "run build && run start -id devxxsofie",
 		"build:main": "run -T -B tsc -p tsconfig.build.json",
 		"lint:raw": "run -T g:eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
