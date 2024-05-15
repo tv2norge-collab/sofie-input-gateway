@@ -79,6 +79,11 @@ export class CoreHandler {
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
+
+			this.setupObserversAndSubscriptions().catch((e) => {
+				this.logger.error('Core Error during setupObserversAndSubscriptions:', e)
+			})
+
 			if (this._onConnected) this._onConnected()
 		})
 		this.core.onDisconnected(() => {
@@ -105,21 +110,17 @@ export class CoreHandler {
 		this.logger.info('Core id: ' + this.core.deviceId)
 		this._statusInitialized = true
 		await this.updateCoreStatus()
+
+		await this.setupObserversAndSubscriptions()
+
+		await this.updateCoreStatus()
 	}
 	async setupObserversAndSubscriptions(): Promise<void> {
 		this.logger.info('Core: Setting up subscriptions..')
 		this.logger.info('DeviceId: ' + this.core.deviceId)
 		await Promise.all([
-			this.core.autoSubscribe(
-				PeripheralDevicePubSub.peripheralDeviceForDevice,
-				this.core.deviceId,
-				this._deviceOptions?.deviceToken
-			),
-			this.core.autoSubscribe(
-				PeripheralDevicePubSub.peripheralDeviceCommands,
-				this.core.deviceId,
-				this._deviceOptions?.deviceToken
-			),
+			this.core.autoSubscribe(PeripheralDevicePubSub.peripheralDeviceForDevice, this.core.deviceId),
+			this.core.autoSubscribe(PeripheralDevicePubSub.peripheralDeviceCommands, this.core.deviceId),
 		])
 		this.logger.info('Core: Subscriptions are set up!')
 		if (this._observers.length) {
@@ -202,6 +203,7 @@ export class CoreHandler {
 				this.logger.info('Loglevel: ' + this.logger.level)
 			}
 
+			this.logger.info('Changed PeripheralDevice: ' + JSON.stringify(device))
 			if (this._onChanged) this._onChanged()
 		}
 	}
