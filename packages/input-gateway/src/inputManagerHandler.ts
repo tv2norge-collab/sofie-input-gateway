@@ -431,8 +431,10 @@ export class InputManagerHandler {
 		}
 
 		const value = Number(action.value)
-		const min = Number(action.limitMin)
-		const max = Number(action.limitMax)
+		if (isNaN(value)) {
+			this.#logger.error(`Register value needs to be a number: received "${action.value}" in action"`)
+			return
+		}
 
 		const originalValue = this.#shiftRegisters[registerIndex] ?? 0
 		let newValue = originalValue
@@ -448,6 +450,9 @@ export class InputManagerHandler {
 				break
 		}
 
+		// Limit the value, if limits are set:
+		const min = Number(action.limitMin) || newValue
+		const max = Number(action.limitMax) || newValue
 		newValue = Math.max(Math.min(newValue, max), min)
 
 		this.#shiftRegisters[registerIndex] = newValue
