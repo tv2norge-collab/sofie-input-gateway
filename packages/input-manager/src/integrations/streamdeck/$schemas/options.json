@@ -1,32 +1,71 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/stream-deck",
-    "title": "Stream Deck Device Options",
-    "type": "object",
-    "properties": {
-        "path": {
-            "type": "string",
-            "ui:title": "Device Path",
-            "ui:description": "The device path or part of it, where the device is attached in the system device tree"
-        },
-        "serialNumber": {
-            "type": "string",
-            "ui:title": "Serial Number",
-            "ui:description": "The serial number of the device"
-        },
-        "index": {
-            "type": "integer",
-            "ui:title": "Device Index",
-            "ui:description": "The index on the list of attached Stream Deck devices"
-        },
-        "brightness": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "ui:title": "Display brightness",
-            "ui:description": "Set the intensity of the backlight on the Stream Deck device screen"
-        }
-    },
-    "required": [],
-    "additionalProperties": false
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/stream-deck",
+	"title": "Stream Deck Device Options",
+	"type": "object",
+	"properties": {
+		"path": {
+			"type": "string",
+			"ui:title": "Device Path",
+			"ui:description": "The device path or part of it, where the device is attached in the system device tree"
+		},
+		"serialNumber": {
+			"type": "string",
+			"ui:title": "Serial Number",
+			"ui:description": "The serial number of the device"
+		},
+		"index": {
+			"type": "integer",
+			"ui:title": "Device Index",
+			"ui:description": "The index on the list of attached Stream Deck devices"
+		},
+		"brightness": {
+			"type": "integer",
+			"minimum": 0,
+			"maximum": 100,
+			"ui:title": "Display brightness",
+			"ui:description": "Set the intensity of the backlight on the Stream Deck device screen"
+		},
+		"stylePresets": {
+			"type": "object",
+			"ui:title": "Style Presets",
+			"ui:description": "Styling definitions to use when drawing the buttons",
+			"ui:import-export": true,
+
+			"patternProperties": {
+				"": {
+					"type": "object",
+					"title": "StreamdeckStylePreset",
+					"properties": {
+						"id": {
+							"type": "string",
+							"ui:title": "Preset Style Id",
+							"ui:description": "",
+							"ui:summaryTitle": "Id",
+							"default": ""
+						},
+						"backgroundImage": {
+							"type": "string",
+							"ui:title": "Background Image",
+							"ui:description": "",
+							"ui:summaryTitle": "Image",
+							"ui:displayType": "base64-image",
+							"default": ""
+						},
+						"drawText": {
+							"type": "boolean",
+							"ui:title": "Draw Text",
+							"ui:description": "Whether to draw text on this button",
+							"default": false
+						}
+					},
+					"required": ["id", "backgroundImage", "drawText"],
+					"additionalProperties": false
+				}
+			},
+			"additionalProperties": false
+		}
+	},
+	"required": [],
+	"additionalProperties": false
 }

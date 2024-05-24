@@ -1,4 +1,4 @@
-import { ClassNames, Feedback } from '../../../feedback'
+import { ClassNames, BitmapFeedback } from '../../../feedback'
 import { BaseRenderer } from '../base'
 
 /**
@@ -72,21 +72,28 @@ export class BaseAdLibRenderer extends BaseRenderer {
 		return 1
 	}
 
-	render(feedback: Feedback): void {
+	render(feedback: BitmapFeedback): void {
 		const text = this.text
 		// text.p({ children: feedback?.action?.long ?? 'unknown', align: 'center', lineClamp: 1 })
 		// text.hr({})
 		if (!feedback?.content) return
-		const label = feedback?.userLabel?.long ?? feedback?.content?.long ?? ''
-		text.p({
-			children: label,
-			align: 'center',
-			spring: true,
-			fontSize: this.percentToPixels(this.getFontSize(label)),
-			lineHeight: this.percentToPixels(this.getFontSize(label)),
-			background: this.getAdLibColor(feedback.classNames),
-			textShadowOffset: 1,
-			lineClamp: 4,
-		})
+
+		if (feedback.backgroundImage) {
+			this.drawBackgroundImage(feedback.backgroundImage)
+		}
+
+		if (!feedback.hideText) {
+			const label = feedback?.userLabel?.long ?? feedback?.content?.long ?? ''
+			text.p({
+				children: label,
+				align: 'center',
+				spring: true,
+				fontSize: this.percentToPixels(this.getFontSize(label)),
+				lineHeight: this.percentToPixels(this.getFontSize(label)),
+				background: !feedback.backgroundImage ? this.getAdLibColor(feedback.classNames) : undefined,
+				textShadowOffset: 1,
+				lineClamp: 4,
+			})
+		}
 	}
 }

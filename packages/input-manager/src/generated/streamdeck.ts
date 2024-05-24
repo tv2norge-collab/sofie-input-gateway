@@ -10,4 +10,16 @@ export interface StreamDeckDeviceOptions {
 	serialNumber?: string
 	index?: number
 	brightness?: number
+	stylePresets?: {
+		[k: string]: StreamdeckStylePreset
+	}
+}
+/**
+ * This interface was referenced by `undefined`'s JSON-Schema definition
+ * via the `patternProperty` "".
+ */
+export interface StreamdeckStylePreset {
+	id: string
+	backgroundImage: string
+	drawText: boolean
 }

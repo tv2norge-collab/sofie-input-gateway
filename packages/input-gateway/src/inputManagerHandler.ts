@@ -2,7 +2,7 @@ import _ from 'underscore'
 import * as Winston from 'winston'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { CoreHandler } from './coreHandler'
-import { DeviceSettings } from './interfaces'
+import { Complete, DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import {
 	DeviceActionArguments,
@@ -22,6 +22,7 @@ import {
 	SomeFeedback,
 	SomeDeviceConfig,
 	TriggerEvent,
+	Feedback,
 } from '@sofie-automation/input-manager'
 import { interpollateTranslation, translateMessage } from './lib/translatableMessage'
 import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
@@ -31,7 +32,7 @@ import {
 	PeripheralDevicePubSub,
 	PeripheralDevicePubSubCollectionsNames,
 } from '@sofie-automation/server-core-integration'
-import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
+import { literal, sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
 import PQueue from 'p-queue'
 import { InputGatewaySettings } from './generated/options'
 
@@ -624,6 +625,7 @@ export class InputManagerHandler {
 		let contentLayerLongName: string | undefined
 		let contentLayerShortName: string | undefined
 		let tally: Tally = Tally.NONE
+		let styleClassNames: string | undefined
 
 		if (actionId) {
 			const previewedAdlibs = this.#coreHandler.core
@@ -641,6 +643,7 @@ export class InputManagerHandler {
 				contentTypes = previewedAdlibs
 					.map((adlib) => adlib.sourceLayerType)
 					.filter((a) => a !== undefined) as SourceLayerType[]
+				styleClassNames = previewedAdlibs[0].styleClassNames
 			}
 		}
 
@@ -650,13 +653,14 @@ export class InputManagerHandler {
 
 		const actionName = mountedTrigger.actionType
 
-		return {
+		return literal<Complete<Feedback>>({
 			userLabel: userLabel ? { long: userLabel } : undefined,
 			action: mountedTrigger ? { long: actionName } : undefined,
 			contentClass: contentLayerLongName ? { long: contentLayerLongName, short: contentLayerShortName } : undefined,
 			content: contentLabel ? { long: contentLabel } : undefined,
 			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger, contentTypes),
 			tally,
-		}
+			styleClassNames,
+		})
 	}
 }

@@ -3,9 +3,9 @@ import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
 import { FeedbackStore } from '../../devices/feedbackStore'
 import { DEFAULT_ANALOG_RATE_LIMIT, Symbols } from '../../lib'
-import { SomeFeedback } from '../../feedback/feedback'
+import { BitmapFeedback, Feedback, SomeFeedback } from '../../feedback/feedback'
 import { getBitmap } from '../../feedback/bitmap'
-import { StreamDeckDeviceOptions } from '../../generated'
+import { StreamDeckDeviceOptions, StreamdeckStylePreset } from '../../generated'
 
 import DEVICE_OPTIONS from './$schemas/options.json'
 
@@ -224,12 +224,22 @@ export class StreamDeckDevice extends Device {
 
 			if (key !== undefined && this.BTN_SIZE) {
 				this.streamDeck?.checkValidKeyIndex(key)
-				const imgBuffer = await getBitmap(feedback, this.BTN_SIZE, this.BTN_SIZE, isDown)
+				const imgBuffer = await getBitmap(
+					this.convertFeedbackToBitmapFeedback(feedback),
+					this.BTN_SIZE,
+					this.BTN_SIZE,
+					isDown
+				)
 				await this.streamDeck?.fillKeyBuffer(key, imgBuffer, {
 					format: 'rgba',
 				})
 			} else if (encoder !== undefined && this.ENC_SIZE_HEIGHT && this.ENC_SIZE_WIDTH) {
-				const imgBuffer = await getBitmap(feedback, this.ENC_SIZE_WIDTH, this.ENC_SIZE_HEIGHT, isDown)
+				const imgBuffer = await getBitmap(
+					this.convertFeedbackToBitmapFeedback(feedback),
+					this.ENC_SIZE_WIDTH,
+					this.ENC_SIZE_HEIGHT,
+					isDown
+				)
 				await streamdeck.fillEncoderLcd(encoder, imgBuffer, {
 					format: 'rgba',
 				})
@@ -237,6 +247,30 @@ export class StreamDeckDevice extends Device {
 		} catch (e) {
 			this.logger.debug(`Stream Deck: Exception thrown in updateFeedback()`, e)
 		}
+	}
+
+	private convertFeedbackToBitmapFeedback(feedback: Feedback): BitmapFeedback | Feedback {
+		const styleClassNames = feedback.styleClassNames
+		if (!styleClassNames || !this.config.stylePresets) return feedback
+
+		console.log('test', styleClassNames)
+
+		// Find the first match
+		for (const name of styleClassNames.split(' ')) {
+			const stylePreset = Object.values<StreamdeckStylePreset>(this.config.stylePresets).find(
+				(preset) => preset.id === name
+			)
+
+			if (stylePreset) {
+				return {
+					...feedback,
+					backgroundImage: stylePreset.backgroundImage,
+					hideText: !stylePreset.drawText,
+				}
+			}
+		}
+
+		return feedback
 	}
 
 	private quietUpdateFeedbackWithDownState = (trigger: string): void => {

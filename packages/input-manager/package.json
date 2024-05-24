@@ -101,7 +101,6 @@
 		"xkeys": "^3.1.1"
 	},
 	"peerDependencies": {
-		"@sofie-automation/server-core-integration": "*",
 		"@sofie-automation/shared-lib": "*"
 	},
 	"publishConfig": {

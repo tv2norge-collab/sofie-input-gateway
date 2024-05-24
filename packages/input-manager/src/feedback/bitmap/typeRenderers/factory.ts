@@ -1,11 +1,11 @@
 import { CanvasRenderingContext2D } from 'skia-canvas'
-import { ClassNames, Feedback } from '../../feedback'
+import { BitmapFeedback, ClassNames } from '../../feedback'
 import { ActionRenderer } from './action'
 import { BaseAdLibRenderer } from './adlib/base'
 import { BaseRenderer } from './base'
 
 export function rendererFactory(
-	feedback: Feedback,
+	feedback: BitmapFeedback,
 	ctx: CanvasRenderingContext2D,
 	width: number,
 	height: number,

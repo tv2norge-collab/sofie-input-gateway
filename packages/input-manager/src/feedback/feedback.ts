@@ -1,5 +1,3 @@
-import { Blob } from 'buffer'
-
 export interface Label {
 	/** Optional, short representation of the label, up to 10 chars */
 	short?: string
@@ -60,14 +58,18 @@ export interface Feedback {
 	content?: Label
 	/** The label for the type of content attached to this Action */
 	contentClass?: Label
-	/** The duration of the content attached to this Action */
-	duration?: string
 	/** The tally state bitmap */
 	tally?: Tally
 	/** Various classes attached to this Action - including the ones defined in `ClassNames` */
 	classNames?: string[]
-	/** A PNG image of the content attached to this Action */
-	thumbnail?: Blob
+	/** Space separated list of class names to use when drawing the button */
+	styleClassNames?: string
 }
 
 export type SomeFeedback = Feedback | null
+
+export interface BitmapFeedback extends Feedback {
+	backgroundImage?: string
+	hideText?: boolean
+}
+export type SomeBitmapFeedback = BitmapFeedback | null

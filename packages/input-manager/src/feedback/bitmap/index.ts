@@ -1,5 +1,5 @@
 import { Canvas, FontLibrary } from 'skia-canvas'
-import { SomeFeedback } from '../feedback'
+import { SomeBitmapFeedback } from '../feedback'
 import { rendererFactory } from './typeRenderers/factory'
 import path from 'path'
 import fs from 'fs/promises'
@@ -7,7 +7,7 @@ import { constants as fsConstants } from 'fs'
 import process from 'process'
 
 async function makeBitmapFromFeedback(
-	feedback: SomeFeedback,
+	feedback: SomeBitmapFeedback,
 	width: number,
 	height: number,
 	isPressed: boolean
@@ -38,7 +38,7 @@ async function makeBitmapFromFeedback(
 }
 
 export async function getBitmap(
-	feedback: SomeFeedback,
+	feedback: SomeBitmapFeedback,
 	width: number,
 	height: number,
 	isPressed?: boolean
