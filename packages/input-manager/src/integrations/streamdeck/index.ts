@@ -292,13 +292,14 @@ export class StreamDeckDevice extends Device {
 	}
 
 	clearFeedbackAll = async (): Promise<void> => {
+		const feedbackIds = this.feedbacks.allFeedbackIds()
+		this.feedbacks.clear()
+
 		await Promise.all(
-			this.feedbacks.allFeedbackIds().map(async (key) => {
+			feedbackIds.map(async (key) => {
 				return this.updateFeedback(key, false)
 			})
 		)
-
-		this.feedbacks.clear()
 	}
 
 	static getOptionsManifest(): object {

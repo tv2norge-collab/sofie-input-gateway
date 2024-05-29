@@ -164,6 +164,16 @@ export class InputManagerHandler {
 
 		this.#coreHandler.onConnected(() => {
 			this.#logger.info(`Core reconnected`)
+
+			// Force purge the collections, as server-core-integration will repopulate them once the subscription are re-established,
+			// but any data that was in the collections before the reconnection will remain and be out of sync.
+			if (this.#coreHandler.core.ddp.ddpClient) {
+				this.#coreHandler.core.ddp.ddpClient.collections[PeripheralDevicePubSubCollectionsNames.mountedTriggers] = {}
+				this.#coreHandler.core.ddp.ddpClient.collections[
+					PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews
+				] = {}
+			}
+
 			this.#handleClearAllMountedTriggers()
 				.then(async () => {
 					await this.#refreshMountedTriggers()
