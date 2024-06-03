@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0-alpha.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.3.0-alpha.0...v0.3.0-alpha.1) (2024-06-03)
+
+
+### Bug Fixes
+
+* duplicating subscriptions upon reconnect ([de79a9c](https://github.com/nrkno/sofie-input-gateway/commit/de79a9ce534f4c948eac45b7cef84f932bf9cde1))
+* handle invalid shift register values better ([5b10c97](https://github.com/nrkno/sofie-input-gateway/commit/5b10c97ad25511546c8acdc0ba39a446169a9676))
+* stale data being drawn when reconnecting to sofie SOFIE-3172 ([be957f0](https://github.com/nrkno/sofie-input-gateway/commit/be957f04dc0c0e53be5245f4d54d00cd5bc83160))
+* subscriptions not starting ([e05702a](https://github.com/nrkno/sofie-input-gateway/commit/e05702a4fe11f984a49034084d5aae136113dbcb))
+
+
+### Features
+
+* drawable png background for streamdeck buttons SOFIE-3138 ([#21](https://github.com/nrkno/sofie-input-gateway/issues/21)) ([16a5555](https://github.com/nrkno/sofie-input-gateway/commit/16a55555f934ff9bc0689f03df033045cc8a6b62))
+
+
+
+
+
 # [0.3.0-alpha.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.1...v0.3.0-alpha.0) (2023-11-23)
 
 

@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0-alpha.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.3.0-alpha.0...v0.3.0-alpha.1) (2024-06-03)
+
+
+### Bug Fixes
+
+* stale data being drawn when reconnecting to sofie SOFIE-3172 ([be957f0](https://github.com/nrkno/sofie-input-gateway/commit/be957f04dc0c0e53be5245f4d54d00cd5bc83160))
+
+
+### Features
+
+* drawable png background for streamdeck buttons SOFIE-3138 ([#21](https://github.com/nrkno/sofie-input-gateway/issues/21)) ([16a5555](https://github.com/nrkno/sofie-input-gateway/commit/16a55555f934ff9bc0689f03df033045cc8a6b62))
+
+
+
+
+
 # [0.3.0-alpha.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.1...v0.3.0-alpha.0) (2023-11-23)
 
 
