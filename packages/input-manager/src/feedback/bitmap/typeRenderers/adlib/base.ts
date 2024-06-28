@@ -73,27 +73,22 @@ export class BaseAdLibRenderer extends BaseRenderer {
 	}
 
 	render(feedback: BitmapFeedback): void {
-		const text = this.text
-		// text.p({ children: feedback?.action?.long ?? 'unknown', align: 'center', lineClamp: 1 })
-		// text.hr({})
 		if (!feedback?.content) return
 
-		if (feedback.backgroundImage) {
-			this.drawBackgroundImage(feedback.backgroundImage)
-		}
+		const label = feedback?.userLabel?.long ?? feedback?.content?.long ?? ''
 
-		if (!feedback.hideText) {
-			const label = feedback?.userLabel?.long ?? feedback?.content?.long ?? ''
-			text.p({
-				children: label,
-				align: 'center',
-				spring: true,
-				fontSize: this.percentToPixels(this.getFontSize(label)),
-				lineHeight: this.percentToPixels(this.getFontSize(label)),
-				background: !feedback.backgroundImage ? this.getAdLibColor(feedback.classNames) : undefined,
-				textShadowOffset: 1,
-				lineClamp: 4,
-			})
-		}
+		if (feedback.style) return this.renderStyled(label, feedback.style)
+
+		const text = this.text
+		text.p({
+			children: label,
+			align: 'center',
+			spring: true,
+			fontSize: this.percentToPixels(this.getFontSize(label)),
+			lineHeight: this.percentToPixels(this.getFontSize(label)),
+			background: this.getAdLibColor(feedback.classNames),
+			textShadowOffset: 1,
+			lineClamp: 4,
+		})
 	}
 }

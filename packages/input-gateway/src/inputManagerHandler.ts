@@ -670,7 +670,7 @@ export class InputManagerHandler {
 			content: contentLabel ? { long: contentLabel } : undefined,
 			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger, contentTypes),
 			tally,
-			styleClassNames,
+			styleClassNames: styleClassNames?.split(/\s+/),
 		})
 	}
 }

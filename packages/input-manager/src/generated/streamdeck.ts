@@ -21,5 +21,26 @@ export interface StreamDeckDeviceOptions {
 export interface StreamdeckStylePreset {
 	id: string
 	backgroundImage: string
-	drawText: boolean
+	background?: string
+	fontSize?: number
+	fontWeight?: 'normal' | 'bold'
+	fontWidth?: 'normal' | 'narrow'
+	fontStyle?: 'normal' | 'italic'
+	color?: boolean & string
+	textStrokeColor?: string
+	textShadowColor?: string
+	textShadowOffset?: number
+	textPosition?:
+		| 'left center'
+		| 'center center'
+		| 'right center'
+		| 'left top'
+		| 'center top'
+		| 'right top'
+		| 'left bottom'
+		| 'center bottom'
+		| 'right bottom'
+	textTransform?: 'capitalize' | 'uppercase' | 'lowercase'
+	inlineBackground?: string
+	displayLabel: boolean
 }
