@@ -51,6 +51,24 @@
 							"ui:displayType": "base64-image",
 							"default": ""
 						},
+						"displayLabel": {
+							"type": "boolean",
+							"ui:title": "Display Label",
+							"ui:description": "Whether to display text label on this button",
+							"default": false
+						},
+						"margin": {
+							"type": "string",
+							"ui:title": "Button margin",
+							"ui:description": "Margin for the button display",
+							"default": ""
+						},
+						"padding": {
+							"type": "string",
+							"ui:title": "Button padding",
+							"ui:description": "Padding for the button display",
+							"default": ""
+						},
 						"background": {
 							"type": "string",
 							"ui:title": "Background Color or Gradient",
@@ -60,7 +78,7 @@
 						"fontSize": {
 							"type": "number",
 							"ui:title": "Label Font Size",
-							"default": 0
+							"default": 1
 						},
 						"fontWeight": {
 							"type": "string",
@@ -101,7 +119,7 @@
 						"textShadowOffset": {
 							"type": "number",
 							"ui:title": "Label Font Shadow Offset",
-							"default": 5
+							"default": 0
 						},
 						"textPosition": {
 							"type": "string",
@@ -125,11 +143,18 @@
 							"ui:title": "Capitalize text",
 							"ui:description": "Transform label text capitalization",
 							"enum": [
+								"none",
 								"capitalize",
 								"uppercase",
 								"lowercase"
 							],
 							"default": "none"
+						},
+						"lineClamp": {
+							"type": "number",
+							"ui:title": "Clamp text lines",
+							"ui:description": "Do not show more than this amount of lines of text",
+							"default": 4
 						},
 						"inlineBackground": {
 							"type": "string",
@@ -137,17 +162,15 @@
 							"ui:description": "The background color displayed underneath the text only. As CSS hex value or CSS linear-gradient function",
 							"default": ""
 						},
-						"displayLabel": {
-							"type": "boolean",
-							"ui:title": "Display Label",
-							"ui:description": "Whether to display text label on this button",
-							"default": false
+						"inlineBackgroundPadding": {
+							"type": "string",
+							"ui:title": "Inline Background padding",
+							"ui:description": "Padding for the background underneath the text.",
+							"default": ""
 						}
 					},
 					"required": [
-						"id",
-						"backgroundImage",
-						"displayLabel"
+						"id"
 					],
 					"additionalProperties": false
 				}

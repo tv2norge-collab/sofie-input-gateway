@@ -28,12 +28,9 @@ export class TextContext {
 		this.height = height
 	}
 
-	private static populateTRBL(
-		number0: number,
-		number1?: number,
-		number2?: number,
-		number3?: number
-	): TopRightBottomLeft {
+	private static populateTRBL(numbers: number[]): TopRightBottomLeft {
+		const [number0, number1, number2, number3] = numbers
+
 		let right,
 			bottom,
 			left = 0
@@ -54,28 +51,22 @@ export class TextContext {
 		return [top, right, bottom, left]
 	}
 
-	setMargin(margin: number): void
-	setMargin(marginBlock: number, marginInline: number): void
-	setMargin(marginTop: number, marginInline: number, marginBottom: number): void
-	setMargin(marginTop: number, marginRight: number, marginBottom: number, marginLeft: number): void
-	setMargin(margin0: number, margin1?: number, margin2?: number, margin3?: number): void {
-		this.#margin = TextContext.populateTRBL(margin0, margin1, margin2, margin3)
+	setMargin(margin: string): void {
+		const values = margin.split(' ').map(Number)
+		this.#margin = TextContext.populateTRBL(values)
 	}
 
-	setPadding(padding: number): void
-	setPadding(paddingBlock: number, paddingInline: number): void
-	setPadding(paddingTop: number, paddingInline: number, paddingBottom: number): void
-	setPadding(paddingTop: number, paddingRight: number, paddingBottom: number, paddingLeft: number): void
-	setPadding(padding0: number, padding1?: number, padding2?: number, padding3?: number): void {
-		this.#padding = TextContext.populateTRBL(padding0, padding1, padding2, padding3)
+	setPadding(padding: string): void {
+		const values = padding.split(' ').map(Number)
+		this.#padding = TextContext.populateTRBL(values)
 	}
 
-	getMargin(): TopRightBottomLeft {
-		return this.#margin.slice() as TopRightBottomLeft
+	getMargin(): string {
+		return this.#margin.join(' ')
 	}
 
-	getPadding(): TopRightBottomLeft {
-		return this.#padding.slice() as TopRightBottomLeft
+	getPadding(): string {
+		return this.#padding.join(' ')
 	}
 
 	getFont(width?: string): string {
@@ -121,7 +112,7 @@ export class TextContext {
 		textShadowColor?: string
 		textStrokeColor?: string
 		inlineBackground?: string
-		inlineBackgroundPadding?: TopRightBottomLeft
+		inlineBackgroundPadding?: string
 	}): void {
 		const ctx = this.#ctx
 		const maxWidth =
@@ -213,9 +204,11 @@ export class TextContext {
 		}
 
 		if (inlineBackground) {
-			ctx.fillStyle = createFill(ctx, inlineBackground, x, y, textHeight, metrics.width)
+			const [top, right, bottom, left] = inlineBackgroundPadding
+				? TextContext.populateTRBL(inlineBackgroundPadding.split(' ').map(Number))
+				: [0, 0, 0, 0]
+			ctx.fillStyle = createFill(ctx, inlineBackground, x - left, y - top, textHeight + bottom, metrics.width + right)
 			clampedLines.forEach((line) => {
-				const [top, right, bottom, left] = inlineBackgroundPadding ?? [0, 0, 0, 0]
 				ctx.fillRect(x + line.x - left, y + line.y - top, line.width + right + left, line.height + top + bottom)
 			})
 		}

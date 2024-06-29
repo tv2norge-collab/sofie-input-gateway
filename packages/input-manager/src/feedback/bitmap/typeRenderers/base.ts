@@ -22,14 +22,18 @@ export abstract class BaseRenderer {
 
 	abstract render(feedback: Feedback): void
 
+	private getLineClamp(inputValue: number | undefined): number | undefined {
+		if (inputValue === undefined || inputValue <= 0) return 4
+		if (inputValue < 1) return 1
+		return inputValue
+	}
+
 	protected renderStyled(label: string, style: BitmapStyleProps): void {
 		if (style.backgroundImage) {
 			this.drawBackgroundImage(style.backgroundImage)
 		}
 
 		if (style.displayLabel !== true) return
-
-		const inlineBackgroundPadding = 3
 
 		const positionAndAlignment = style.textPosition?.split(' ')
 
@@ -43,6 +47,14 @@ export abstract class BaseRenderer {
 			label = label.toLowerCase().replace(/\w{3,}/g, (match) => match.replace(/\w/, (m) => m.toUpperCase()))
 		}
 
+		if (style.margin) {
+			text.setMargin(style.margin)
+		}
+
+		if (style.padding) {
+			text.setPadding(style.padding)
+		}
+
 		text.p({
 			children: label,
 			align: (positionAndAlignment?.[0] ?? 'center') as CanvasTextAlign,
@@ -54,17 +66,12 @@ export abstract class BaseRenderer {
 			textStrokeColor: style.textStrokeColor || undefined,
 			color: style.color || undefined,
 			inlineBackground: style.inlineBackground,
-			inlineBackgroundPadding: [
-				inlineBackgroundPadding,
-				inlineBackgroundPadding,
-				inlineBackgroundPadding,
-				inlineBackgroundPadding,
-			],
+			inlineBackgroundPadding: style.inlineBackgroundPadding,
 			textShadowColor: style.textShadowColor,
 			textShadowOffset: style.textShadowOffset,
 			spring: true,
 			background: !style.backgroundImage ? style.background ?? '#000' : undefined,
-			lineClamp: 4,
+			lineClamp: this.getLineClamp(style.lineClamp),
 		})
 	}
 

@@ -92,6 +92,10 @@ export interface BitmapStyleProps {
 		| 'right bottom'
 	inlineBackground?: string
 	displayLabel?: boolean
+	padding?: string
+	margin?: string
+	lineClamp?: number
+	inlineBackgroundPadding?: string
 }
 
 export interface BitmapFeedback extends Feedback {

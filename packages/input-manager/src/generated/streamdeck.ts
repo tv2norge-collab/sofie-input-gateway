@@ -20,7 +20,10 @@ export interface StreamDeckDeviceOptions {
  */
 export interface StreamdeckStylePreset {
 	id: string
-	backgroundImage: string
+	backgroundImage?: string
+	displayLabel?: boolean
+	margin?: string
+	padding?: string
 	background?: string
 	fontSize?: number
 	fontWeight?: 'normal' | 'bold'
@@ -41,6 +44,7 @@ export interface StreamdeckStylePreset {
 		| 'center bottom'
 		| 'right bottom'
 	textTransform?: 'capitalize' | 'uppercase' | 'lowercase'
+	lineClamp?: number
 	inlineBackground?: string
-	displayLabel: boolean
+	inlineBackgroundPadding?: string
 }
