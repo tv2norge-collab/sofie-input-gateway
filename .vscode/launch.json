@@ -10,7 +10,7 @@
 			"name": "Build & Run Input Gateway",
 			"preLaunchTask": "Input Gateway: build",
 			"program": "${workspaceFolder}/packages/input-gateway/dist/index.js",
-			"args": ["-id", "devxxsofie"],
+			"args": ["-id", "localDevInp"],
 			"console": "integratedTerminal",
 			"outFiles": [
 				"${workspaceFolder}/packages/input-gateway/dist/**/*.js",
@@ -22,7 +22,7 @@
 			"request": "launch",
 			"name": "Run Input Gateway",
 			"program": "${workspaceFolder}/packages/input-gateway/dist/index.js",
-			"args": ["-id", "devxxsofie"],
+			"args": ["-id", "localDevInp"],
 			"console": "integratedTerminal",
 			"outFiles": [
 				"${workspaceFolder}/packages/input-gateway/dist/**/*.js",

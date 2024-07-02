@@ -62,14 +62,43 @@ export interface Feedback {
 	tally?: Tally
 	/** Various classes attached to this Action - including the ones defined in `ClassNames` */
 	classNames?: string[]
-	/** Space separated list of class names to use when drawing the button */
-	styleClassNames?: string
+	/** List of class names to use when drawing the button */
+	styleClassNames?: string[]
 }
 
 export type SomeFeedback = Feedback | null
 
-export interface BitmapFeedback extends Feedback {
+export interface BitmapStyleProps {
 	backgroundImage?: string
-	hideText?: boolean
+	background?: string
+	fontSize?: number
+	fontWeight?: 'bold' | 'normal'
+	fontWidth?: 'narrow' | 'normal'
+	fontStyle?: 'italic' | 'normal'
+	color?: string
+	textStrokeColor?: string
+	textShadowColor?: string
+	textShadowOffset?: number
+	textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize'
+	textPosition?:
+		| 'left center'
+		| 'center center'
+		| 'right center'
+		| 'left top'
+		| 'center top'
+		| 'right top'
+		| 'left bottom'
+		| 'center bottom'
+		| 'right bottom'
+	inlineBackground?: string
+	displayLabel?: boolean
+	padding?: string
+	margin?: string
+	lineClamp?: number
+	inlineBackgroundPadding?: string
+}
+
+export interface BitmapFeedback extends Feedback {
+	style?: BitmapStyleProps
 }
 export type SomeBitmapFeedback = BitmapFeedback | null

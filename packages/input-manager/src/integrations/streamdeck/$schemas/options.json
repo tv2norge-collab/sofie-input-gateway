@@ -31,7 +31,6 @@
 			"ui:title": "Style Presets",
 			"ui:description": "Styling definitions to use when drawing the buttons",
 			"ui:import-export": true,
-
 			"patternProperties": {
 				"": {
 					"type": "object",
@@ -52,14 +51,127 @@
 							"ui:displayType": "base64-image",
 							"default": ""
 						},
-						"drawText": {
+						"displayLabel": {
 							"type": "boolean",
-							"ui:title": "Draw Text",
-							"ui:description": "Whether to draw text on this button",
+							"ui:title": "Display Label",
+							"ui:description": "Whether to display text label on this button",
 							"default": false
+						},
+						"margin": {
+							"type": "string",
+							"ui:title": "Button margin",
+							"ui:description": "Margin for the button display",
+							"default": ""
+						},
+						"padding": {
+							"type": "string",
+							"ui:title": "Button padding",
+							"ui:description": "Padding for the button display",
+							"default": ""
+						},
+						"background": {
+							"type": "string",
+							"ui:title": "Background Color or Gradient",
+							"ui:description": "The background color for this button. As CSS hex value or CSS linear-gradient function",
+							"default": ""
+						},
+						"fontSize": {
+							"type": "number",
+							"ui:title": "Label Font Size",
+							"default": 1
+						},
+						"fontWeight": {
+							"type": "string",
+							"ui:title": "Label Font Bold Weight",
+							"enum": [
+								"normal",
+								"bold"
+							],
+							"default": "normal"
+						},
+						"fontWidth": {
+							"type": "string",
+							"ui:title": "Label Font Width",
+							"enum": ["normal", "narrow"],
+							"default": "normal"
+						},
+						"fontStyle": {
+							"type": "string",
+							"ui:title": "Label Font Style",
+							"enum": ["normal", "italic"],
+							"default": "normal"
+						},
+						"color": {
+							"type": "string",
+							"ui:title": "Label Font Fill Color",
+							"default": ""
+						},
+						"textStrokeColor": {
+							"type": "string",
+							"ui:title": "Label Font Stroke Color",
+							"default": ""
+						},
+						"textShadowColor": {
+							"type": "string",
+							"ui:title": "Label Font Shadow Color",
+							"default": ""
+						},
+						"textShadowOffset": {
+							"type": "number",
+							"ui:title": "Label Font Shadow Offset",
+							"default": 0
+						},
+						"textPosition": {
+							"type": "string",
+							"ui:title": "Label Text alignment",
+							"ui:description": "Position of the text label",
+							"enum": [
+								"left center",
+								"center center",
+								"right center",
+								"left top",
+								"center top",
+								"right top",
+								"left bottom",
+								"center bottom",
+								"right bottom"
+							],
+							"default": "center center"
+						},
+						"textTransform": {
+							"type": "string",
+							"ui:title": "Capitalize text",
+							"ui:description": "Transform label text capitalization",
+							"enum": [
+								"none",
+								"capitalize",
+								"uppercase",
+								"lowercase"
+							],
+							"default": "none"
+						},
+						"lineClamp": {
+							"type": "number",
+							"ui:title": "Clamp text lines",
+							"ui:description": "Do not show more than this amount of lines of text",
+							"default": 4
+						},
+						"inlineBackground": {
+							"type": "string",
+							"ui:title": "Inline Background Color or Gradient",
+							"ui:description": "The background color displayed underneath the text only. As CSS hex value or CSS linear-gradient function",
+							"default": ""
+						},
+						"inlineBackgroundPadding": {
+							"type": "string",
+							"ui:title": "Inline Background padding",
+							"ui:description": "Padding for the background underneath the text.",
+							"default": ""
 						}
 					},
-					"required": ["id", "backgroundImage", "drawText"],
+					"required": [
+						"id"
+					],
 					"additionalProperties": false
 				}
 			},

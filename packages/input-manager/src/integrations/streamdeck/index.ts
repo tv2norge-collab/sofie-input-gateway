@@ -253,10 +253,8 @@ export class StreamDeckDevice extends Device {
 		const styleClassNames = feedback.styleClassNames
 		if (!styleClassNames || !this.config.stylePresets) return feedback
 
-		console.log('test', styleClassNames)
-
 		// Find the first match
-		for (const name of styleClassNames.split(' ')) {
+		for (const name of styleClassNames) {
 			const stylePreset = Object.values<StreamdeckStylePreset>(this.config.stylePresets).find(
 				(preset) => preset.id === name
 			)
@@ -264,8 +262,7 @@ export class StreamDeckDevice extends Device {
 			if (stylePreset) {
 				return {
 					...feedback,
-					backgroundImage: stylePreset.backgroundImage,
-					hideText: !stylePreset.drawText,
+					style: stylePreset,
 				}
 			}
 		}
