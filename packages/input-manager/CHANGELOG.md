@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0-alpha.2](https://github.com/nrkno/sofie-input-gateway/compare/v0.3.0-alpha.1...v0.3.0-alpha.2) (2024-07-02)
+
+
+### Bug Fixes
+
+* error in streamdeck config schema ([1d7a49e](https://github.com/nrkno/sofie-input-gateway/commit/1d7a49ec1d733214166017acd7987daa2962029b))
+
+
+### Features
+
+* extend styling options ([b7da0f6](https://github.com/nrkno/sofie-input-gateway/commit/b7da0f6a4b5185207d25b474600aaf9eb36d9a86))
+* make button styles faster and add more text formatting options ([e6b37ea](https://github.com/nrkno/sofie-input-gateway/commit/e6b37eac664ebc7b34a9c0795788a97756eb7f28))
+
+
+
+
+
 # [0.3.0-alpha.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.3.0-alpha.0...v0.3.0-alpha.1) (2024-06-03)
 
 
