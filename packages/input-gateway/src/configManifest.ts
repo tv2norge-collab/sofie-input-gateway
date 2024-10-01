@@ -1,25 +1,23 @@
-import { DeviceType, getIntegrationsConfigManifest } from '@sofie-automation/input-manager'
 import {
-	ConfigManifestEntryType,
+	getIntegrationsConfigManifest,
+	SubdeviceManifest as InputDeviceManifest,
+} from '@sofie-automation/input-manager'
+import {
 	DeviceConfigManifest,
-	TableEntryConfigManifestEntry,
+	JSONBlobStringify,
+	JSONSchema,
+	SubdeviceManifest,
 } from '@sofie-automation/server-core-integration'
 
+import DEVICE_CONFIG from './$schemas/options.json'
+
+const subdeviceManifest: SubdeviceManifest = Object.fromEntries(
+	Object.entries<InputDeviceManifest>(getIntegrationsConfigManifest()).map(([id, dev]) => {
+		return [id, dev]
+	})
+)
+
 export const INPUT_DEVICE_CONFIG: DeviceConfigManifest = {
-	deviceConfig: [
-		{
-			id: 'debugLogging',
-			name: 'Activate Debug Logging',
-			type: ConfigManifestEntryType.BOOLEAN,
-		},
-		{
-			id: 'devices',
-			name: 'Input Devices',
-			type: ConfigManifestEntryType.TABLE,
-			typeField: 'type',
-			isSubDevices: true,
-			defaultType: DeviceType.HTTP,
-			config: getIntegrationsConfigManifest() as Record<string, TableEntryConfigManifestEntry[]>,
-		},
-	],
+	deviceConfigSchema: JSONBlobStringify<JSONSchema>(DEVICE_CONFIG),
+	subdeviceManifest,
 }

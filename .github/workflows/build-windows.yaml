@@ -25,15 +25,16 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '18'
 
       - name: Run build
         env:
           CI: true
           PKG_CACHE_PATH: ${{ runner.temp }}
         run: |
+          corepack enable
           # try and avoid timeout errors
-          yarn config set network-timeout 100000 -g
+          yarn config set httpTimeout 100000
 
           yarn install
           yarn do:build-win32:ci

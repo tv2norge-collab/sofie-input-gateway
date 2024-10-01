@@ -1,32 +1,23 @@
 import { Server } from 'http'
 import { Logger } from '../../logger'
 import { Device, TriggerEventArguments } from '../../devices/device'
-import { DeviceConfigManifest } from '../../lib'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
+import { HTTPServerOptions } from '../../generated'
 
-export interface HTTPDeviceConfig {
-	port: number
-}
+import DEVICE_OPTIONS from './$schemas/options.json'
 
-export const DEVICE_CONFIG: DeviceConfigManifest<HTTPDeviceConfig> = [
-	{
-		id: 'port',
-		type: ConfigManifestEntryType.INT,
-		name: 'Port number',
-	},
-]
+const DEFAULT_PORT = 8080
 
-export class HTTPDevice extends Device {
-	#server: Server | undefined
-	#config: HTTPDeviceConfig
+export class HTTPServer extends Device {
+	private server: Server | undefined
+	private config: HTTPServerOptions
 
-	constructor(config: HTTPDeviceConfig, logger: Logger) {
+	constructor(config: HTTPServerOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
 	async init(): Promise<void> {
-		this.#server = new Server((req, res) => {
+		this.server = new Server((req, res) => {
 			if (!req.url) {
 				this.logger.error(`HTTP: Request has no URL`)
 				res.end()
@@ -60,13 +51,13 @@ export class HTTPDevice extends Device {
 			res.end()
 			return
 		})
-		this.#server.listen(this.#config.port)
+		this.server.listen(this.config.port ?? DEFAULT_PORT)
 	}
 
 	async destroy(): Promise<void> {
 		await super.destroy()
-		if (!this.#server) return
-		const server = this.#server
+		if (!this.server) return
+		const server = this.server
 		return new Promise((resolve, reject) => {
 			server.close((err) => {
 				if (err) {
@@ -85,5 +76,9 @@ export class HTTPDevice extends Device {
 
 	async clearFeedbackAll(): Promise<void> {
 		void ''
+	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
 	}
 }

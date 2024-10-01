@@ -1,0 +1,31 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/x-keys",
+    "title": "X-Keys Device Options",
+    "type": "object",
+    "properties": {
+        "unitId": {
+            "type": "integer",
+            "ui:title": "Unit ID",
+            "description": "This is a user-configurable ID that is supposed to identify the set of physical labels on the buttons",
+            "ui:description": "User-configurable ID, identyfing a particular device configuration"
+        },
+        "path": {
+            "type": "string",
+            "ui:title": "Device Path",
+            "ui:description": "The device path or part of it, where the device is attached in the system device tree"
+        },
+        "productId": {
+            "type": "integer",
+            "ui:title": "Product ID",
+            "ui:description": "Device type identifier"
+        },
+        "serialNumber": {
+            "type": "string",
+            "ui:title": "Serial Number",
+            "ui:description": "The serial number of the device"
+        }
+    },
+    "required": [],
+    "additionalProperties": false
+}

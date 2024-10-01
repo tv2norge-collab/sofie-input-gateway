@@ -1,5 +1,3 @@
-import { TableEntryConfigManifestEntry } from '@sofie-automation/server-core-integration'
-
 export enum Symbols {
 	DOWN = '↧',
 	UP = '↥',
@@ -17,8 +15,5 @@ export function assertNever(_never: never): void {
 	// Do nothing. This is a type guard
 }
 
-export type DeviceConfigManifest<ConfigObj extends object> = Array<
-	{ id: keyof ConfigObj } & Omit<TableEntryConfigManifestEntry, 'id'>
->
 // The value, 50 ms, was chosen because it is approximate the time it takes for a human to click a key (key down + up).
 export const DEFAULT_ANALOG_RATE_LIMIT = 50

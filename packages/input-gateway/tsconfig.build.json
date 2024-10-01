@@ -11,6 +11,8 @@
 		},
 		"types": ["node"],
 		"esModuleInterop": true,
-		"target": "ES2021"
+		"target": "ES2022",
+		"resolveJsonModule": true,
+		"skipLibCheck": true
 	}
 }

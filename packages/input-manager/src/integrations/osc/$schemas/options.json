@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:local:nrk.no/sofie-input-gateway/integration-settings/osc",
+	"title": "OSC Server Options",
+	"type": "object",
+	"properties": {
+		"port": {
+			"type": "integer",
+			"ui:title": "Port",
+			"ui:description": "The port to listen on for incoming connections",
+			"default": 57121
+		},
+		"host": {
+			"type": "string",
+			"ui:title": "Host",
+			"ui:description": "The interface on which to listen for connections, will use all if empty"
+		}
+	},
+	"required": [],
+	"additionalProperties": false
+}

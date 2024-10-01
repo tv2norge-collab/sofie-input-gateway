@@ -15,5 +15,13 @@ wallaby.conf.js
 packages/*/coverage/
 .npmrc
 
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
 # Ignore JetBrains IDE specific files
 .idea

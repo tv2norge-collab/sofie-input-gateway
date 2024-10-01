@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:local:nrk.no/sofie-input-gateway/gateway-settings",
+    "title": "Input Gateway Settings",
+    "type": "object",
+    "properties": {
+        "logLevel": {
+            "type": "string",
+            "ui:title": "Log level",
+            "default": "info",
+            "enum": [
+                "error",
+                "warn",
+                "info",
+                "verbose",
+                "debug",
+                "silly"
+            ]
+        }
+    },
+    "required": []
+}

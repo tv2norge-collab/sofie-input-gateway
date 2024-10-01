@@ -6,10 +6,27 @@
 	"configurations": [
 		{
 			"type": "node",
-			"request": "attach",
-			"name": "Attach to Playout Gateway",
+			"request": "launch",
+			"name": "Build & Run Input Gateway",
+			"preLaunchTask": "Input Gateway: build",
+			"program": "${workspaceFolder}/packages/input-gateway/dist/index.js",
+			"args": ["-id", "localDevInp"],
+			"console": "integratedTerminal",
 			"outFiles": [
-				"${workspaceFolder}/dist/*.js"
+				"${workspaceFolder}/packages/input-gateway/dist/**/*.js",
+				"${workspaceFolder}/packages/input-manager/dist/**/*.js"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Run Input Gateway",
+			"program": "${workspaceFolder}/packages/input-gateway/dist/index.js",
+			"args": ["-id", "localDevInp"],
+			"console": "integratedTerminal",
+			"outFiles": [
+				"${workspaceFolder}/packages/input-gateway/dist/**/*.js",
+				"${workspaceFolder}/packages/input-manager/dist/**/*.js"
 			]
 		}
 	]

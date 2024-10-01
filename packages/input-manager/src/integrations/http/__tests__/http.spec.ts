@@ -1,4 +1,4 @@
-import { HTTPDevice } from '../index'
+import { HTTPServer } from '../index'
 import { IncomingMessage, ServerResponse } from 'http'
 import { MockLogger } from '../../../__mocks__/logger'
 
@@ -25,7 +25,7 @@ jest.mock('http', () => ({
 
 describe('HTTP Server', () => {
 	it('Creates an HTTP server on initialization', async () => {
-		const device = new HTTPDevice(
+		const device = new HTTPServer(
 			{
 				port: 9090,
 			},
@@ -36,7 +36,7 @@ describe('HTTP Server', () => {
 		expect(mockServerPort).toBe(9090)
 	})
 	it('Emits a trigger event when it receives a request', async () => {
-		const device = new HTTPDevice(
+		const device = new HTTPServer(
 			{
 				port: 9090,
 			},

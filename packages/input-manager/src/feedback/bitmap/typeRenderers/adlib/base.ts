@@ -1,4 +1,4 @@
-import { ClassNames, Feedback } from '../../../feedback'
+import { ClassNames, BitmapFeedback } from '../../../feedback'
 import { BaseRenderer } from '../base'
 
 /**
@@ -72,12 +72,14 @@ export class BaseAdLibRenderer extends BaseRenderer {
 		return 1
 	}
 
-	render(feedback: Feedback): void {
-		const text = this.text
-		// text.p({ children: feedback?.action?.long ?? 'unknown', align: 'center', lineClamp: 1 })
-		// text.hr({})
+	render(feedback: BitmapFeedback): void {
 		if (!feedback?.content) return
+
 		const label = feedback?.userLabel?.long ?? feedback?.content?.long ?? ''
+
+		if (feedback.style) return this.renderStyled(label, feedback.style)
+
+		const text = this.text
 		text.p({
 			children: label,
 			align: 'center',

@@ -1,42 +1,27 @@
 import net from 'net'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
+import { FeedbackStore } from '../../devices/feedbackStore'
+import { DEFAULT_ANALOG_RATE_LIMIT, Symbols } from '../../lib'
 import { ClassNames, Label, SomeFeedback, Tally } from '../../feedback/feedback'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
+import { SkaarhojPanelOptions } from '../../generated'
 import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
 import ASCIIFolder from 'fold-to-ascii'
 
 const SEND_TIMEOUT = 1000
 const CONNECTION_TIMEOUT = 5000
 
-export interface SkaarhojDeviceConfig {
-	host: string
-	port: number
-}
-
-export const DEVICE_CONFIG: DeviceConfigManifest<SkaarhojDeviceConfig> = [
-	{
-		id: 'host',
-		type: ConfigManifestEntryType.STRING,
-		name: 'Address',
-	},
-	{
-		id: 'port',
-		type: ConfigManifestEntryType.INT,
-		name: 'Port',
-	},
-]
+import DEVICE_OPTIONS from './$schemas/options.json'
 
 export class SkaarhojDevice extends Device {
-	#socket: net.Socket | undefined
-	#closing = false
-	#config: SkaarhojDeviceConfig
-	#feedbacks: Record<string, SomeFeedback> = {}
+	private socket: net.Socket | undefined
+	private isClosing = false
+	private config: SkaarhojPanelOptions
+	private feedbacks = new FeedbackStore()
 
-	constructor(config: SkaarhojDeviceConfig, logger: Logger) {
+	constructor(config: SkaarhojPanelOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
 	async init(): Promise<void> {
@@ -44,8 +29,8 @@ export class SkaarhojDevice extends Device {
 			let isOpen = false
 			const socket = net.createConnection(
 				{
-					host: this.#config.host,
-					port: this.#config.port,
+					host: this.config.host,
+					port: this.config.port,
 					timeout: CONNECTION_TIMEOUT,
 				},
 				() => {
@@ -55,7 +40,7 @@ export class SkaarhojDevice extends Device {
 						await sleep(50)
 						await this.sendToDevice('Clear')
 						await sleep(50) // Skaarhoj needs a bit of time after the clear command to start doing something
-						for (const keyStr of Object.keys(this.#feedbacks)) {
+						for (const keyStr of Object.keys(this.feedbacks)) {
 							await this.updateFeedback(keyStr)
 						}
 						resolve()
@@ -70,16 +55,16 @@ export class SkaarhojDevice extends Device {
 					error: err,
 				})
 				socket.end()
-				this.#socket = undefined
+				this.socket = undefined
 			})
 			socket.on('close', () => {
-				if (this.#closing) return
+				if (this.isClosing) return
 				this.emit('error', {
 					error: new Error('Unexpected connection close'),
 				})
-				this.#socket = undefined
+				this.socket = undefined
 			})
-			this.#socket = socket
+			this.socket = socket
 		})
 	}
 
@@ -108,9 +93,17 @@ export class SkaarhojDevice extends Device {
 		} else {
 			const stateMatch = state.match(AnalogStateChange.StateChange)
 			if (stateMatch) {
+				const value = parseFloat(stateMatch[2])
+				const key = stateMatch[1]
+
+				let direction = 0
+				if (value < 0) direction = -1
+				if (value > 0) direction = 1
+
 				this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, () => {
 					return {
-						[stateMatch[1]]: parseFloat(stateMatch[2]),
+						[key]: value,
+						direction,
 					}
 				})
 			} else {
@@ -123,20 +116,20 @@ export class SkaarhojDevice extends Device {
 
 	async destroy(): Promise<void> {
 		await super.destroy()
-		if (!this.#socket) return
-		this.#closing = true
-		const socket = this.#socket
+		if (!this.socket) return
+		this.isClosing = true
+		const socket = this.socket
 		return new Promise((resolve) => socket.end(resolve))
 	}
 
-	private static parseTriggerId(triggerId: string): [string, boolean] {
+	private static parseTriggerId(triggerId: string): { buttonId: string; action: string } {
 		const triggerElements = triggerId.match(/^(\d+)(.\d+)?\s(\S+)$/)
 		if (!triggerElements) {
-			return ['0', false]
+			return { buttonId: '0', action: '' }
 		}
 		const buttonId = triggerElements[1] ?? '0'
-		const isUp = triggerElements[3] === Symbols.UP
-		return [buttonId, isUp]
+		const action = triggerElements[3] ?? ''
+		return { buttonId, action }
 	}
 
 	private async sendClearFeedback(key: string): Promise<void> {
@@ -160,10 +153,10 @@ export class SkaarhojDevice extends Device {
 		return result
 	}
 
-	private async updateFeedback(key: string): Promise<void> {
-		const feedback = this.#feedbacks[key]
+	private async updateFeedback(feedbackId: string): Promise<void> {
+		const feedback = this.feedbacks.get(feedbackId, ACTION_PRIORITIES)
 		if (!feedback) {
-			await this.sendClearFeedback(key)
+			await this.sendClearFeedback(feedbackId)
 			return
 		}
 
@@ -201,7 +194,7 @@ export class SkaarhojDevice extends Device {
 			hasFilledTitle = false
 
 			if (!feedback.content) {
-				await this.sendClearFeedback(key)
+				await this.sendClearFeedback(feedbackId)
 				return
 			}
 		}
@@ -210,31 +203,28 @@ export class SkaarhojDevice extends Device {
 		if (line1) line1 = SkaarhojDevice.normalizeString(line1).trim()
 		if (line2) line2 = SkaarhojDevice.normalizeString(line2).trim()
 
-		await this.sendToDevice(`HWC#${key}=${tallyColor}`)
+		await this.sendToDevice(`HWC#${feedbackId}=${tallyColor}`)
 		await this.sendToDevice(
-			`HWCt#${key}=|||${title ?? ''}|${hasFilledTitle ? '' : '1'}|${line1 ?? 'UNKNOWN'}|${line2}|`
+			`HWCt#${feedbackId}=|||${title ?? ''}|${hasFilledTitle ? '' : '1'}|${line1 ?? 'UNKNOWN'}|${line2}|`
 		)
 	}
 
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
-		if (!this.#socket) return
-		const [button] = SkaarhojDevice.parseTriggerId(triggerId)
-		this.#feedbacks[button] = feedback
-		await this.updateFeedback(button)
+		if (!this.socket) return
+		const { buttonId, action } = SkaarhojDevice.parseTriggerId(triggerId)
+		this.feedbacks.set(buttonId, action, feedback)
+		await this.updateFeedback(buttonId)
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const keyStr of Object.keys(this.#feedbacks)) {
-			this.#feedbacks[keyStr] = null
-			await this.updateFeedback(keyStr)
-		}
-		if (!this.#socket) return
+		this.feedbacks.clear()
+		if (!this.socket) return
 		await this.sendToDevice('Clear')
 	}
 
 	private async sendToDevice(buf: string): Promise<void> {
 		return new Promise((resolve, reject) => {
-			const socket = this.#socket
+			const socket = this.socket
 			if (!socket) {
 				reject(new Error('Socket not connected'))
 				return
@@ -250,6 +240,10 @@ export class SkaarhojDevice extends Device {
 			})
 		})
 	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
+	}
 }
 
 const InboundMessages = {
@@ -259,3 +253,5 @@ const InboundMessages = {
 const AnalogStateChange = {
 	StateChange: /^(\w+):([\d-.]+)$/,
 }
+
+const ACTION_PRIORITIES = [Symbols.DOWN, Symbols.UP, Symbols.JOG, Symbols.MOVE, Symbols.SHUTTLE, Symbols.T_BAR]

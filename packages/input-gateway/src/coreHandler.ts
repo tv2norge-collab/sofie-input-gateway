@@ -1,4 +1,10 @@
-import { CoreConnection, CoreOptions, DDPConnectorOptions } from '@sofie-automation/server-core-integration'
+import {
+	CoreConnection,
+	CoreOptions,
+	DDPConnectorOptions,
+	PeripheralDevicePubSub,
+	PeripheralDevicePubSubCollectionsNames,
+} from '@sofie-automation/server-core-integration'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import _ from 'underscore'
 import * as Winston from 'winston'
@@ -6,7 +12,6 @@ import { DeviceConfig } from './inputManagerHandler'
 import fs from 'fs'
 import { INPUT_DEVICE_CONFIG } from './configManifest'
 import { PeripheralDeviceCommandId, PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
-import { PeripheralDevicePublic } from '@sofie-automation/shared-lib/dist/core/model/peripheralDevice'
 import {
 	PeripheralDeviceCategory,
 	PeripheralDeviceSubType,
@@ -16,7 +21,7 @@ import {
 import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { PeripheralDeviceCommand } from '@sofie-automation/shared-lib/dist/core/model/PeripheralDeviceCommand'
 import { Process } from './process'
-import { stringifyError } from './lib/lib'
+import { stringifyError } from '@sofie-automation/shared-lib/dist/lib/stringifyError'
 import path from 'path'
 
 export interface CoreConfig {
@@ -74,6 +79,7 @@ export class CoreHandler {
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
+
 			if (this._onConnected) this._onConnected()
 		})
 		this.core.onDisconnected(() => {
@@ -98,20 +104,19 @@ export class CoreHandler {
 		}
 		await this.core.init(ddpConfig)
 		this.logger.info('Core id: ' + this.core.deviceId)
-		await this.setupObserversAndSubscriptions()
 		this._statusInitialized = true
+		await this.updateCoreStatus()
+
+		await this.setupObserversAndSubscriptions()
+
 		await this.updateCoreStatus()
 	}
 	async setupObserversAndSubscriptions(): Promise<void> {
 		this.logger.info('Core: Setting up subscriptions..')
 		this.logger.info('DeviceId: ' + this.core.deviceId)
 		await Promise.all([
-			this.core.autoSubscribe('peripheralDevices', {
-				_id: this.core.deviceId,
-			}),
-			this.core.autoSubscribe('studioOfDevice', this.core.deviceId),
-			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
-			// @todo: subscribe to userInput
+			this.core.autoSubscribe(PeripheralDevicePubSub.peripheralDeviceForDevice, this.core.deviceId),
+			this.core.autoSubscribe(PeripheralDevicePubSub.peripheralDeviceCommands, this.core.deviceId),
 		])
 		this.logger.info('Core: Subscriptions are set up!')
 		if (this._observers.length) {
@@ -122,15 +127,11 @@ export class CoreHandler {
 			this._observers = []
 		}
 		// setup observers
-		const observer = this.core.observe('peripheralDevices')
-		observer.added = (id: string) => {
-			this.onDeviceChanged(protectString(id))
-		}
-		observer.changed = (id1: string) => {
-			this.onDeviceChanged(protectString(id1))
-		}
+		const observer = this.core.observe(PeripheralDevicePubSubCollectionsNames.peripheralDeviceForDevice)
+		observer.added = (id) => this.onDeviceChanged(id)
+		observer.changed = (id) => this.onDeviceChanged(id)
+
 		this.setupObserverForPeripheralDeviceCommands(this)
-		return
 	}
 	async destroy(): Promise<void> {
 		this._statusDestroyed = true
@@ -151,7 +152,6 @@ export class CoreHandler {
 
 			deviceCategory: PeripheralDeviceCategory.TRIGGER_INPUT,
 			deviceType: PeripheralDeviceType.INPUT,
-			deviceSubType: subDeviceType,
 
 			deviceName: name,
 			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
@@ -159,6 +159,9 @@ export class CoreHandler {
 			configManifest: {
 				...INPUT_DEVICE_CONFIG,
 			},
+
+			versions: this._getVersions(),
+			documentationUrl: 'https://github.com/nrkno/sofie-input-gateway',
 		}
 
 		if (!options.deviceToken) {
@@ -168,41 +171,6 @@ export class CoreHandler {
 
 		if (subDeviceType === PERIPHERAL_SUBTYPE_PROCESS) options.versions = this._getVersions()
 		return options
-
-		// let credentials: {
-		// 	deviceId: PeripheralDeviceId
-		// 	deviceToken: string
-		// }
-
-		// if (this._deviceOptions.deviceId && this._deviceOptions.deviceToken) {
-		// 	credentials = {
-		// 		deviceId: protectString(this._deviceOptions.deviceId + subDeviceId),
-		// 		deviceToken: this._deviceOptions.deviceToken,
-		// 	}
-		// } else if (this._deviceOptions.deviceId) {
-		// 	this.logger.warn('Token not set, only id! This might be unsecure!')
-		// 	credentials = {
-		// 		deviceId: protectString(this._deviceOptions.deviceId + subDeviceId),
-		// 		deviceToken: 'unsecureToken',
-		// 	}
-		// } else {
-		// 	credentials = CoreConnection.getCredentials(subDeviceId)
-		// }
-		// const options: CoreOptions = {
-		// 	...credentials,
-
-		// 	deviceCategory: PeripheralDeviceCategory.TRIGGER_INPUT,
-		// 	deviceType: PeripheralDeviceType.INPUT,
-		// 	deviceSubType: subType || PERIPHERAL_SUBTYPE_PROCESS,
-
-		// 	deviceName: name,
-		// 	watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
-
-		// 	configManifest: INPUT_DEVICE_CONFIG,
-
-		// 	versions: this._getVersions(),
-		// }
-		// return options
 	}
 	onConnected(fcn: () => any): void {
 		this._onConnected = fcn
@@ -212,30 +180,31 @@ export class CoreHandler {
 	}
 	onDeviceChanged(id: PeripheralDeviceId): void {
 		if (id === this.core.deviceId) {
-			const col = this.core.getCollection<PeripheralDevicePublic>('peripheralDevices')
-			if (!col) throw new Error('collection "peripheralDevices" not found!')
+			const col = this.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceForDevice)
+			if (!col) throw new Error('collection "peripheralDeviceForDevice" not found!')
 
 			const device = col.findOne(id)
 			if (device) {
-				if (!_.isEqual(this.deviceSettings, device.settings)) {
-					this.deviceSettings = device.settings || {}
+				if (!_.isEqual(this.deviceSettings, device.deviceSettings)) {
+					this.deviceSettings = device.deviceSettings || {}
 				}
 			} else {
 				this.deviceSettings = {}
 			}
 
-			const logLevel = this.deviceSettings['debugLogging'] ? 'debug' : 'info'
+			const logLevel = this.deviceSettings['logLevel'] ? 'debug' : 'info'
 			if (logLevel !== this.logger.level) {
 				this.logger.level = logLevel
 
 				this.logger.info('Loglevel: ' + this.logger.level)
 			}
 
+			this.logger.info('Changed PeripheralDevice: ' + JSON.stringify(device))
 			if (this._onChanged) this._onChanged()
 		}
 	}
 	get logDebug(): boolean {
-		return !!this.deviceSettings['debugLogging']
+		return !!this.deviceSettings['logLevel']
 	}
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -286,15 +255,14 @@ export class CoreHandler {
 			}
 		}
 	}
-	retireExecuteFunction(cmdId: string): void {
-		delete this._executedFunctions[cmdId]
+	retireExecuteFunction(cmdId: PeripheralDeviceCommandId): void {
+		delete this._executedFunctions[unprotectString(cmdId)]
 	}
 	setupObserverForPeripheralDeviceCommands(functionObject: CoreHandler): void {
-		const observer = functionObject.core.observe('peripheralDeviceCommands')
-		functionObject.killProcess(0)
+		const observer = functionObject.core.observe(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
 		functionObject._observers.push(observer)
 		const addedChangedCommand = (id: PeripheralDeviceCommandId) => {
-			const cmds = functionObject.core.getCollection<PeripheralDeviceCommand>('peripheralDeviceCommands')
+			const cmds = functionObject.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
 			if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 			const cmd = cmds.findOne(id)
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
@@ -305,18 +273,13 @@ export class CoreHandler {
 				// console.log('not mine', cmd.deviceId, this.core.deviceId)
 			}
 		}
-		observer.added = (id: string) => {
-			addedChangedCommand(protectString(id))
-		}
-		observer.changed = (id: string) => {
-			addedChangedCommand(protectString(id))
-		}
-		observer.removed = (id: string) => {
-			this.retireExecuteFunction(id)
-		}
-		const cmds = functionObject.core.getCollection('peripheralDeviceCommands')
+		observer.added = (id) => addedChangedCommand(id)
+		observer.changed = (id) => addedChangedCommand(id)
+		observer.removed = (id) => this.retireExecuteFunction(id)
+
+		const cmds = functionObject.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceCommands)
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
-		;(cmds.find({}) as PeripheralDeviceCommand[]).forEach((cmd: PeripheralDeviceCommand) => {
+		cmds.find({}).forEach((cmd: PeripheralDeviceCommand) => {
 			if (cmd.deviceId === functionObject.core.deviceId) {
 				this.executeFunction(cmd, functionObject)
 			}

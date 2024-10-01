@@ -2,12 +2,14 @@ import _ from 'underscore'
 import * as Winston from 'winston'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { CoreHandler } from './coreHandler'
-import { DeviceSettings } from './interfaces'
+import { Complete, DeviceSettings } from './interfaces'
 import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
 import {
+	DeviceActionArguments,
 	DeviceTriggerMountedAction,
 	DeviceTriggerMountedActionId,
 	PreviewWrappedAdLib,
+	ShiftRegisterActionArguments,
 } from '@sofie-automation/shared-lib/dist/input-gateway/deviceTriggerPreviews'
 import { SourceLayerType } from '@sofie-automation/shared-lib/dist/core/model/ShowStyle'
 import { Process } from './process'
@@ -20,15 +22,23 @@ import {
 	SomeFeedback,
 	SomeDeviceConfig,
 	TriggerEvent,
+	Feedback,
 } from '@sofie-automation/input-manager'
 import { interpollateTranslation, translateMessage } from './lib/translatableMessage'
-import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 import { ITranslatableMessage } from '@sofie-automation/shared-lib/dist/lib/translations'
-import { Observer } from '@sofie-automation/server-core-integration'
-import { sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
+import {
+	Observer,
+	SubscriptionId,
+	PeripheralDevicePubSub,
+	PeripheralDevicePubSubCollectionsNames,
+} from '@sofie-automation/server-core-integration'
+import { literal, sleep } from '@sofie-automation/shared-lib/dist/lib/lib'
 import PQueue from 'p-queue'
+import { InputGatewaySettings } from './generated/options'
 
 export type SetProcessState = (processName: string, comments: string[], status: StatusCode) => void
+
+const DEFAULT_LOG_LEVEL = 'info'
 
 export interface ProcessConfig {
 	/** Will cause the Node applocation to blindly accept all certificates. Not recommenced unless in local, controlled networks. */
@@ -44,7 +54,7 @@ export class InputManagerHandler {
 	#coreHandler!: CoreHandler
 	#config!: Config
 	#deviceSettings: DeviceSettings | undefined
-	#triggersSubscriptionId: string | undefined
+	#triggersSubscriptionId: SubscriptionId | undefined
 	#logger: Winston.Logger
 	#process!: Process
 
@@ -52,7 +62,10 @@ export class InputManagerHandler {
 
 	#queue: PQueue
 
-	#observers: Observer[] = []
+	#shiftRegisters: number[] = []
+	#deviceTriggerActions: Record<string, Record<string, DeviceActionArguments>> = {}
+
+	#observers: Observer<any>[] = []
 	/** Set of deviceIds to check for triggers to send  */
 	#devicesWithTriggersToSend = new Set<string>()
 
@@ -75,6 +88,10 @@ export class InputManagerHandler {
 
 			const peripheralDevice = await this.#coreHandler.core.getPeripheralDevice()
 
+			const gatewaySettings = peripheralDevice.deviceSettings as InputGatewaySettings
+
+			this.#logger.level = gatewaySettings?.logLevel ?? DEFAULT_LOG_LEVEL
+
 			// Stop here if studioId not set
 			if (!peripheralDevice.studioId) {
 				this.#logger.warn('------------------------------------------------------')
@@ -87,7 +104,7 @@ export class InputManagerHandler {
 			}
 			this.#logger.info('Initializing InputManager...')
 
-			await this.initInputManager((peripheralDevice.settings || {}) as DeviceSettings)
+			await this.initInputManager((peripheralDevice.inputDevices || {}) as DeviceSettings)
 			this.#logger.info('InputManager initialized')
 
 			this.#logger.info('Initialization done')
@@ -96,15 +113,13 @@ export class InputManagerHandler {
 			this.#logger.error('Error during initialization:')
 			this.#logger.error(e)
 			if (e instanceof Error) this.#logger.error(e.stack)
-			try {
-				if (this.#coreHandler) {
-					this.#coreHandler
-						.destroy()
-						.catch((err) => this.#logger.error(`Error when trying to destroy CoreHandler: ${err}`))
-				}
-			} catch (e1) {
-				this.#logger.error(e1)
+
+			if (this.#coreHandler) {
+				this.#coreHandler
+					.destroy()
+					.catch((err) => this.#logger.error(`Error when trying to destroy CoreHandler: ${err}`))
 			}
+
 			this.#logger.info('Shutting down in 10 seconds!')
 			setTimeout(() => {
 				// eslint-disable-next-line no-process-exit
@@ -129,33 +144,48 @@ export class InputManagerHandler {
 
 		this.#deviceSettings = settings
 
-		const devices = settings.devices ?? {}
-
-		this.#inputManager = await this.#createInputManager(devices)
+		this.#inputManager = await this.#createInputManager(settings)
 
 		this.#triggersSubscriptionId = await this.#coreHandler.core.autoSubscribe(
-			'mountedTriggersForDevice',
+			PeripheralDevicePubSub.mountedTriggersForDevice,
 			this.#coreHandler.core.deviceId,
-			InputManagerHandler.getDeviceIds(devices)
+			InputManagerHandler.getDeviceIds(settings),
+			this.#config.device.deviceToken
 		)
-		await this.#coreHandler.core.autoSubscribe('mountedTriggersForDevicePreview', this.#coreHandler.core.deviceId)
+		await this.#coreHandler.core.autoSubscribe(
+			PeripheralDevicePubSub.mountedTriggersForDevicePreview,
+			this.#coreHandler.core.deviceId,
+			this.#config.device.deviceToken
+		)
 
 		this.#logger.info(`Subscribed to mountedTriggersForDevice: ${this.#triggersSubscriptionId}`)
 
-		this.#refreshMountedTriggers()
+		await this.#refreshMountedTriggers()
 
 		this.#coreHandler.onConnected(() => {
 			this.#logger.info(`Core reconnected`)
+
+			// Force purge the collections, as server-core-integration will repopulate them once the subscription are re-established,
+			// but any data that was in the collections before the reconnection will remain and be out of sync.
+			if (this.#coreHandler.core.ddp.ddpClient) {
+				this.#coreHandler.core.ddp.ddpClient.collections[PeripheralDevicePubSubCollectionsNames.mountedTriggers] = {}
+				this.#coreHandler.core.ddp.ddpClient.collections[
+					PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews
+				] = {}
+			}
+
 			this.#handleClearAllMountedTriggers()
-				.then(() => {
-					this.#refreshMountedTriggers()
+				.then(async () => {
+					await this.#refreshMountedTriggers()
 				})
 				.catch((err) => this.#logger.error(`Error in refreshMountedTriggers() on coreHandler.onConnected: ${err}`))
 		})
 
-		const mountedTriggersObserver = this.#coreHandler.core.observe('mountedTriggers')
+		const mountedTriggersObserver = this.#coreHandler.core.observe(
+			PeripheralDevicePubSubCollectionsNames.mountedTriggers
+		)
 		mountedTriggersObserver.added = (id, _obj) => {
-			this.#handleChangedMountedTrigger(protectString(id)).catch((err) =>
+			this.#handleChangedMountedTrigger(id).catch((err) =>
 				this.#logger.error(`Error in handleChangedMountedTrigger() on mountedTriggersObserver.added: ${err}`)
 			)
 		}
@@ -166,8 +196,9 @@ export class InputManagerHandler {
 			newFields: Partial<DeviceTriggerMountedAction>
 		) => {
 			const obj = this.#coreHandler.core
-				.getCollection<DeviceTriggerMountedAction>('mountedTriggers')
-				.findOne(protectString(id))
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.findOne(id)
+			if (!obj) return
 			if (
 				newFields['deviceId'] ||
 				newFields['deviceTriggerId'] ||
@@ -178,13 +209,13 @@ export class InputManagerHandler {
 					oldFields.deviceId ?? obj.deviceId,
 					oldFields.deviceTriggerId ?? obj.deviceTriggerId
 				)
-					.then(async () => this.#handleChangedMountedTrigger(protectString(id)))
+					.then(async () => this.#handleChangedMountedTrigger(id))
 					.catch((err) => {
 						this.#logger.error(`Error in handleRemovedMountedTrigger() on mountedTriggersObserver.changed: ${err}`)
 					})
 				return
 			}
-			this.#handleChangedMountedTrigger(protectString(id)).catch((err) => {
+			this.#handleChangedMountedTrigger(id).catch((err) => {
 				this.#logger.error(`Error in handleChangedMountedTrigger() on mountedTriggersObserver.changed: ${err}`)
 			})
 		}
@@ -194,12 +225,16 @@ export class InputManagerHandler {
 				this.#logger.error(`Error in handleRemovedMountedTrigger() on mountedTriggersObserver.removed: ${err}`)
 			})
 		}
-		const triggersPreviewsObserver = this.#coreHandler.core.observe('mountedTriggersPreviews')
+		const triggersPreviewsObserver = this.#coreHandler.core.observe(
+			PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews
+		)
 		triggersPreviewsObserver.added = (id, obj) => {
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedActions = this.#coreHandler.core.getCollection<DeviceTriggerMountedAction>('mountedTriggers').find({
-				actionId: changedPreview.actionId,
-			})
+			const mountedActions = this.#coreHandler.core
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.find({
+					actionId: changedPreview.actionId,
+				})
 			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${id}"`)
 				return
@@ -212,15 +247,17 @@ export class InputManagerHandler {
 		}
 		triggersPreviewsObserver.changed = (id, _old, _cleared, _new) => {
 			const changedPreview = this.#coreHandler.core
-				.getCollection<PreviewWrappedAdLib>('mountedTriggersPreviews')
-				.findOne(protectString(id))
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews)
+				.findOne(id)
 			if (!changedPreview) {
 				this.#logger.error(`Could not find PreviewAdlib: "${id}"`)
 				return
 			}
-			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
-				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction[]
+			const mountedActions = this.#coreHandler.core
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.find({
+					actionId: changedPreview.actionId,
+				})
 			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
 				return
@@ -233,9 +270,11 @@ export class InputManagerHandler {
 		}
 		triggersPreviewsObserver.removed = (_id, obj) => {
 			const changedPreview = obj as PreviewWrappedAdLib
-			const mountedActions = this.#coreHandler.core.getCollection('mountedTriggers').find({
-				actionId: changedPreview.actionId,
-			}) as DeviceTriggerMountedAction[]
+			const mountedActions = this.#coreHandler.core
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
+				.find({
+					actionId: changedPreview.actionId,
+				})
 			if (mountedActions.length === 0) {
 				this.#logger.error(`Could not find mounted action for PreviewAdlib: "${changedPreview._id}"`)
 				return
@@ -265,9 +304,12 @@ export class InputManagerHandler {
 			.getPeripheralDevice()
 			.then(async (device) => {
 				if (!device) return
-				if (_.isEqual(device.settings, this.#deviceSettings)) return
+				if (_.isEqual(device.inputDevices, this.#deviceSettings)) return
 
-				const settings: DeviceSettings = device.settings as DeviceSettings
+				const settings: DeviceSettings = device.inputDevices as DeviceSettings
+				const gatewaySettings: InputGatewaySettings = device.deviceSettings as InputGatewaySettings
+
+				this.#logger.level = gatewaySettings?.logLevel ?? DEFAULT_LOG_LEVEL
 
 				this.#logger.debug(`Device configuration changed`)
 
@@ -283,33 +325,38 @@ export class InputManagerHandler {
 
 				this.#deviceSettings = settings
 
-				const devices = settings.devices ?? {}
-
-				this.#inputManager = await this.#createInputManager(devices)
+				this.#inputManager = await this.#createInputManager(settings)
 
 				this.#triggersSubscriptionId = await this.#coreHandler.core.autoSubscribe(
-					'mountedTriggersForDevice',
+					PeripheralDevicePubSub.mountedTriggersForDevice,
 					this.#coreHandler.core.deviceId,
-					InputManagerHandler.getDeviceIds(devices)
+					InputManagerHandler.getDeviceIds(settings),
+					this.#config.device.deviceToken
 				)
 
-				this.#refreshMountedTriggers()
+				await this.#refreshMountedTriggers()
 			})
 			.catch(() => {
 				this.#logger.error(`coreHandler.onChanged: Could not get peripheral device`)
 			})
 	}
 
-	#refreshMountedTriggers() {
-		this.#coreHandler.core
-			.getCollection('mountedTriggers')
+	async #refreshMountedTriggers() {
+		this.#deviceTriggerActions = {}
+
+		if (!this.#inputManager) return
+
+		const endReplaceTransaction = this.#inputManager.beginFeedbackReplaceTransaction()
+
+		const mountedActions = this.#coreHandler.core
+			.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
 			.find({})
-			.forEach((obj) => {
-				const mountedTrigger = obj as DeviceTriggerMountedAction
-				this.#handleChangedMountedTrigger(mountedTrigger._id).catch((err) =>
-					this.#logger.error(`Error in #handleChangedMountedTrigger in #refreshMountedTriggers: ${err}`)
-				)
-			})
+
+		await Promise.allSettled(
+			mountedActions.map(async (mountedTrigger) => this.#handleChangedMountedTrigger(mountedTrigger._id))
+		)
+
+		await endReplaceTransaction()
 	}
 
 	#triggerSendTrigger() {
@@ -334,34 +381,38 @@ export class InputManagerHandler {
 						}
 					}
 
-					if (triggerToSend && deviceId) {
-						this.#logger.verbose(`Trigger send...`)
-						this.#logger.verbose(triggerToSend.triggerId)
-						this.#logger.verbose(triggerToSend.arguments)
-
-						if (this.#coreHandler.core.connected) {
-							await this.#coreHandler.core.coreMethods.inputDeviceTrigger(
-								deviceId,
-								triggerToSend.triggerId,
-								triggerToSend.arguments ?? null
-							)
-							this.#logger.verbose(`Trigger send done!`)
-
-							if (triggerToSend.rateLimit) {
-								// Wait a bit, to rate-limit sending of the triggers:
-								await sleep(triggerToSend.rateLimit)
-							}
-						} else {
-							// If we're not connected, discard the input
-							this.#logger.warn('Skipping SendTrigger, not connected to Core')
-						}
-
-						// Queue another sendTrigger, to send any triggers that might have come in
-						// while we where busy handling this one:
-						this.#triggerSendTrigger()
-					} else {
+					if (!triggerToSend || !deviceId) {
 						// Nothing left to send.
+						return
 					}
+					triggerToSend.triggerId = this.#shiftPrefixTriggerId(triggerToSend.triggerId)
+
+					this.#executeDeviceAction(deviceId, triggerToSend)
+
+					this.#logger.verbose(`Trigger send...`)
+					this.#logger.verbose(triggerToSend.triggerId)
+					this.#logger.verbose(triggerToSend.arguments)
+
+					if (this.#coreHandler.core.connected) {
+						await this.#coreHandler.core.coreMethods.inputDeviceTrigger(
+							deviceId,
+							triggerToSend.triggerId,
+							triggerToSend.arguments ?? null
+						)
+						this.#logger.verbose(`Trigger send done!`)
+
+						if (triggerToSend.rateLimit) {
+							// Wait a bit, to rate-limit sending of the triggers:
+							await sleep(triggerToSend.rateLimit)
+						}
+					} else {
+						// If we're not connected, discard the input
+						this.#logger.warn('Skipping SendTrigger, not connected to Core')
+					}
+
+					// Queue another sendTrigger, to send any triggers that might have come in
+					// while we where busy handling this one:
+					this.#triggerSendTrigger()
 				} catch (e) {
 					this.#logger.error(`peripheralDevice.input.inputDeviceTrigger failed: ${e}`)
 					this.#logger.error(e)
@@ -371,6 +422,100 @@ export class InputManagerHandler {
 				this.#logger.error(`#queue.add() error: ${e}`)
 				this.#logger.error(e)
 			})
+	}
+
+	#executeDeviceAction(deviceId: string, trigger: TriggerEvent): void {
+		const deviceAction: DeviceActionArguments | undefined = this.#deviceTriggerActions[deviceId]?.[trigger.triggerId]
+		if (!deviceAction) return
+
+		this.#logger.debug(`Executing Device Action: ${deviceAction.type}: ${JSON.stringify(deviceAction)}`)
+
+		if (deviceAction.type === 'modifyRegister') this.#executeModifyShiftRegister(deviceAction)
+	}
+
+	#executeModifyShiftRegister(action: ShiftRegisterActionArguments): void {
+		const registerIndex = Number(action.register)
+
+		if (registerIndex < 0 || !Number.isInteger(registerIndex)) {
+			this.#logger.error(`Register index needs to be a non-negative integer: received "${action.register}" in action"`)
+			return
+		}
+
+		const value = Number(action.value)
+		if (isNaN(value)) {
+			this.#logger.error(`Register value needs to be a number: received "${action.value}" in action"`)
+			return
+		}
+
+		const originalValue = this.#shiftRegisters[registerIndex] ?? 0
+		let newValue = originalValue
+		switch (action.operation) {
+			case '=':
+				newValue = value
+				break
+			case '+':
+				newValue += value
+				break
+			case '-':
+				newValue -= value
+				break
+		}
+
+		// Limit the value, if limits are set:
+		const min = Number(action.limitMin) || newValue
+		const max = Number(action.limitMax) || newValue
+		newValue = Math.max(Math.min(newValue, max), min)
+
+		this.#shiftRegisters[registerIndex] = newValue
+
+		this.#refreshMountedTriggers().catch(this.#logger.error)
+	}
+
+	#SHIFT_PREFIX_REGEX = /^\[([\d:]+)\]\s+(.+)$/
+
+	#shiftPrefixTriggerId(triggerId: string): string {
+		const shiftPrefix = this.#serializeShiftRegisters()
+		if (shiftPrefix === '') {
+			return triggerId
+		}
+		return `${shiftPrefix} ${triggerId}`
+	}
+
+	#shiftUnprefixTriggerId(prefixedTriggerId: string): [number[], string] {
+		const match = this.#SHIFT_PREFIX_REGEX.exec(prefixedTriggerId)
+		if (!match) return [[], prefixedTriggerId]
+
+		const shiftStates = match[1].split(':').map((shiftRegister) => Number(shiftRegister))
+		const triggerId = match[2]
+		return [shiftStates, triggerId]
+	}
+
+	#matchesCurrentShiftState(shiftState: number[]): boolean {
+		const maxLength = Math.max(shiftState.length, this.#shiftRegisters.length)
+		for (let i = 0; i < maxLength; i++) {
+			if ((shiftState[i] ?? 0) !== (this.#shiftRegisters[i] ?? 0)) return false
+		}
+		return true
+	}
+
+	#serializeShiftRegisters(): string {
+		const output: string[] = []
+		const buffer: string[] = []
+		const maxRegister = this.#shiftRegisters.length
+		for (let i = 0; i < maxRegister; i++) {
+			const curValue = this.#shiftRegisters[i] ?? 0
+			if (curValue !== 0) {
+				output.push(...buffer)
+				output.push(String(curValue))
+				buffer.length = 0
+			} else {
+				buffer.push(String(curValue))
+			}
+		}
+
+		if (output.length === 0) return ''
+
+		return `[${output.join(':')}]`
 	}
 
 	async #createInputManager(settings: Record<string, SomeDeviceConfig>): Promise<InputManager> {
@@ -391,7 +536,7 @@ export class InputManagerHandler {
 
 	async #handleChangedMountedTrigger(id: DeviceTriggerMountedActionId): Promise<void> {
 		const mountedTrigger = this.#coreHandler.core
-			.getCollection<DeviceTriggerMountedAction>('mountedTriggers')
+			.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggers)
 			.findOne(id)
 		if (!this.#inputManager) return
 
@@ -400,9 +545,18 @@ export class InputManagerHandler {
 		this.#logger.debug(`Setting feedback for "${feedbackDeviceId}", "${feedbackTriggerId}"`)
 		if (!feedbackDeviceId || !feedbackTriggerId) return
 
+		if (mountedTrigger.deviceActionArguments) {
+			this.#deviceTriggerActions[feedbackDeviceId] = this.#deviceTriggerActions[feedbackDeviceId] ?? {}
+			this.#deviceTriggerActions[feedbackDeviceId][feedbackTriggerId] = mountedTrigger.deviceActionArguments
+		}
+
+		const [shiftState, unshiftedTriggerId] = this.#shiftUnprefixTriggerId(feedbackTriggerId)
+
+		if (!this.#matchesCurrentShiftState(shiftState)) return
+
 		await this.#inputManager.setFeedback(
 			feedbackDeviceId,
-			feedbackTriggerId,
+			unshiftedTriggerId,
 			await this.#getFeedbackForMountedTrigger(mountedTrigger)
 		)
 	}
@@ -415,12 +569,24 @@ export class InputManagerHandler {
 		this.#logger.debug(`Removing feedback for "${feedbackDeviceId}", "${feedbackTriggerId}"`)
 		if (!feedbackDeviceId || !feedbackTriggerId) return
 
-		await this.#inputManager.setFeedback(feedbackDeviceId, feedbackTriggerId, null)
+		if (
+			this.#deviceTriggerActions[feedbackDeviceId] &&
+			this.#deviceTriggerActions[feedbackDeviceId][feedbackTriggerId]
+		) {
+			delete this.#deviceTriggerActions[feedbackDeviceId][feedbackTriggerId]
+		}
+
+		const [shiftState, unshiftedTriggerId] = this.#shiftUnprefixTriggerId(feedbackTriggerId)
+
+		if (!this.#matchesCurrentShiftState(shiftState)) return
+
+		await this.#inputManager.setFeedback(feedbackDeviceId, unshiftedTriggerId, null)
 	}
 
 	async #handleClearAllMountedTriggers(): Promise<void> {
 		if (!this.#inputManager) return
 
+		this.#deviceTriggerActions = {}
 		await this.#inputManager.clearFeedbackAll()
 	}
 
@@ -469,14 +635,15 @@ export class InputManagerHandler {
 		let contentLayerLongName: string | undefined
 		let contentLayerShortName: string | undefined
 		let tally: Tally = Tally.NONE
+		let styleClassNames: string | undefined
 
 		if (actionId) {
 			const previewedAdlibs = this.#coreHandler.core
-				.getCollection('mountedTriggersPreviews')
+				.getCollection(PeripheralDevicePubSubCollectionsNames.mountedTriggersPreviews)
 				.find({
 					actionId: mountedTrigger?.actionId,
 				})
-				.reverse() as PreviewWrappedAdLib[]
+				.reverse()
 
 			if (previewedAdlibs.length > 0) {
 				tally = tally | Tally.PRESENT
@@ -486,6 +653,7 @@ export class InputManagerHandler {
 				contentTypes = previewedAdlibs
 					.map((adlib) => adlib.sourceLayerType)
 					.filter((a) => a !== undefined) as SourceLayerType[]
+				styleClassNames = previewedAdlibs[0].styleClassNames
 			}
 		}
 
@@ -495,13 +663,14 @@ export class InputManagerHandler {
 
 		const actionName = mountedTrigger.actionType
 
-		return {
+		return literal<Complete<Feedback>>({
 			userLabel: userLabel ? { long: userLabel } : undefined,
 			action: mountedTrigger ? { long: actionName } : undefined,
 			contentClass: contentLayerLongName ? { long: contentLayerLongName, short: contentLayerShortName } : undefined,
 			content: contentLabel ? { long: contentLabel } : undefined,
 			classNames: InputManagerHandler.buildFeedbackClassNames(mountedTrigger, contentTypes),
 			tally,
-		}
+			styleClassNames: styleClassNames?.split(/\s+/),
+		})
 	}
 }

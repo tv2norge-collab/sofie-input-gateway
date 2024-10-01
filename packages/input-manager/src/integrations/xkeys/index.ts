@@ -1,9 +1,11 @@
 import { listAllConnectedPanels, setupXkeysPanel, XKeys } from 'xkeys'
 import { Logger } from '../../logger'
 import { Device } from '../../devices/device'
-import { DEFAULT_ANALOG_RATE_LIMIT, DeviceConfigManifest, Symbols } from '../../lib'
+import { DEFAULT_ANALOG_RATE_LIMIT, Symbols } from '../../lib'
 import { ClassNames, SomeFeedback, Tally } from '../../feedback/feedback'
-import { ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
+import { XKeysDeviceOptions } from '../../generated'
+
+import DEVICE_OPTIONS from './$schemas/options.json'
 
 enum Colors {
 	RED = '#ff0000',
@@ -14,45 +16,14 @@ enum Colors {
 	ORANGE = '#ff8000',
 }
 
-export interface XKeysDeviceConfig {
-	unitId?: number
-	path?: string
-	productId?: number
-	serialNumber?: string
-}
-
-export const DEVICE_CONFIG: DeviceConfigManifest<XKeysDeviceConfig> = [
-	{
-		id: 'unitId',
-		type: ConfigManifestEntryType.INT,
-		name: 'Unit ID',
-		hint: 'This is a user-configurable ID that is supposed to identify the set of physical labels on the buttons',
-	},
-	{
-		id: 'path',
-		type: ConfigManifestEntryType.STRING,
-		name: 'Device Path',
-	},
-	{
-		id: 'productId',
-		type: ConfigManifestEntryType.INT,
-		name: 'Product ID',
-	},
-	{
-		id: 'serialNumber',
-		type: ConfigManifestEntryType.INT,
-		name: 'Serial Number',
-	},
-]
-
 export class XKeysDevice extends Device {
-	#config: XKeysDeviceConfig
-	#feedbacks: Record<number, SomeFeedback> = {}
-	#device: XKeys | undefined
+	private config: XKeysDeviceOptions
+	private feedbacks: Record<number, SomeFeedback> = {}
+	private device: XKeys | undefined
 
-	constructor(config: XKeysDeviceConfig, logger: Logger) {
+	constructor(config: XKeysDeviceOptions, logger: Logger) {
 		super(logger)
-		this.#config = config
+		this.config = config
 	}
 
 	async init(): Promise<void> {
@@ -60,7 +31,7 @@ export class XKeysDevice extends Device {
 		const useDevices = (
 			await Promise.allSettled(
 				allDevices.map(async (thisDevice): Promise<XKeys | null> => {
-					const config = this.#config
+					const config = this.config
 					if (config.productId && thisDevice.productId !== config.productId) return null
 
 					const xkeysDevice = await setupXkeysPanel(thisDevice)
@@ -109,41 +80,48 @@ export class XKeysDevice extends Device {
 			`X-Keys: productId: ${device.info.productId}, unitId: ${device.unitId}, path: ${device.devicePath}`
 		)
 
-		this.#device = device
+		this.device = device
 
-		this.#device.on('down', (keyIndex) => {
+		this.device.on('down', (keyIndex) => {
 			const triggerId = `${keyIndex} ${Symbols.DOWN}`
 			this.addTriggerEvent({ triggerId })
 		})
 
-		this.#device.on('up', (keyIndex) => {
+		this.device.on('up', (keyIndex) => {
 			const triggerId = `${keyIndex} ${Symbols.UP}`
 			this.addTriggerEvent({ triggerId })
 		})
 
-		this.#device.on('jog', (index, deltaValue) => {
+		this.device.on('jog', (index, deltaValue) => {
 			const triggerId = `${index} ${Symbols.JOG}`
 
 			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { deltaValue: number }) => {
 				if (!prev) prev = { deltaValue: 0 }
+
+				let direction = 0
+				if (deltaValue < 0) direction = -1
+				if (deltaValue > 0) direction = 1
+
 				return {
 					deltaValue: prev.deltaValue + deltaValue,
+					direction,
 				}
 			})
 		})
 
-		this.#device.on('shuttle', (index, position) => {
+		this.device.on('shuttle', (index, position) => {
 			const triggerId = `${index} ${Symbols.SHUTTLE}`
 
 			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { position: number }) => {
 				if (!prev) prev = { position: 0 }
+
 				return {
 					position: prev.position + position,
 				}
 			})
 		})
 
-		this.#device.on('tbar', (index, position) => {
+		this.device.on('tbar', (index, position) => {
 			const triggerId = `${index} ${Symbols.T_BAR}`
 
 			this.updateTriggerAnalog({ triggerId, rateLimit: DEFAULT_ANALOG_RATE_LIMIT }, (prev?: { position: number }) => {
@@ -154,7 +132,7 @@ export class XKeysDevice extends Device {
 			})
 		})
 
-		this.#device.on('joystick', (index, positions) => {
+		this.device.on('joystick', (index, positions) => {
 			const triggerId = `${index} ${Symbols.MOVE}`
 
 			this.updateTriggerAnalog(
@@ -171,12 +149,12 @@ export class XKeysDevice extends Device {
 			)
 		})
 
-		this.#device.on('disconnected', () => {
+		this.device.on('disconnected', () => {
 			this.logger.warn(`X-Keys: Disconnected`)
 			this.emit('error', { error: new Error('X-Keys: Disconnected') })
 		})
 
-		this.#device.on('error', (err) => {
+		this.device.on('error', (err) => {
 			this.logger.error(`X-Keys: Received Error: ${err}`)
 			this.emit('error', { error: err instanceof Error ? err : new Error(String(err)) })
 		})
@@ -184,9 +162,9 @@ export class XKeysDevice extends Device {
 
 	async destroy(): Promise<void> {
 		await super.destroy()
-		if (!this.#device) return
-		this.#device.removeAllListeners()
-		await this.#device.close()
+		if (!this.device) return
+		this.device.removeAllListeners()
+		await this.device.close()
 	}
 
 	private static parseTriggerId(triggerId: string): { keyIndex: number; isButton: boolean; isUp: boolean } {
@@ -206,9 +184,9 @@ export class XKeysDevice extends Device {
 	}
 
 	private async updateFeedback(key: number): Promise<void> {
-		const device = this.#device
+		const device = this.device
 		if (!device) return
-		const feedback = this.#feedbacks[key]
+		const feedback = this.feedbacks[key]
 		if (!feedback) {
 			device.setBacklight(key, null)
 			return
@@ -218,22 +196,26 @@ export class XKeysDevice extends Device {
 	}
 
 	async setFeedback(triggerId: string, feedback: SomeFeedback): Promise<void> {
-		if (!this.#device) return
+		if (!this.device) return
 
 		const { keyIndex, isButton } = XKeysDevice.parseTriggerId(triggerId)
 
 		if (!isButton) return
 
-		this.#feedbacks[keyIndex] = feedback
+		this.feedbacks[keyIndex] = feedback
 
 		await this.updateFeedback(keyIndex)
 	}
 
 	async clearFeedbackAll(): Promise<void> {
-		for (const keyStr of Object.keys(this.#feedbacks)) {
+		for (const keyStr of Object.keys(this.feedbacks)) {
 			const key = Number(keyStr)
-			this.#feedbacks[key] = null
+			this.feedbacks[key] = null
 			await this.updateFeedback(key)
 		}
+	}
+
+	static getOptionsManifest(): object {
+		return DEVICE_OPTIONS
 	}
 }

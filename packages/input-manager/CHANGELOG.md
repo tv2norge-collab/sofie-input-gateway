@@ -3,6 +3,82 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.3.0-alpha.2...v0.3.0) (2024-10-01)
+
+**Note:** Version bump only for package @sofie-automation/input-manager
+
+
+
+
+
+# [0.3.0-alpha.2](https://github.com/nrkno/sofie-input-gateway/compare/v0.3.0-alpha.1...v0.3.0-alpha.2) (2024-07-02)
+
+
+### Bug Fixes
+
+* error in streamdeck config schema ([1d7a49e](https://github.com/nrkno/sofie-input-gateway/commit/1d7a49ec1d733214166017acd7987daa2962029b))
+
+
+### Features
+
+* extend styling options ([b7da0f6](https://github.com/nrkno/sofie-input-gateway/commit/b7da0f6a4b5185207d25b474600aaf9eb36d9a86))
+* make button styles faster and add more text formatting options ([e6b37ea](https://github.com/nrkno/sofie-input-gateway/commit/e6b37eac664ebc7b34a9c0795788a97756eb7f28))
+
+
+
+
+
+# [0.3.0-alpha.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.3.0-alpha.0...v0.3.0-alpha.1) (2024-06-03)
+
+
+### Bug Fixes
+
+* stale data being drawn when reconnecting to sofie SOFIE-3172 ([be957f0](https://github.com/nrkno/sofie-input-gateway/commit/be957f04dc0c0e53be5245f4d54d00cd5bc83160))
+
+
+### Features
+
+* drawable png background for streamdeck buttons SOFIE-3138 ([#21](https://github.com/nrkno/sofie-input-gateway/issues/21)) ([16a5555](https://github.com/nrkno/sofie-input-gateway/commit/16a55555f934ff9bc0689f03df033045cc8a6b62))
+
+
+
+
+
+# [0.3.0-alpha.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.1...v0.3.0-alpha.0) (2023-11-23)
+
+
+### Bug Fixes
+
+* **Streamdeck:** simplify feedback update ([b36616f](https://github.com/nrkno/sofie-input-gateway/commit/b36616f5dd2fede2f84fd9842879912f54d29e14))
+* **Streamdeck:** tests ([bdd5062](https://github.com/nrkno/sofie-input-gateway/commit/bdd50621a71808f65860127591600216e7dc53e5))
+
+
+### Features
+
+* improve feedback refresh ([b097d67](https://github.com/nrkno/sofie-input-gateway/commit/b097d671ead026442cd2ef7f0d3c1a96cf7ee363))
+* **StreamDeck, XKeys, Skaarhoj:** add direction information ([1e92094](https://github.com/nrkno/sofie-input-gateway/commit/1e92094ef59467e52ecd5180e069833b7daf789f))
+* **Streamdeck:** add a "trigger down" map for rendering feedbacks ([97aa0b8](https://github.com/nrkno/sofie-input-gateway/commit/97aa0b8f7c16e35f0ec66e38b1f05ac336e5aa41))
+
+
+
+
+
+## [0.2.2-alpha.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.2-alpha.0...v0.2.2-alpha.1) (2023-07-04)
+
+**Note:** Version bump only for package @sofie-automation/input-manager
+
+
+
+
+
+## [0.2.2-alpha.0](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.1...v0.2.2-alpha.0) (2023-06-27)
+
+**Note:** Version bump only for package @sofie-automation/input-manager
+
+
+
+
+
 ## [0.2.1](https://github.com/nrkno/sofie-input-gateway/compare/v0.2.0...v0.2.1) (2023-04-12)
 
 ### Bug Fixes
