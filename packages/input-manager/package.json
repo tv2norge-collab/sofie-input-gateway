@@ -96,9 +96,9 @@
 		"easymidi": "^3.1.0",
 		"eventemitter3": "^4.0.7",
 		"fold-to-ascii": "^5.0.1",
-		"lru-cache": "^10.2.2",
+		"lru-cache": "^10.4.2",
 		"osc": "^2.4.4",
-		"skia-canvas": "^1.0.1",
+		"skia-canvas": "^1.0.2",
 		"xkeys": "^3.1.1"
 	},
 	"peerDependencies": {
