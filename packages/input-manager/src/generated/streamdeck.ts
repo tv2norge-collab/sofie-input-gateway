@@ -29,7 +29,7 @@ export interface StreamdeckStylePreset {
 	fontWeight?: 'normal' | 'bold'
 	fontWidth?: 'normal' | 'narrow'
 	fontStyle?: 'normal' | 'italic'
-	color?: boolean & string
+	color?: string
 	textStrokeColor?: string
 	textShadowColor?: string
 	textShadowOffset?: number
@@ -43,7 +43,7 @@ export interface StreamdeckStylePreset {
 		| 'left bottom'
 		| 'center bottom'
 		| 'right bottom'
-	textTransform?: 'capitalize' | 'uppercase' | 'lowercase'
+	textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase'
 	lineClamp?: number
 	inlineBackground?: string
 	inlineBackgroundPadding?: string

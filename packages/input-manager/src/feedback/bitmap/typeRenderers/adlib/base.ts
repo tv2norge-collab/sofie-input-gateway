@@ -1,4 +1,4 @@
-import { ClassNames, BitmapFeedback } from '../../../feedback'
+import { ClassNames, BitmapFeedback, Tally } from '../../../feedback'
 import { BaseRenderer } from '../base'
 
 /**
@@ -54,12 +54,24 @@ const COLORS: Record<string, string> = {
 	[ClassNames.UNKNOWN]: '#4b4b4b',
 }
 
+const TALLY_COLORS: Record<string, string> = {
+	[Tally.CURRENT]: '#ff0000',
+	[Tally.NEXT]: '#00ff00',
+}
+
 export class BaseAdLibRenderer extends BaseRenderer {
 	private getAdLibColor(classNames: string[] | undefined): string {
 		if (classNames === undefined) return COLORS[ClassNames.UNKNOWN]
 		const className = classNames.find((className) => Object.keys(COLORS).includes(className)) as ClassNames | undefined
 		if (className) return COLORS[className]
 		return COLORS[ClassNames.UNKNOWN]
+	}
+
+	private getTallyColor(tally: Tally | undefined): string | undefined {
+		if (tally === undefined) return undefined
+		if (Tally.CURRENT & tally) return TALLY_COLORS[Tally.CURRENT]
+		if (Tally.NEXT & tally) return TALLY_COLORS[Tally.NEXT]
+		return undefined
 	}
 
 	private getFontSize(label: string): number {
@@ -86,7 +98,7 @@ export class BaseAdLibRenderer extends BaseRenderer {
 			spring: true,
 			fontSize: this.percentToPixels(this.getFontSize(label)),
 			lineHeight: this.percentToPixels(this.getFontSize(label)),
-			background: this.getAdLibColor(feedback.classNames),
+			background: this.getTallyColor(feedback.tally) ?? this.getAdLibColor(feedback.classNames),
 			textShadowOffset: 1,
 			lineClamp: 4,
 		})
